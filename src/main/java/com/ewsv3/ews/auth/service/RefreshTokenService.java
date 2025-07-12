@@ -25,7 +25,14 @@ public class RefreshTokenService {
     private UserRepository userRepository;
 
     public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
+//        return refreshTokenRepository.findByToken(token);
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByToken(token);
+        if (refreshToken.isPresent() && refreshToken.get().getExpiryDate().compareTo(Instant.now()) < 0) {
+            refreshTokenRepository.delete(refreshToken.get());
+            return Optional.empty();
+        }
+        return refreshToken;
+
     }
 
     @Transactional

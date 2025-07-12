@@ -1,0 +1,33 @@
+package com.ewsv3.ews.request.dto;
+
+public record NewRequestReqBody(
+                Long personRequestId,
+                Long requestMasterId,
+                Long personId,
+                String timeHour,
+                String dateStart,
+                String dateEnd,
+                String timeStart,
+                String timeEnd,
+                String duration,
+                String specificDays,
+                String mon,
+                String tue,
+                String wed,
+                String thu,
+                String fri,
+                String sat,
+                String sun,
+                Long createdBy,
+                String createdOn,
+                Long lastUpdatedBy,
+                String lastUpdateDate,
+                String status,
+                String comments,
+                String dmlMode,
+                Long requestReasonId,
+                String newTimeStart,
+                String newTimeEnd,
+                String sPersonRosterId,
+                String dPersonRosterId) {
+}

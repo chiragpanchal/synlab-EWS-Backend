@@ -3,8 +3,7 @@ package com.ewsv3.ews.auth.service;
 import com.ewsv3.ews.auth.dto.User;
 import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.auth.repository.UserRepository;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,8 +67,16 @@ public class JwtService {
         try {
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
             return true;
+        } catch (MalformedJwtException e) {
+            System.err.println("Invalid JWT token: " + e.getMessage());
+        } catch (ExpiredJwtException e) {
+            System.err.println("JWT token is expired: " + e.getMessage());
+        } catch (UnsupportedJwtException e) {
+            System.err.println("JWT token is unsupported: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.err.println("JWT claims string is empty: " + e.getMessage());
         } catch (Exception e) {
-            // Log exception
+            System.err.println("JWT validation failed: " + e.getMessage());
         }
         return false;
     }

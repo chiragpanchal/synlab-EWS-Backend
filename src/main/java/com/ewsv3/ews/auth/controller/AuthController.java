@@ -76,6 +76,8 @@ public class AuthController {
         UserPrincipal userDetails = (UserPrincipal) authentication.getPrincipal();
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUserId());
 
+        System.out.println("authenticateUser refreshToken.getExpiryDate():"+refreshToken.getExpiryDate());
+
         return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
                 userDetails.getUserId(),
                 userDetails.getUsername(),
