@@ -11,10 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -78,7 +75,7 @@ public class DashboardController {
 
     }
 
-    @PostMapping("/pending-team-requests")
+    @GetMapping("/pending-team-requests")
     public ResponseEntity<List<PendingTeamRequestsDto>> getPendingTeamRequests(
             @RequestHeader Map<String, String> headers) {
 
@@ -94,7 +91,7 @@ public class DashboardController {
         }
     }
 
-    @PostMapping("/awaiting-actions")
+    @GetMapping("/awaiting-actions")
     public ResponseEntity<List<AwaitingActionsDto>> getAwaitingActions(@RequestHeader Map<String, String> headers) {
 
         try {

@@ -4,6 +4,7 @@ import com.ewsv3.ews.auth.dto.User;
 import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.auth.repository.UserRepository;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 
 @Service
@@ -65,8 +67,15 @@ public class JwtService {
 
     public boolean validateJwtToken(String authToken) {
         try {
+
+            System.out.println("validateJwtToken key:" + key());
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
             return true;
+//            Jwts.parserBuilder()
+//                    .setSigningKey(getSigningKey())
+//                    .build()
+//                    .parseClaimsJws(authToken);
+//            return true;
         } catch (MalformedJwtException e) {
             System.err.println("Invalid JWT token: " + e.getMessage());
         } catch (ExpiredJwtException e) {
@@ -79,5 +88,11 @@ public class JwtService {
             System.err.println("JWT validation failed: " + e.getMessage());
         }
         return false;
+    }
+
+    // Ensure consistent key generation
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
