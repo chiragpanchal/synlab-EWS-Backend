@@ -16,7 +16,7 @@ import java.util.Map;
 public class UserController {
     
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<?> getUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
@@ -26,7 +26,7 @@ public class UserController {
         response.put("username", userPrincipal.getUsername());
         response.put("userType", userPrincipal.getUserType());
         response.put("enterpriseId", userPrincipal.getEnterpriseId());
-        response.put("employeeId", userPrincipal.getEmployeeId());
+        response.put("personId", userPrincipal.getEmployeeId());
         
         return ResponseEntity.ok(response);
     }

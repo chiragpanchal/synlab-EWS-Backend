@@ -59,12 +59,15 @@ public class RequestUtils {
                 spra.item_key,
                 spra.created_on,
                 decode(si.completion_date, NULL, 'Awaiting Approval', 'Approved') status,
+                mgr.full_name pending_with,
                 spra.comments
             FROM
                 sc_person_requests_appr spra,
                 sc_requests_master      srm,
                 sc_items                si,
-                sc_request_reasons      srr
+                sc_request_reasons      srr,
+                sc_notifications        sn,
+                sc_person_v mgr
             WHERE
                     spra.person_id = :personId
                 AND srm.request_master_id = spra.request_master_id
@@ -74,6 +77,9 @@ public class RequestUtils {
                 AND si.item_key = spra.item_key
                 AND srr.request_master_id (+) = srm.request_master_id
                 AND srr.request_reason_id(+)= spra.request_reason_id
+                and sn.item_key(+)=spra.item_key
+                and (mgr.user_id(+)= sn.to_user_id
+                or  mgr.user_id(+)= sn.more_info_user_id)
             ORDER BY
                 spra.created_on DESC""";
 
@@ -103,4 +109,65 @@ public class RequestUtils {
              ORDER BY
                 sn.notification_id,
                 usr.full_name""";
+
+    static String DestinationRostersSql= """
+            select
+                per.person_id,
+                per.employee_number,
+                per.full_name,
+                spr.time_start,
+                spr.time_end,
+                spr.person_roster_id
+            from
+                sc_person_rosters spr,
+                sc_person_v       per
+            where
+                    spr.published = 'Y'
+                and spr.on_call is null
+                and spr.emergency is null
+                and per.person_id = spr.person_id
+                and exists (
+                    select
+                        'Y'
+                    from
+                        sc_person_rosters spr2
+                    where
+                            spr2.person_roster_id = :personRosterId
+                        and spr2.department_id = spr.department_id
+                        and spr2.job_title_id  = spr.job_title_id
+                        and spr.effective_date between spr2.effective_date and spr2.effective_date + 2
+                )
+                and not exists (
+                    select
+                        'Y'
+                    from
+                        sc_person_rosters spr2
+                    where
+                            spr2.person_id = spr.person_id
+                        and spr2.person_roster_id = :personRosterId
+                )
+                and not exists (
+                    select
+                        'Y'
+                    from
+                        sc_person_rosters spr2
+                    where
+                            spr2.person_id = spr.person_id
+                        and spr2.effective_date   = spr.effective_date
+                        and spr2.person_roster_id = :personRosterId
+                )
+            order by
+                per.full_name,
+                spr.time_start""";
+
+    static String RostersForDate = """
+            select
+                spr.person_roster_id,
+                spr.time_start,
+                spr.time_end
+            from
+                sc_person_rosters spr
+            where
+                    spr.person_id = :personId
+                and spr.effective_date between :startDate and :endDate""";
 }

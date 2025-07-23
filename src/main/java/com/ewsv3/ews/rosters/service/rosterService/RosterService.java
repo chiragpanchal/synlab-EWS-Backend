@@ -1,0 +1,712 @@
+package com.ewsv3.ews.rosters.service.rosterService;
+
+
+import com.ewsv3.ews.masters.service.ServiceUtils;
+import com.ewsv3.ews.rosters.dto.rosters.*;
+import com.ewsv3.ews.rosters.dto.rosters.payload.*;
+import com.ewsv3.ews.rosters.dto.rosters.payload.pivot.PersonRosterSqlResp;
+import jakarta.annotation.PostConstruct;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+import static com.ewsv3.ews.rosters.service.utils.RosterSql.*;
+
+@Service
+public class RosterService {
+
+    // private final JdbcClient jdbcClient;
+    //
+    // public RosterService(JdbcClient jdbcClient) {
+    // this.jdbcClient = jdbcClient;
+    // }
+
+    private SimpleJdbcCall simpleJdbcCall;
+    private final JdbcTemplate jdbcTemplate;
+
+    public RosterService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @PostConstruct
+    public void init() {
+        jdbcTemplate.setResultsMapCaseInsensitive(true);
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_SPOT_ROSTER_P");
+    }
+
+    public List<PersonRosters> getPersonRosters(Long userId, Long profileId, Date startDate, Date endDate,
+                                                JdbcClient jdbcClient) {
+
+        // ServiceUtils serviceUtils = new ServiceUtils();
+
+        // SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.printf("\nInside getPersonRosters: %s========================> ", LocalTime.now());
+        Map<String, Object> objectMap = new HashMap<>();
+
+        objectMap.put("userId", userId);
+        objectMap.put("profileId", profileId);
+        objectMap.put("startDate", startDate);
+        objectMap.put("endDate", endDate);
+
+        System.out.printf("\nInside getPersonRosters objectMap:%s\n", objectMap);
+
+        List<PersonRosters> personRostersList = jdbcClient.sql(ServiceUtils.getPersonRosterDataSql)
+                .params(objectMap)
+                .query(PersonRosters.class)
+                .list();
+
+        System.out.printf("Completed getPersonRosters: %s========================> \n", LocalTime.now());
+
+        return personRostersList;
+
+    }
+
+    public PersonRosterSqlResp getPersonRosterSql_old(Long userId, PersonRosterPivotReq personRosterPivotReq,
+                                                      NamedParameterJdbcTemplate namedParameterJdbcTemplate, JdbcClient jdbcClient) {
+
+        // ServiceUtils serviceUtils = new ServiceUtils();
+
+        // SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.printf("\ngetPersonRosterSql: BEGIN%s========================> \n", LocalTime.now());
+        Map<String, Object> objectMap = new HashMap<>();
+
+        objectMap.put("userId", userId);
+        objectMap.put("startDate", LocalDate.parse(personRosterPivotReq.startDate()));
+        objectMap.put("endDate", LocalDate.parse(personRosterPivotReq.endDate()));
+        objectMap.put("profileId", personRosterPivotReq.profileId());
+
+        System.out.printf("\ngetPersonRosterSql objectMap:%s\n", objectMap);
+
+        // part 1: Getting Roster lines date
+
+        // List<PersonRosterLines> personRostersList =
+        // jdbcClient.sql(ServiceUtils.personRosterSql)
+        // .params(objectMap)
+        // .query(PersonRosterLines.class)
+        // .list();
+
+        // System.out.printf("getPersonRosterSql personRostersList: %s\n",
+        // personRostersList);
+
+        // part 2: Getting KPI String
+        System.out.printf("\n\t\tgetPersonRosterSql: KPI Procedure call BEGIN%s========================> \n",
+                LocalTime.now());
+        String kpiString = "";
+        Map<String, Object> procParamMap = new HashMap<>();
+        procParamMap.put("p_user_id", userId);
+        procParamMap.put("p_start_date", LocalDate.parse(personRosterPivotReq.startDate()));
+        procParamMap.put("p_end_date", LocalDate.parse(personRosterPivotReq.endDate()));
+        procParamMap.put("p_profile_id", personRosterPivotReq.profileId());
+
+        JdbcTemplate template = namedParameterJdbcTemplate.getJdbcTemplate();
+        SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(template).withProcedureName("SC_GET_ROSTER_SQL_KPI");
+        SqlParameterSource sqlParameterSource = new MapSqlParameterSource(procParamMap);
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(sqlParameterSource);
+        System.out.printf("\n\t\tgetPersonRosterSql: KPI Procedure call END%s========================> \n",
+                LocalTime.now());
+
+        kpiString = (String) simpleJdbcCallResult.get("P_KPI_STRING");
+        System.out.printf("kpiString: %s\n", kpiString);
+
+        // part 3: Preparing final response
+
+        // PersonRosterSqlResp rosterSqlResp = new
+        // PersonRosterSqlResp(personRostersList, kpiString);
+        System.out.printf("\ngetPersonRosterSql: END%s========================> \n", LocalTime.now());
+
+        // return rosterSqlResp;
+        return null;
+
+    }
+
+    public PersonRosterSqlResp getPersonRosterSql(long userId, Long profileId, Long personId, LocalDate startDate,
+                                                  LocalDate endDate, int page, int size, String text, String filterFlag, JdbcClient jdbcClient,
+                                                  NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+
+        System.out.println("getPersonRosterSql userId:" + userId);
+        Map<String, Object> objectMap = null;
+        String searchText = Objects.equals(text, "") ? "%" : "%" + text.trim() + "%";
+        try {
+            objectMap = Map.of(
+                    "userId", userId,
+                    "profileId", profileId,
+                    "personId", personId == null ? 0L : personId,
+                    "startDate", startDate,
+                    "endDate", endDate,
+                    "offset", page,
+                    "pageSize", size,
+                    "text", searchText,
+                    "pFilterFlag", filterFlag == null ? "Y" : filterFlag);
+        } catch (Exception e) {
+            System.out.println("Exception in creating objectMap:" + e);
+            throw new RuntimeException(e);
+        }
+
+        System.out.println("getPersonRosterSql objectMap:" + objectMap);
+
+        List<RosterLines> rosterLines = jdbcClient.sql(RosterTeamSql).params(objectMap).query(RosterLines.class).list();
+
+        System.out.printf("\ngetPersonRosterSql rosterLines:%s\n", rosterLines);
+
+        for (RosterLines rosterLine : rosterLines) {
+
+            Map<String, Object> personDateMap = Map.of(
+                    "personId", rosterLine.getPersonId(),
+                    "startDate", startDate,
+                    "endDate", endDate,
+                    "pFilterFlag", filterFlag == null ? "Y" : filterFlag);
+
+            List<RosterLinesChild> children = jdbcClient.sql(RosterMemberChildSql).params(personDateMap)
+                    .query(RosterLinesChild.class).list();
+
+            for (RosterLinesChild child : children) {
+                System.out.println("child.personId():" + child.personId());
+            }
+
+            // Ensure at least one record per date between startDate and endDate
+            Set<LocalDate> existingDates = children.stream()
+                    .map(RosterLinesChild::effectiveDate)
+                    .collect(Collectors.toSet());
+
+            List<RosterLinesChild> filledChildren = new ArrayList<>(children);
+            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                if (!existingDates.contains(date)) {
+                    RosterLinesChild emptyChild = getLinesChild(rosterLine, date);
+                    filledChildren.add(emptyChild);
+                }
+            }
+
+            filledChildren.sort(Comparator.comparing(RosterLinesChild::effectiveDate));
+
+            // System.out.println("getTeamTimecardsSimpleV2 filledChildren:" +
+            // filledChildren);
+            // System.out.println("============================================================");
+            // System.out.println("getTeamTimecardsSimpleV2
+            // timecardSimple.getEmployeeNumber():" + rosterLine.getEmployeeNumber());
+            // for (RosterLinesChild child : filledChildren) {
+            // System.out.println("getTeamTimecardsSimpleV2 child.child.effectiveDate():" +
+            // child.effectiveDate());
+            // }
+
+            // Group filledChildren by effectiveDate and create RosterLinesChildDates
+            Map<LocalDate, List<RosterLinesChild>> groupedByDate = filledChildren.stream()
+                    .collect(Collectors.groupingBy(RosterLinesChild::effectiveDate));
+            List<RosterLinesChildDates> childDatesList = groupedByDate.entrySet().stream()
+                    .map(entry -> new RosterLinesChildDates(entry.getKey(),
+                            entry.getValue().toArray(new RosterLinesChild[0])))
+                    .sorted(Comparator.comparing(RosterLinesChildDates::effectiveDate))
+                    .collect(Collectors.toList());
+
+            for (RosterLinesChildDates dates : childDatesList) {
+                System.out.println("childDatesList: " + dates.effectiveDate() + ":" + dates.children().length);
+            }
+            rosterLine.setChildren(childDatesList);
+
+            // rosterLine.setChildren(filledChildren);
+
+        }
+
+        for (RosterLines line : rosterLines) {
+            line.getChildren().forEach(rosterLinesChildDates -> {
+                System.out
+                        .println("rosterLines:" + line.getPersonName() + ":" + rosterLinesChildDates.children().length);
+            });
+        }
+
+        // part 2: Getting KPI String
+        System.out.printf("\n\t\tgetPersonRosterSql: KPI Procedure call BEGIN%s========================> \n",
+                LocalTime.now());
+        String kpiString = "";
+        Map<String, Object> procParamMap = new HashMap<>();
+        procParamMap.put("p_user_id", userId);
+        procParamMap.put("p_start_date", startDate);
+        procParamMap.put("p_end_date", endDate);
+        procParamMap.put("p_profile_id", profileId);
+        procParamMap.put("p_text", searchText);
+
+        JdbcTemplate template = namedParameterJdbcTemplate.getJdbcTemplate();
+        SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(template).withProcedureName("SC_GET_ROSTER_SQL_KPI");
+        SqlParameterSource sqlParameterSource = new MapSqlParameterSource(procParamMap);
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(sqlParameterSource);
+        System.out.printf("\n\t\tgetPersonRosterSql: KPI Procedure call END%s========================> \n",
+                LocalTime.now());
+
+        kpiString = (String) simpleJdbcCallResult.get("P_KPI_STRING");
+        System.out.printf("kpiString: %s\n", kpiString);
+
+        // part 3: Preparing final response
+
+        PersonRosterSqlResp rosterSqlResp = new PersonRosterSqlResp(rosterLines, kpiString);
+        System.out.printf("\ngetPersonRosterSql: END%s========================> \n", LocalTime.now());
+
+        return rosterSqlResp;
+
+    }
+
+    private static RosterLinesChild getLinesChild(RosterLines rosterLine, LocalDate date) {
+        RosterLinesChild emptyChild = new RosterLinesChild(
+                rosterLine.getPersonId(),
+                rosterLine.getAssignmentId(),
+                null, // personRosterId
+                date,
+                null, // timeStart
+                null, // timeEnd
+                0.0, // schHrs
+                null, // schDepartmentId
+                null, // schJobTitleId
+                null, // schWorkLocationId
+                null, // schDepartment
+                null, // schJobTitle
+                null, // schLocation
+                null, // onCall
+                null, // emergency
+                null, // published
+                null, // workDurationId
+                null, // workDurationCode
+                null // workDurationName
+        );
+        emptyChild.setEffectiveDate(date);
+        return emptyChild;
+    }
+
+    public List<PersonRosterPivotResponse> getPersonRostersProcedure(Long userId,
+                                                                     PersonRosterPivotReq personRosterPivotReq, NamedParameterJdbcTemplate namedParameterJdbcTemplate,
+                                                                     JdbcClient jdbcClient) {
+
+        System.out.println("inside getPersonRostersProcedure");
+        System.out.println("personRosterPivotReq:%s\n" + personRosterPivotReq);
+
+        // JdbcTemplate template = namedParameterJdbcTemplate.getJdbcTemplate();
+        // SimpleJdbcCall simpleJdbcCall = new
+        // SimpleJdbcCall(template).withProcedureName("SC_PERSON_ROSTER_PIVOT_P5");
+
+        Map<String, Object> procParamMap = new HashMap<>();
+        String p_kpi_string = "";
+        procParamMap.put("p_user_id", userId);
+        procParamMap.put("p_start_date", LocalDate.parse(personRosterPivotReq.startDate()));
+        procParamMap.put("p_end_date", LocalDate.parse(personRosterPivotReq.endDate()));
+        procParamMap.put("p_profile_id", personRosterPivotReq.profileId());
+        procParamMap.put("p_person_ids", personRosterPivotReq.personIds());
+        procParamMap.put("p_department_ids", personRosterPivotReq.departmentIds());
+        procParamMap.put("p_job_title_ids", personRosterPivotReq.jobTitleTds());
+        procParamMap.put("p_work_location_ids", personRosterPivotReq.workLocationIds());
+        procParamMap.put("p_business_unit_ids", personRosterPivotReq.businessUnitIds());
+        procParamMap.put("p_legal_entity_ids", personRosterPivotReq.legalEntityIds());
+        procParamMap.put("p_duty_manager_ids", personRosterPivotReq.dutyManagerIds());
+        procParamMap.put("p_appr_status", personRosterPivotReq.apprStatus());
+        procParamMap.put("p_filter_by", personRosterPivotReq.filterBy());
+        procParamMap.put("p_kpi_string", p_kpi_string);
+
+        // SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.printf("\ngetPersonRosters BEGIN PROCEDURE CALL: %s========================> ", LocalTime.now());
+        // SqlParameterSource sqlParameterSource = new
+        // MapSqlParameterSource(procParamMap);
+        // Map<String, Object> simpleJdbcCallResult =
+        // simpleJdbcCall.execute(sqlParameterSource);
+        System.out.printf("p_kpi_string:%s\n", p_kpi_string);
+
+        System.out.printf("\ngetPersonRosters END PROCEDURE CALL: %s========================> ", LocalTime.now());
+
+        System.out.printf("\ngetPersonRosters BEGIN gathering data: %s========================> ", LocalTime.now());
+        List<PersonRosterPivotResponse> pivotResponseList = jdbcClient.sql(ServiceUtils.personRosterPivotSql)
+                .param("userId", userId)
+                // param("id", id)
+                .query(PersonRosterPivotResponse.class)
+                .list();
+
+        System.out.printf("\ngetPersonRosters END gathering data: %s========================> ", LocalTime.now());
+
+        return new ArrayList<>(pivotResponseList);
+
+    }
+
+    public List<PersonRostersSmall> getPersonRostersSmall(Long userId, Long profileId, Date startDate, Date endDate,
+                                                          JdbcClient jdbcClient) {
+
+        // ServiceUtils serviceUtils = new ServiceUtils();
+
+        // SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.println("Inside getPersonRosters ========================> ");
+        Map<String, Object> objectMap = new HashMap<>();
+
+        objectMap.put("userId", userId);
+        objectMap.put("profileId", profileId);
+        objectMap.put("startDate", startDate);
+        objectMap.put("endDate", endDate);
+        // objectMap.put("startDate", sdf.format(startDate));
+        // objectMap.put("endDate", sdf.format(endDate));
+        // List<PersonRosters> personRosters = new ArrayList<>();
+
+        System.out.printf("\nInside getPersonRosters objectMap:%s\n", objectMap);
+
+        List<PersonRostersSmall> personRostersList = jdbcClient.sql(ServiceUtils.getPersonRosterDataSqlSmall)
+                .params(objectMap)
+                .query(PersonRostersSmall.class)
+                .list();
+
+        System.out.println("Completed getPersonRosters ========================> ");
+
+        return personRostersList;
+
+    }
+
+    public RosterDMLResponseDto createSpotRoster(long userId, SpotRequestBody requestBody) {
+
+        System.out.println("createSpotRoster :requestBody:" + requestBody);
+        List<PersonDtoSelected> personDtoSelected = requestBody.personDtoSelected();
+
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+        String errorMessage = "";
+        int recCounts = 0;
+
+        try {
+
+            for (PersonDtoSelected selected : personDtoSelected) {
+
+                for (WorkDurationDtoAssignment workDurationDtoAssignment : requestBody.workDurationDtoAssignment()) {
+                    // List<WorkDurationDtoAssignment> workDurationDtoAssignment =
+                    // requestBody.getWorkDurationDtoAssignment();
+
+                    Map<String, Object> inParamMap = new HashMap<>();
+                    inParamMap.put("p_creator_user_id", userId);
+                    inParamMap.put("p_start_date", requestBody.startDate());
+                    inParamMap.put("p_end_date", requestBody.endDate());
+                    inParamMap.put("p_person_id", selected.personId());
+                    inParamMap.put("p_assignment_id", selected.assignmentId());
+                    inParamMap.put("p_job_title_id", selected.jobTitleId());
+                    inParamMap.put("p_department_id", selected.departmentId());
+                    inParamMap.put("p_work_location_id", selected.locationId());
+                    inParamMap.put("p_work_duration_id", workDurationDtoAssignment.workDurationId());
+                    inParamMap.put("p_on_call", selected.onCallType());
+                    inParamMap.put("p_emergency", selected.emergencyType());
+                    inParamMap.put("p_sun", workDurationDtoAssignment.sun());
+                    inParamMap.put("p_mon", workDurationDtoAssignment.mon());
+                    inParamMap.put("p_tue", workDurationDtoAssignment.tue());
+                    inParamMap.put("p_wed", workDurationDtoAssignment.wed());
+                    inParamMap.put("p_thu", workDurationDtoAssignment.thu());
+                    inParamMap.put("p_fri", workDurationDtoAssignment.fri());
+                    inParamMap.put("p_sat", workDurationDtoAssignment.sat());
+                    inParamMap.put("p_person_roster_id", requestBody.personRosterId());
+
+                    SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+                    System.out.println(inSource);
+                    // simpleJdbcCall = new
+                    // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
+                    simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_SPOT_ROSTER_P");
+                    Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+                    AtomicReference<Object> sMessage = new AtomicReference<>();
+
+                    simpleJdbcCallResult.forEach((s, o) -> {
+                        System.out.println(s);
+                        System.out.println(o);
+
+                        if (s.equals("P_OUT")) {
+                            String strMessage = o.toString();
+                            System.out.println("strMessage:" + strMessage);
+                            sMessage.set(o);
+                        }
+                    });
+
+                    System.out.println("sMessage.get():" + sMessage.get());
+                    String messageString = sMessage.get().toString();
+
+                    String flag = messageString.substring(0, 1);
+                    System.out.println("flag:" + flag);
+                    if (flag.equals("E")) {
+                        errorMessage = messageString.substring(2);
+                        break;
+                    } else {
+                        recCounts = recCounts + Integer.parseInt(messageString.substring(2));
+                        System.out.println("recCounts:" + recCounts);
+                    }
+
+                }
+
+                if (!errorMessage.isEmpty()) {
+                    break;
+                }
+
+            }
+
+            if (!errorMessage.isEmpty()) {
+                responseDto.setStatusMessage("E");
+                responseDto.setDetailMessage(errorMessage);
+            } else {
+                responseDto.setStatusMessage("S");
+                responseDto.setDetailMessage(String.valueOf(recCounts) + " schedule(s) created successfully!");
+            }
+            System.out.println("responseDto:" + responseDto);
+
+            return responseDto;
+
+        } catch (Exception exception) {
+            System.out.println("error:" + exception.getMessage());
+            responseDto.setStatusMessage("E");
+            responseDto.setDetailMessage(exception.getMessage());
+        }
+
+        return null;
+
+    }
+
+    public List<PersonRosters> getSinglePersonRosters(Long userId, Long personId, Long personRosterId, Date startDate,
+                                                      Date endDate, JdbcClient jdbcClient) {
+        Map<String, Object> objectMap = new HashMap<>();
+
+        objectMap.put("personId", personId);
+        objectMap.put("personRosterId", personRosterId);
+        objectMap.put("startDate", startDate);
+        objectMap.put("endDate", endDate);
+
+        System.out.println("getSinglePersonRosters objectMap:" + objectMap);
+
+        List<PersonRosters> personRostersList = jdbcClient.sql(getSinglePersonRosterDataSql).params(objectMap)
+                .query(PersonRosters.class).list();
+
+        System.out.println("RESULTS personRostersList: ");
+
+        for (PersonRosters personRosters : personRostersList) {
+            System.out.println("personRosters.personRosterId()" + personRosters.personRosterId());
+        }
+
+        // jdbcClient.sql(ServiceUtils.getPersonRosterDataSqlSmall)
+        // .params(objectMap)
+        // .query(PersonRostersSmall.class)
+        // .list();
+        // List<PersonRosters> personRosters =
+        // namedParameterJdbcTemplate.query(getSinglePersonRosterDataSql, objectMap,
+        // personRostersRowMapper);
+
+        return personRostersList;
+
+    }
+
+    public RosterDMLResponseDto deletePersonRoster(Long userId, RosterDeleteReasonReqBody reqBody,
+                                                   JdbcClient jdbcClient) {
+
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+        AtomicReference<String> errorMessage = new AtomicReference<>("");
+        AtomicInteger deleteCounts = new AtomicInteger();
+
+        System.out.println("deletePersonRoster: reqBody:" + reqBody);
+
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
+
+        Map<String, Object> inParamMap = new HashMap<>();
+        reqBody.personId().forEach(aPersonId -> {
+
+            System.out.println("deletePersonRoster: aPersonId:" + aPersonId);
+
+            inParamMap.put("p_user_id", userId);
+            inParamMap.put("p_person_id", aPersonId);
+            inParamMap.put("p_deselect_person_id", reqBody.deSelectPersonId().stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(",")));
+            inParamMap.put("p_start_date", reqBody.startDate());
+            inParamMap.put("p_end_date", reqBody.endDate());
+            inParamMap.put("p_person_roster_id", reqBody.personRosterId());
+            inParamMap.put("p_profile_id", reqBody.profileId());
+            inParamMap.put("p_filter_flag", reqBody.filterFlag());
+            inParamMap.put("p_delete_reason_id", reqBody.deleteReasonId());
+            inParamMap.put("p_remarks", reqBody.deleteComments());
+
+            SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+            System.out.println(inSource);
+            Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+            AtomicReference<Object> sMessage = new AtomicReference<>();
+
+            simpleJdbcCallResult.forEach((s, o) -> {
+                System.out.println(s);
+                System.out.println(o);
+
+                if (s.equals("P_OUT")) {
+                    String strMessage = o.toString();
+                    System.out.println("strMessage:" + strMessage);
+                    sMessage.set(o);
+                }
+            });
+
+            System.out.println("sMessage.get():" + sMessage.get());
+            String messageString = sMessage.get().toString();
+
+            String flag = messageString.substring(0, 1);
+            System.out.println("flag:" + flag);
+            if (flag.equals("E")) {
+                errorMessage.set(messageString.substring(2));
+            } else {
+                // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
+                deleteCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
+                System.out.println("deleteCounts:" + deleteCounts);
+            }
+
+            if (!errorMessage.get().isEmpty()) {
+                responseDto.setStatusMessage("E");
+                responseDto.setDetailMessage(errorMessage.get());
+            } else {
+                responseDto.setStatusMessage("S");
+                responseDto.setDetailMessage(String.valueOf(deleteCounts.get()) + " schedule(s) deleted successfully!");
+            }
+
+            inParamMap.clear();
+
+        });
+
+        return responseDto;
+
+    }
+
+    public RosterDMLResponseDto copyPersonRoster(Long userId, RosterCopyReqBody reqBody, JdbcClient jdbcClient) {
+
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+        AtomicReference<String> errorMessage = new AtomicReference<>("");
+        AtomicInteger transCounts = new AtomicInteger();
+
+        System.out.println("copyPersonRoster: reqBody:" + reqBody);
+
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_COPY_ROSTERS_P");
+
+        Map<String, Object> inParamMap = new HashMap<>();
+        inParamMap.put("p_user_id", userId);
+        inParamMap.put("p_from_person_id", reqBody.fromPersonId());
+        inParamMap.put("p_person_ids", reqBody.personIds());
+        inParamMap.put("p_start_date", reqBody.startDate());
+        inParamMap.put("p_end_date", reqBody.endDate());
+        inParamMap.put("p_filter_flag", reqBody.filterFlag());
+
+        SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+        System.out.println(inSource);
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+        AtomicReference<Object> sMessage = new AtomicReference<>();
+
+        simpleJdbcCallResult.forEach((s, o) -> {
+            System.out.println(s);
+            System.out.println(o);
+
+            if (s.equals("P_OUT")) {
+                String strMessage = o.toString();
+                System.out.println("strMessage:" + strMessage);
+                sMessage.set(o);
+            }
+        });
+
+        System.out.println("sMessage.get():" + sMessage.get());
+        String messageString = sMessage.get().toString();
+
+        String flag = messageString.substring(0, 1);
+        System.out.println("flag:" + flag);
+        if (flag.equals("E")) {
+            errorMessage.set(messageString.substring(2));
+        } else {
+            // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
+            transCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
+            System.out.println("transCounts:" + transCounts);
+        }
+
+        if (!errorMessage.get().isEmpty()) {
+            responseDto.setStatusMessage("E");
+            responseDto.setDetailMessage(errorMessage.get());
+        } else {
+            responseDto.setStatusMessage("S");
+            responseDto.setDetailMessage(String.valueOf(transCounts.get()) + " schedule(s) created successfully!");
+        }
+
+        inParamMap.clear();
+
+        return responseDto;
+
+    }
+
+    public RosterDMLResponseDto createRota(Long userId, List<RotaCreationReqBody> reqBody,
+                                           JdbcClient jdbcClient) {
+
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+
+        System.out.println("createRota: reqBody:" + reqBody);
+        AtomicInteger recCounts = new AtomicInteger(0);
+
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_GENERATE_ROTA_SHIFTS_P");
+
+        // If reqBody.persons() is a comma-separated String, split and convert to
+        // List<Long>
+        // List<Long> persons = Arrays.stream(reqBody.persons().split(","))
+        // .map(String::trim)
+        // .filter(s -> !s.isEmpty())
+        // .map(Long::valueOf)
+        // .collect(Collectors.toList());
+
+        reqBody.forEach(reqBodyItem -> {
+
+            try {
+                System.out.println("createRota: reqBodyItem:" + reqBodyItem);
+
+                Map<String, Object> inParamMap = new HashMap<>();
+
+                inParamMap.put("p_user_id", userId);
+                inParamMap.put("p_work_rotation_id", reqBodyItem.workRotationId());
+                inParamMap.put("p_rota_start_date", reqBodyItem.rotaStartDate());
+                inParamMap.put("p_rota_end_date", reqBodyItem.rotaEndDate());
+                inParamMap.put("p_line_seq", reqBodyItem.lineSeq());
+                inParamMap.put("p_department_id", reqBodyItem.departmentId());
+                inParamMap.put("p_job_title_id", reqBodyItem.jobTitleId());
+                inParamMap.put("p_work_location_id", reqBodyItem.workLocationId());
+                inParamMap.put("p_mode", reqBodyItem.mode());
+                inParamMap.put("p_persons", reqBodyItem.persons() == null ? "" : reqBodyItem.persons());
+
+                SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+                System.out.println(inSource);
+                Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+                simpleJdbcCallResult.forEach((s, o) -> {
+                    System.out.println(s);
+                    System.out.println(o);
+
+                    if (s.equals("P_OUT")) {
+                        String strMessage = o.toString();
+                        System.out.println("strMessage:" + strMessage);
+                        if (strMessage.startsWith("E")) {
+                            responseDto.setStatusMessage("E");
+                            responseDto.setDetailMessage(strMessage.substring(2));
+                        } else {
+                            recCounts.addAndGet(Integer.parseInt(strMessage.substring(2)));
+                        }
+                    }
+                });
+
+                inParamMap.clear();
+
+                recCounts.incrementAndGet();
+
+            } catch (Exception e) {
+                System.out.println("Exception in createRota: " + e.getMessage());
+            }
+
+        });
+
+        if (recCounts.get() == 0) {
+            responseDto.setStatusMessage("E");
+            responseDto.setDetailMessage("No records created!");
+            return responseDto;
+        }
+
+        responseDto.setStatusMessage("S");
+        responseDto.setDetailMessage(
+                "Rotation plan for " + String.valueOf(recCounts.get()) + " staff created successfully!");
+
+        return responseDto;
+
+    }
+}

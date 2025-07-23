@@ -9,6 +9,7 @@ public record NewRequestReqBody(
                 String dateEnd,
                 String timeStart,
                 String timeEnd,
+                Double hours,
                 String duration,
                 String specificDays,
                 String mon,

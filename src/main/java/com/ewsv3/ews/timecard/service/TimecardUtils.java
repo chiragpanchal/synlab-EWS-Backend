@@ -26,7 +26,17 @@ public class TimecardUtils {
                 st.time_type,
                 nvl(st.primary_row,'N') primary_row,
                 st.violation_code,
-                sw.work_duration_code
+                sw.work_duration_code,
+                (
+                        select
+                            count(*)
+                        from
+                            sc_person_requests_appr req
+                        where
+                                req.person_id = st.person_id
+                            and req.date_start = st.effective_date
+                            and req.rejected is null
+                    )    request_counts
             FROM
                 sc_timecards      st,
                 sc_departments    sd,

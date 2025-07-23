@@ -36,7 +36,7 @@ public class RequestController {
         throw new RuntimeException("User not authenticated or invalid token");
     }
 
-    @PostMapping("req-master")
+    @GetMapping("req-master")
     @CrossOrigin
     public ResponseEntity<List<RequestMaster>> getRequestMaster(@RequestHeader Map<String, String> headers) {
         try {
@@ -118,6 +118,26 @@ public class RequestController {
             List<RequestApproval> requestApprovals = this.requestService.getRequestApprovals(reqBody.itemKey(),
                     this.jdbcClient);
             return new ResponseEntity<>(requestApprovals, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            System.out.println("getRequests > exception:" + exception.getMessage());
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @GetMapping("dest-rosters")
+    @CrossOrigin
+    public ResponseEntity<List<DestinationRosterResponseBody>> getDestinationRosters(@RequestHeader Map<String, String> headers,
+                                                                     @RequestBody DestinationRosterReqBody reqBody) {
+
+        System.out.println("getDestinationRosters reqBody:" + reqBody);
+
+        try {
+
+            List<DestinationRosterResponseBody> destinationRosters = this.requestService.getDestinationRosters(reqBody, this.jdbcClient);
+            return new ResponseEntity<>(destinationRosters, HttpStatus.OK);
 
         } catch (Exception exception) {
             System.out.println("getRequests > exception:" + exception.getMessage());

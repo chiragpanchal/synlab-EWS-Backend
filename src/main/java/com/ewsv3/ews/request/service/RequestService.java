@@ -1,10 +1,8 @@
 package com.ewsv3.ews.request.service;
 
-import com.ewsv3.ews.request.dto.NewRequestReqBody;
-import com.ewsv3.ews.request.dto.RequestApproval;
-import com.ewsv3.ews.request.dto.RequestMaster;
-import com.ewsv3.ews.request.dto.RequestResp;
+import com.ewsv3.ews.request.dto.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.SqlInOutParameter;
 import org.springframework.jdbc.core.SqlOutParameter;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -34,41 +32,10 @@ public class RequestService {
     public RequestService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
         this.jdbcTemplate.setResultsMapCaseInsensitive(true);
+        // Try with schema specification and enable debugging
         this.simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate)
-                // .withCatalogName("EWS_SGP")
                 .withProcedureName("SC_PERSON_REQUESTS_P")
-                .declareParameters(
-                        new SqlParameter("p_person_request_id", Types.NUMERIC),
-                        new SqlParameter("p_request_master_id", Types.NUMERIC),
-                        new SqlParameter("p_person_id", Types.NUMERIC),
-                        new SqlParameter("p_time_hour", Types.VARCHAR),
-                        new SqlParameter("p_date_start", Types.DATE),
-                        new SqlParameter("p_date_end", Types.DATE),
-                        new SqlParameter("p_time_start", Types.DATE),
-                        new SqlParameter("p_time_end", Types.DATE),
-                        new SqlParameter("p_specific_days", Types.VARCHAR),
-                        new SqlParameter("p_mon", Types.VARCHAR),
-                        new SqlParameter("p_tue", Types.VARCHAR),
-                        new SqlParameter("p_wed", Types.VARCHAR),
-                        new SqlParameter("p_thu", Types.VARCHAR),
-                        new SqlParameter("p_fri", Types.VARCHAR),
-                        new SqlParameter("p_sat", Types.VARCHAR),
-                        new SqlParameter("p_sun", Types.VARCHAR),
-                        new SqlParameter("p_created_by", Types.NUMERIC),
-                        new SqlParameter("p_created_on", Types.TIMESTAMP),
-                        new SqlParameter("p_last_updated_by", Types.NUMERIC),
-                        new SqlParameter("p_last_update_date", Types.TIMESTAMP),
-                        new SqlParameter("p_status", Types.VARCHAR),
-                        new SqlParameter("p_comments", Types.VARCHAR),
-                        new SqlParameter("p_dml_mode", Types.VARCHAR),
-                        new SqlParameter("p_request_reason_id", Types.NUMERIC),
-                        new SqlParameter("p_new_time_start", Types.TIMESTAMP),
-                        new SqlParameter("p_new_time_end", Types.TIMESTAMP),
-                        new SqlParameter("p_s_person_roster_id", Types.NUMERIC),
-                        new SqlParameter("p_d_person_roster_id", Types.NUMERIC),
-                        new SqlOutParameter("p_item_key", Types.NUMERIC),
-                        new SqlOutParameter("p_approval_user_id", Types.VARCHAR),
-                        new SqlOutParameter("p_message", Types.VARCHAR));
+                .withoutProcedureColumnMetaDataAccess();  // Disable metadata access to avoid discovery issues
     }
 
     // @PostConstruct
@@ -138,9 +105,6 @@ public class RequestService {
     public String createRequest(Long userId, NewRequestReqBody reqBody, JdbcClient jdbcClient) {
 
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
-        // DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
-        // DateTimeFormatter timestampFormatter =
-        // DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         LocalDate sDate = LocalDate.parse(reqBody.dateStart(), dateFormatter);
         LocalDate eDate = LocalDate.parse(reqBody.dateEnd(), dateFormatter);
@@ -149,13 +113,37 @@ public class RequestService {
         System.out.println("createRequest eDate:" + eDate);
         System.out.println("createRequest userId:" + userId);
 
-        LocalTime sTime = LocalDateTime.parse(reqBody.timeStart(), DateTimeFormatter.ofPattern("MM/dd/yyyy, hh:mm a"))
-                .toLocalTime();
-        LocalTime eTime = LocalDateTime.parse(reqBody.timeEnd(), DateTimeFormatter.ofPattern("MM/dd/yyyy, hh:mm a"))
-                .toLocalTime();
+        // Sanitize time strings to remove any non-standard whitespace
+        String sanitizedTimeStart = reqBody.timeStart().replaceAll("\\s+", " ").trim();
+        String sanitizedTimeEnd = reqBody.timeEnd().replaceAll("\\s+", " ").trim();
+        System.out.println("Sanitized timeStart: '" + sanitizedTimeStart + "'");
+        System.out.println("Sanitized timeEnd: '" + sanitizedTimeEnd + "'");
 
-        // LocalTime sTime = LocalTime.parse(reqBody.timeStart(), timeFormatter);
-        // LocalTime eTime = LocalTime.parse(reqBody.timeEnd(), timeFormatter);
+        // Try both 12-hour and 24-hour patterns for time parsing
+        LocalTime sTime = null;
+        LocalTime eTime = null;
+        DateTimeFormatter formatter12 = DateTimeFormatter.ofPattern("hh:mm a", java.util.Locale.ENGLISH);
+        DateTimeFormatter formatter24 = DateTimeFormatter.ofPattern("HH:mm", java.util.Locale.ENGLISH);
+        try {
+            sTime = LocalTime.parse(sanitizedTimeStart, formatter12);
+        } catch (Exception ex1) {
+            try {
+                sTime = LocalTime.parse(sanitizedTimeStart, formatter24);
+            } catch (Exception ex2) {
+                throw new RuntimeException("Could not parse timeStart: '" + sanitizedTimeStart + "'", ex2);
+            }
+        }
+        System.out.println("createRequest sTime:" + sTime);
+        try {
+            eTime = LocalTime.parse(sanitizedTimeEnd, formatter12);
+        } catch (Exception ex1) {
+            try {
+                eTime = LocalTime.parse(sanitizedTimeEnd, formatter24);
+            } catch (Exception ex2) {
+                throw new RuntimeException("Could not parse timeEnd: '" + sanitizedTimeEnd + "'", ex2);
+            }
+        }
+        System.out.println("createRequest eTime:" + eTime);
 
         // Combine LocalDate and LocalTime to create LocalDateTime
         LocalDateTime startTime = sDate.atTime(sTime);
@@ -164,114 +152,83 @@ public class RequestService {
         System.out.println("createRequest startTime" + startTime);
         System.out.println("createRequest endTime" + endTime);
 
-        // Timestamp startTimeTs = Timestamp.valueOf(startTime);
-        // Timestamp endTimeTs = Timestamp.valueOf(endTime);
-        // Timestamp createdOnTs = new Timestamp(System.currentTimeMillis());
-        // Timestamp lastUpdateTs = new Timestamp(System.currentTimeMillis());
+        // Use direct CallableStatement for more control
+        try {
+            String sql = "{call SC_PERSON_REQUESTS_P(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
-        SqlParameterSource inSource = new MapSqlParameterSource()
-                .addValue("p_person_request_id", null, Types.NUMERIC)
-                .addValue("p_request_master_id", reqBody.requestMasterId(), Types.NUMERIC)
-                .addValue("p_person_id", reqBody.personId(), Types.NUMERIC)
-                .addValue("p_time_hour", reqBody.timeHour(), Types.VARCHAR)
-                .addValue("p_date_start", java.sql.Date.valueOf(sDate), Types.DATE)
-                .addValue("p_date_end", java.sql.Date.valueOf(eDate), Types.DATE)
-                // .addValue("p_time_start", new Date(), Types.TIMESTAMP)
-                // .addValue("p_time_start", LocalDateTime.of(2025, 5, 11, 9, 0), Types.DATE)
-                .addValue("p_time_start", startTime, Types.DATE)
-                // .addValue("p_time_end", new Date(), Types.TIMESTAMP)
-                .addValue("p_time_end", endTime, Types.DATE)
-                .addValue("p_specific_days", "A", Types.VARCHAR)
-                .addValue("p_mon", reqBody.mon(), Types.VARCHAR)
-                .addValue("p_tue", reqBody.tue(), Types.VARCHAR)
-                .addValue("p_wed", reqBody.wed(), Types.VARCHAR)
-                .addValue("p_thu", reqBody.thu(), Types.VARCHAR)
-                .addValue("p_fri", reqBody.fri(), Types.VARCHAR)
-                .addValue("p_sat", reqBody.sat(), Types.VARCHAR)
-                .addValue("p_sun", reqBody.sun(), Types.VARCHAR)
-                .addValue("p_created_by", userId, Types.NUMERIC)
-                .addValue("p_created_on", new Date(), Types.TIMESTAMP)
-                .addValue("p_last_updated_by", userId, Types.NUMERIC)
-                .addValue("p_last_update_date", new Date(), Types.TIMESTAMP)
-                .addValue("p_status", "SUBMIT", Types.VARCHAR)
-                .addValue("p_comments", reqBody.comments(), Types.VARCHAR)
-                .addValue("p_dml_mode", "INS", Types.VARCHAR)
-                .addValue("p_request_reason_id", reqBody.requestReasonId(), Types.NUMERIC)
-                .addValue("p_new_time_start", null, Types.TIMESTAMP)
-                .addValue("p_new_time_end", null, Types.TIMESTAMP)
-                .addValue("p_s_person_roster_id", null, Types.NUMERIC)
-                .addValue("p_d_person_roster_id", null, Types.NUMERIC);
-        System.out.println("inSource:" + inSource);
+            return jdbcTemplate.execute(sql, (java.sql.CallableStatement cs) -> {
+                // Set IN and IN OUT parameters
+                cs.setInt(1, -1); // p_person_request_id (IN OUT)
+                cs.setLong(2, reqBody.requestMasterId()); // p_request_master_id
+                cs.setLong(3, reqBody.personId()); // p_person_id
+                cs.setString(4, reqBody.timeHour()); // p_time_hour
+                cs.setDate(5, java.sql.Date.valueOf(sDate)); // p_date_start
+                cs.setDate(6, java.sql.Date.valueOf(eDate)); // p_date_end
+                cs.setTimestamp(7, java.sql.Timestamp.valueOf(startTime)); // p_time_start
+                cs.setTimestamp(8, java.sql.Timestamp.valueOf(endTime)); // p_time_end
+                if (reqBody.hours() != null) {
+                    cs.setDouble(9, reqBody.hours()); // p_hours
+                } else {
+                    cs.setNull(9, Types.NUMERIC);
+                }
+                cs.setString(10, "A"); // p_specific_days
+                cs.setString(11, reqBody.mon()); // p_mon
+                cs.setString(12, reqBody.tue()); // p_tue
+                cs.setString(13, reqBody.wed()); // p_wed
+                cs.setString(14, reqBody.thu()); // p_thu
+                cs.setString(15, reqBody.fri()); // p_fri
+                cs.setString(16, reqBody.sat()); // p_sat
+                cs.setString(17, reqBody.sun()); // p_sun
+                cs.setLong(18, userId); // p_created_by
+                cs.setTimestamp(19, new java.sql.Timestamp(System.currentTimeMillis())); // p_created_on
+                cs.setLong(20, userId); // p_last_updated_by
+                cs.setTimestamp(21, new java.sql.Timestamp(System.currentTimeMillis())); // p_last_update_date
+                cs.setString(22, "SUBMIT"); // p_status
+                cs.setString(23, reqBody.comments()); // p_comments
+                cs.setString(24, "INS"); // p_dml_mode
+                cs.setObject(25, reqBody.requestReasonId(), Types.NUMERIC);
+//                if (reqBody.requestReasonId() != null) {
+//                    cs.setLong(25, reqBody.requestReasonId()); // p_request_reason_id
+//                } else {
+//                    cs.setNull(25, Types.NUMERIC);
+//                }
+                cs.setNull(26, Types.TIMESTAMP); // p_new_time_start
+                cs.setNull(27, Types.TIMESTAMP); // p_new_time_end
+                cs.setObject(28, reqBody.sPersonRosterId(), Types.NUMERIC);
+//                cs.setNull(28, Types.NUMERIC); // p_s_person_roster_id
+                cs.setNull(29, Types.NUMERIC); // p_d_person_roster_id
 
-        // OUT parameters are not included in the input source
+                // Register OUT parameters
+                cs.registerOutParameter(1, Types.NUMERIC); // p_person_request_id (IN OUT)
+                cs.registerOutParameter(30, Types.NUMERIC); // p_item_key
+                cs.registerOutParameter(31, Types.VARCHAR); // p_approval_user_id
+                cs.registerOutParameter(32, Types.VARCHAR); // p_message
 
-        // simpleJdbcCall
-        // .withProcedureName("SC_PERSON_REQUESTS_P")
-        // .declareParameters(
-        // new SqlOutParameter("p_person_request_id", Types.NUMERIC),
-        // new SqlOutParameter("p_item_key", Types.NUMERIC),
-        // new SqlOutParameter("p_approval_user_id", Types.VARCHAR),
-        // new SqlOutParameter("p_message", Types.VARCHAR)
-        // );
+                // Execute the call
+                cs.execute();
 
-        Map<String, Object> result = simpleJdbcCall.execute(inSource);
-        System.out.println("result:" + result);
+                // Get OUT parameter values
+                Long personRequestId = cs.getLong(1);
+                Long itemKey = cs.getLong(30);
+                String approvalUserId = cs.getString(31);
+                String message = cs.getString(32);
 
-        // SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-        // System.out.println(inSource);
-        // Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
-        // System.out.println("simpleJdbcCallResult" + simpleJdbcCallResult);
-        //
+                System.out.println("personRequestId: " + personRequestId);
+                System.out.println("itemKey: " + itemKey);
+                System.out.println("approvalUserId: " + approvalUserId);
+                System.out.println("message: " + message);
 
-        AtomicReference<Object> sMessage = new AtomicReference<>();
-        AtomicReference<Object> personRequestId = new AtomicReference<>();
-        AtomicReference<Object> itemKey = new AtomicReference<>();
+                if ("SUCCESS".equals(message)) {
+                    return String.valueOf(itemKey);
+                } else {
+                    throw new RuntimeException(message);
+                }
+            });
 
-        result.forEach((s, o) -> {
-            System.out.println(s);
-            System.out.println(o);
-
-            if (s.equalsIgnoreCase("P_MESSAGE")) {
-                String strMessage = o.toString();
-                System.out.println("strMessage:" + strMessage);
-                sMessage.set(o);
-            }
-
-            if (s.equalsIgnoreCase("P_PERSON_REQUEST_ID")) {
-                String strMessage = o.toString();
-                System.out.println("strMessage:" + strMessage);
-                personRequestId.set(o);
-            }
-
-            if (s.equalsIgnoreCase("P_ITEM_KEY")) {
-                String strMessage = o.toString();
-                System.out.println("strMessage:" + strMessage);
-                // itemKeyResult.set(o.toString());
-                itemKey.set(o);
-            }
-
-        });
-
-        System.out.println("sMessage:" + sMessage);
-        System.out.println("itemKey:" + itemKey);
-        System.out.println("personRequestId:" + personRequestId);
-
-        // System.out.println("sMessage.get().toString():" + sMessage.get().toString());
-        // System.out.println("itemKey.get().toString():" + itemKey.get().toString());
-
-        Object resultItemKey = itemKey.get();
-        System.out.println("resultItemKey:" + resultItemKey);
-        String resultStr = (resultItemKey != null) ? resultItemKey.toString() : null;
-
-        System.out.println("resultStr:" + resultStr);
-
-        if (Objects.equals(sMessage.get().toString(), "SUCCESS")) {
-            return itemKey.get().toString();
-
-        } else {
-            throw new RuntimeException(sMessage.get().toString());
+        } catch (Exception e) {
+            System.out.println("Error calling stored procedure: " + e.getMessage());
+            throw new RuntimeException("Failed to create request", e);
         }
-
     }
 
     public List<RequestApproval> getRequestApprovals(Long itemKey, JdbcClient jdbcClient) {
@@ -281,6 +238,15 @@ public class RequestService {
                 .query(RequestApproval.class).list();
         return requestApprovalList;
 
+    }
+
+    public List<DestinationRosterResponseBody> getDestinationRosters(DestinationRosterReqBody reqBody, JdbcClient jdbcClient) {
+        Map<String, Object> reqApprovalMap = new HashMap<>();
+        reqApprovalMap.put("personRosterId", reqBody.personRosterId());
+        List<DestinationRosterResponseBody> rosterResponseBodyList = jdbcClient.sql(DestinationRostersSql).params(reqApprovalMap)
+                .query(DestinationRosterResponseBody.class).list();
+
+        return rosterResponseBodyList;
     }
 
 }
