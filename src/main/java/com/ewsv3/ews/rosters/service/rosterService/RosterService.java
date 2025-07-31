@@ -161,6 +161,8 @@ public class RosterService {
 
         for (RosterLines rosterLine : rosterLines) {
 
+            System.out.println("rosterLine.getPersonId(): " + rosterLine.getPersonId());
+
             Map<String, Object> personDateMap = Map.of(
                     "personId", rosterLine.getPersonId(),
                     "startDate", startDate,
@@ -274,7 +276,9 @@ public class RosterService {
                 null, // published
                 null, // workDurationId
                 null, // workDurationCode
-                null // workDurationName
+                null, // workDurationName
+                null,
+                null
         );
         emptyChild.setEffectiveDate(date);
         return emptyChild;
@@ -505,64 +509,62 @@ public class RosterService {
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
-        reqBody.personId().forEach(aPersonId -> {
 
-            System.out.println("deletePersonRoster: aPersonId:" + aPersonId);
+        System.out.println("deletePersonRoster: reqBody.personIds:" + reqBody.personIds());
 
-            inParamMap.put("p_user_id", userId);
-            inParamMap.put("p_person_id", aPersonId);
-            inParamMap.put("p_deselect_person_id", reqBody.deSelectPersonId().stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(",")));
-            inParamMap.put("p_start_date", reqBody.startDate());
-            inParamMap.put("p_end_date", reqBody.endDate());
-            inParamMap.put("p_person_roster_id", reqBody.personRosterId());
-            inParamMap.put("p_profile_id", reqBody.profileId());
-            inParamMap.put("p_filter_flag", reqBody.filterFlag());
-            inParamMap.put("p_delete_reason_id", reqBody.deleteReasonId());
-            inParamMap.put("p_remarks", reqBody.deleteComments());
+        inParamMap.put("p_user_id", userId);
+        inParamMap.put("p_person_ids", reqBody.personIds());
+        inParamMap.put("p_deselect_person_ids", reqBody.deSelectPersonIds());
+        inParamMap.put("p_start_date", reqBody.startDate());
+        inParamMap.put("p_end_date", reqBody.endDate());
+        inParamMap.put("p_person_roster_id", reqBody.personRosterId());
+        inParamMap.put("p_profile_id", reqBody.profileId());
+        inParamMap.put("p_filter_flag", reqBody.filterFlag());
+        inParamMap.put("p_delete_reason_id", reqBody.deleteReasonId());
+        inParamMap.put("p_remarks", reqBody.deleteComments());
+        inParamMap.put("p_delete_type", reqBody.deleteType());
+        inParamMap.put("p_group_key", reqBody.groupKey());
 
-            SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-            System.out.println(inSource);
-            Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+        SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+        System.out.println(inSource);
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
-            AtomicReference<Object> sMessage = new AtomicReference<>();
+        AtomicReference<Object> sMessage = new AtomicReference<>();
 
-            simpleJdbcCallResult.forEach((s, o) -> {
-                System.out.println(s);
-                System.out.println(o);
+        simpleJdbcCallResult.forEach((s, o) -> {
+            System.out.println(s);
+            System.out.println(o);
 
-                if (s.equals("P_OUT")) {
-                    String strMessage = o.toString();
-                    System.out.println("strMessage:" + strMessage);
-                    sMessage.set(o);
-                }
-            });
-
-            System.out.println("sMessage.get():" + sMessage.get());
-            String messageString = sMessage.get().toString();
-
-            String flag = messageString.substring(0, 1);
-            System.out.println("flag:" + flag);
-            if (flag.equals("E")) {
-                errorMessage.set(messageString.substring(2));
-            } else {
-                // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
-                deleteCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
-                System.out.println("deleteCounts:" + deleteCounts);
+            if (s.equals("P_OUT")) {
+                String strMessage = o.toString();
+                System.out.println("strMessage:" + strMessage);
+                sMessage.set(o);
             }
-
-            if (!errorMessage.get().isEmpty()) {
-                responseDto.setStatusMessage("E");
-                responseDto.setDetailMessage(errorMessage.get());
-            } else {
-                responseDto.setStatusMessage("S");
-                responseDto.setDetailMessage(String.valueOf(deleteCounts.get()) + " schedule(s) deleted successfully!");
-            }
-
-            inParamMap.clear();
-
         });
+
+        System.out.println("sMessage.get():" + sMessage.get());
+        String messageString = sMessage.get().toString();
+
+        String flag = messageString.substring(0, 1);
+        System.out.println("flag:" + flag);
+        if (flag.equals("E")) {
+            errorMessage.set(messageString.substring(2));
+        } else {
+            // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
+            deleteCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
+            System.out.println("deleteCounts:" + deleteCounts);
+        }
+
+        if (!errorMessage.get().isEmpty()) {
+            responseDto.setStatusMessage("E");
+            responseDto.setDetailMessage(errorMessage.get());
+        } else {
+            responseDto.setStatusMessage("S");
+            responseDto.setDetailMessage(String.valueOf(deleteCounts.get()) + " schedule(s) deleted successfully!");
+        }
+
+        inParamMap.clear();
+
 
         return responseDto;
 
@@ -585,6 +587,9 @@ public class RosterService {
         inParamMap.put("p_start_date", reqBody.startDate());
         inParamMap.put("p_end_date", reqBody.endDate());
         inParamMap.put("p_filter_flag", reqBody.filterFlag());
+        inParamMap.put("p_copy_type", reqBody.copyType());
+        inParamMap.put("p_group_key", reqBody.groupKey());
+
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
         System.out.println(inSource);

@@ -23,7 +23,9 @@ public record RosterLinesChild(
         String published,
         Long workDurationId,
         String workDurationCode,
-        String workDurationName
+        String workDurationName,
+        Long schCost,
+        String currencyCode
 ) {
 
     public RosterLinesChild setEffectiveDate(LocalDate effectiveDate) {
@@ -46,7 +48,9 @@ public record RosterLinesChild(
                 this.published,
                 this.workDurationId,
                 this.workDurationCode,
-                this.workDurationName
+                this.workDurationName,
+                this.schCost,
+                this.currencyCode
         );
     }
 

@@ -8,6 +8,8 @@ public record RosterCopyReqBody(
         String personIds,
         Date startDate,
         Date endDate,
-        String filterFlag
+        String filterFlag,
+        String copyType,
+        String groupKey
 ) {
 }

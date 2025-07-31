@@ -63,14 +63,18 @@ public class RosterSql {
                 spr.published,
                 swd.work_duration_id,
                 swd.work_duration_code,
-                swd.work_duration_name
+                swd.work_duration_name,
+                ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
+                fc.currency_code
               FROM
                 sc_person_rosters spr,
                 sc_person_v       per,
                 sc_work_duration  swd,
                 sc_departments    sd,
                 sc_jobs           sj,
-                sc_work_locations loc
+                sc_work_locations loc,
+                sc_person_preferred_jobs pj,
+                sc_currencies            fc
              WHERE
                     per.person_id = spr.person_id
                    AND spr.person_id=:personId
@@ -80,6 +84,9 @@ public class RosterSql {
                    AND spr.department_id        = sd.department_id (+)
                    AND spr.job_title_id         = sj.job_title_id (+)
                    AND spr.work_location_id     = loc.work_location_id (+)
+                   and pj.person_id (+)         = spr.person_id
+                   and pj.job_title_id (+)      = spr.job_title_id
+                   and fc.currency_id (+)       = pj.currency_id
              ORDER BY
                 spr.effective_date,
                 spr.time_start""";

@@ -194,30 +194,46 @@ public class ServiceUtils {
 //            "        sd.department_id = pos.organization_id\n" +
 //            "    AND sj.job_title_id = pos.job_id ";
 
+//    public static String departmentJobSql = """
+//            SELECT DISTINCT
+//                sd.department_id,
+//                sd.department_name,
+//                sj.job_title_id,
+//                sj.job_title,
+//                pos.position_id,
+//                pos.name position_name
+//            FROM
+//                sc_departments sd,
+//                sc_jobs        sj,
+//                sc_positions   pos
+//            WHERE
+//                    pos.organization_id = sd.department_id
+//                AND pos.job_id = sj.job_title_id
+//                AND pos.organization_id IN (
+//                    SELECT
+//                        tkv.department_id
+//                    FROM
+//                        sc_timekeeper_person_v tkv
+//                    WHERE
+//                            tkv.timekeeper_user_id = :userId
+//                        AND tkv.profile_id = :profileId
+//                )""";
+
     public static String departmentJobSql = """
-            SELECT DISTINCT
-                sd.department_id,
-                sd.department_name,
-                sj.job_title_id,
-                sj.job_title,
-                pos.position_id,
-                pos.name position_name
-            FROM
-                sc_departments sd,
-                sc_jobs        sj,
-                sc_positions   pos
-            WHERE
-                    pos.organization_id = sd.department_id
-                AND pos.job_id = sj.job_title_id
-                AND pos.organization_id IN (
-                    SELECT
-                        tkv.department_id
-                    FROM
-                        sc_timekeeper_person_v tkv
-                    WHERE
-                            tkv.timekeeper_user_id = :userId
-                        AND tkv.profile_id = :profileId
-                )""";
+            select distinct
+                tkv.department_id,
+                tkv.department_name,
+                job_title_id,
+                job_title,
+                0     position_id,
+                'n/a' position_name
+            from
+                sc_timekeeper_person_v tkv
+            where
+                    tkv.timekeeper_user_id = :userId
+                and tkv.profile_id = :profileId
+                and tkv.department_id is not null
+                and tkv.job_title_id is not null""";
 
     public static String sqlProfiles = """
             SELECT
