@@ -3,11 +3,11 @@ package com.ewsv3.ews.rosters.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.masters.service.MasterDataService;
-import com.ewsv3.ews.rosters.dto.rosters.PersonRosters;
-import com.ewsv3.ews.rosters.dto.rosters.PersonRostersSmall;
-import com.ewsv3.ews.rosters.dto.rosters.RosterMasters;
+import com.ewsv3.ews.rosters.dto.rosters.*;
 import com.ewsv3.ews.rosters.dto.rosters.payload.*;
 import com.ewsv3.ews.rosters.dto.rosters.payload.pivot.PersonRosterSqlResp;
+import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterReqBody;
+import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterResponse;
 import com.ewsv3.ews.rosters.service.rosterService.RosterService;
 import com.ewsv3.ews.team.dto.ProfileDatesRequestBody;
 import org.springframework.http.HttpStatus;
@@ -34,7 +34,7 @@ public class RosterController {
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     public RosterController(MasterDataService masterDataService, RosterService rosterService,
-            JdbcClient jdbcClient, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+                            JdbcClient jdbcClient, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         this.masterDataService = masterDataService;
         this.rosterService = rosterService;
         this.jdbcClient = jdbcClient;
@@ -81,7 +81,6 @@ public class RosterController {
         }
 
     }
-
 
 
     @PostMapping("/rosters")
@@ -207,7 +206,7 @@ public class RosterController {
     @PostMapping("/person-rosters")
     @CrossOrigin
     public ResponseEntity<List<PersonRosters>> getPersonRosters(@RequestHeader Map<String, String> header,
-            @RequestBody PersonRosterReqBody requestBody) {
+                                                                @RequestBody PersonRosterReqBody requestBody) {
         try {
             System.out.println("getPersonRosters > getCurrentUserId():" + getCurrentUserId());
             System.out.println("person-rosters > requestBody:" + requestBody);
@@ -231,7 +230,7 @@ public class RosterController {
     @PostMapping("/delete-rosters")
     @CrossOrigin
     public ResponseEntity<RosterDMLResponseDto> deleteRosters(@RequestHeader Map<String, String> header,
-            @RequestBody RosterDeleteReasonReqBody requestBody) {
+                                                              @RequestBody RosterDeleteReasonReqBody requestBody) {
         try {
             System.out.println("deleteRosters > getCurrentUserId():" + getCurrentUserId());
             System.out.println("person-rosters > requestBody:" + requestBody);
@@ -252,7 +251,7 @@ public class RosterController {
     @PostMapping("/copy-rosters")
     @CrossOrigin
     public ResponseEntity<RosterDMLResponseDto> copyPersonRoster(@RequestHeader Map<String, String> header,
-            @RequestBody RosterCopyReqBody requestBody) {
+                                                                 @RequestBody RosterCopyReqBody requestBody) {
         try {
             System.out.println("copyPersonRoster > getCurrentUserId():" + getCurrentUserId());
             System.out.println("copy-rosters> requestBody:" + requestBody);
@@ -273,12 +272,12 @@ public class RosterController {
     @PostMapping("/rota")
     @CrossOrigin
     public ResponseEntity<RosterDMLResponseDto> rotaRoster(@RequestHeader Map<String, String> header,
-            @RequestBody List<RotaCreationReqBody> requestBody) {
+                                                           @RequestBody List<PersonRotationAssocReqBody> requestBody) {
         try {
             System.out.println("rotaRoster > getCurrentUserId():" + getCurrentUserId());
             System.out.println("rota > requestBody:" + requestBody);
 
-            RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.createRota(
+            RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.createPersonRota(
                     getCurrentUserId(),
                     requestBody,
                     jdbcClient);
@@ -289,6 +288,67 @@ public class RosterController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    @PostMapping("/roster-actions")
+    @CrossOrigin
+    public ResponseEntity<RosterDMLResponseDto> rosterActions(@RequestHeader Map<String, String> header,
+                                                              @RequestBody RosterActionsReqBody requestBody) {
+        try {
+            System.out.println("rosterActions > getCurrentUserId():" + getCurrentUserId());
+            System.out.println("rosterActions > requestBody:" + requestBody);
+
+            RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.rosterActions(
+                    getCurrentUserId(),
+                    requestBody,
+                    jdbcClient);
+            return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("/demand-rosters")
+    @CrossOrigin
+    public ResponseEntity<DemandAllocationRespBody> resterDemands(@RequestHeader Map<String, String> header,
+                                                                  @RequestBody DemandAllocationReqBody requestBody) {
+        try {
+            System.out.println("resterDemands > getCurrentUserId():" + getCurrentUserId());
+            System.out.println("resterDemands > requestBody:" + requestBody);
+
+            DemandAllocationRespBody allocations = this.rosterService.getDemandAllocations(
+                    getCurrentUserId(),
+                    requestBody,
+                    jdbcClient);
+            return new ResponseEntity<>(allocations, HttpStatus.OK);
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("/validate-rosters")
+    @CrossOrigin
+    public ResponseEntity<ValidateRosterResponse> getValidateRosterResponse(@RequestHeader Map<String, String> header, @RequestBody ValidateRosterReqBody reqBody) {
+        try {
+            System.out.println("getValidateRosterResponse > getCurrentUserId():" + getCurrentUserId());
+            System.out.println("getValidateRosterResponse > reqBody:" + reqBody);
+
+            ValidateRosterResponse rosterResponse = this.rosterService.getValidateRosterResponse(
+                    getCurrentUserId(),
+                    reqBody,
+                    jdbcClient);
+            return new ResponseEntity<>(rosterResponse, HttpStatus.OK);
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

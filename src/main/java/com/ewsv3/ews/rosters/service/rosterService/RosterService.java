@@ -5,6 +5,10 @@ import com.ewsv3.ews.masters.service.ServiceUtils;
 import com.ewsv3.ews.rosters.dto.rosters.*;
 import com.ewsv3.ews.rosters.dto.rosters.payload.*;
 import com.ewsv3.ews.rosters.dto.rosters.payload.pivot.PersonRosterSqlResp;
+import com.ewsv3.ews.rosters.dto.rosters.validate.DemandLineResponse;
+import com.ewsv3.ews.rosters.dto.rosters.validate.ScheduleLineResponse;
+import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterReqBody;
+import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterResponse;
 import jakarta.annotation.PostConstruct;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -712,6 +716,256 @@ public class RosterService {
                 "Rotation plan for " + String.valueOf(recCounts.get()) + " staff created successfully!");
 
         return responseDto;
+
+    }
+
+    public RosterDMLResponseDto createPersonRota(Long userId, List<PersonRotationAssocReqBody> assocReqBodies, JdbcClient jdbcClient) {
+
+        int dmlCounts = 0;
+        int errCounts = 0;
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+
+        Map<String, Object> inParamMap = new HashMap<>();
+        Map<String, Object> inProcParamMap = new HashMap<>();
+        AtomicInteger recCounts = new AtomicInteger(0);
+
+        for (PersonRotationAssocReqBody assocReqBody : assocReqBodies) {
+
+            try {
+
+                PersonRotationPlanResp rotationPlanResp = jdbcClient.sql(sqlPersonRotationPlans)
+                        .param("personId", assocReqBody.personId())
+                        .param("startDate", assocReqBody.startDate())
+                        .query(PersonRotationPlanResp.class)
+                        .optional()
+                        .orElse(null);
+
+                if (rotationPlanResp != null && rotationPlanResp.fullName() != null && rotationPlanResp.workRotationName() != null) {
+                    responseDto.setStatusMessage("E");
+                    responseDto.setDetailMessage(rotationPlanResp.fullName() + " already assigned to " + rotationPlanResp.workRotationName() + " plan during this period");
+                    return responseDto;
+                }
+
+
+                inParamMap.put("personId", assocReqBody.personId());
+                inParamMap.put("workRotationId", assocReqBody.workRotationId());
+                inParamMap.put("startDate", assocReqBody.startDate());
+                inParamMap.put("endDate", assocReqBody.endDate());
+                inParamMap.put("startSeq", assocReqBody.startSeq());
+                inParamMap.put("createdBy", userId);
+                inParamMap.put("lastUpdatedBy", userId);
+
+
+                int updated = jdbcClient.sql(InsertPersonRorationAssoc).params(inParamMap).update();
+
+                dmlCounts = dmlCounts + updated;
+
+                inParamMap.clear();
+
+
+//                calling procedure to create rotation plan based schedules..
+                simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sc_process_rota_p");
+
+
+                inProcParamMap.put("p_person_id", assocReqBody.personId());
+                inProcParamMap.put("p_work_rotation_id", assocReqBody.workRotationId());
+
+                SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
+                System.out.println(inSource);
+                Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+                simpleJdbcCallResult.forEach((s, o) -> {
+                    System.out.println(s);
+                    System.out.println(o);
+
+                    if (s.equals("P_OUT")) {
+                        String strMessage = o.toString();
+                        System.out.println("strMessage:" + strMessage);
+                        if (strMessage.startsWith("E")) {
+                            responseDto.setStatusMessage("E");
+                            responseDto.setDetailMessage(strMessage.substring(2));
+                        } else {
+                            recCounts.addAndGet(Integer.parseInt(strMessage.substring(2)));
+                        }
+                    }
+                });
+
+
+            } catch (Exception e) {
+                errCounts = errCounts + 1;
+                System.out.println("createPersonRota exception , error:" + e.getMessage());
+                responseDto.setStatusMessage("E");
+                responseDto.setDetailMessage(e.getMessage());
+                return responseDto;
+            } finally {
+                inParamMap.clear();
+                inProcParamMap.clear();
+            }
+
+        }
+
+//        responseDto.setStatusMessage("S");
+//        responseDto.setDetailMessage(String.valueOf(dmlCounts) + " rotations created successfully, " + String.valueOf(errCounts) + " went in error");
+//        return responseDto;
+        if (recCounts.get() == 0) {
+            responseDto.setStatusMessage("E");
+            responseDto.setDetailMessage("No records created!");
+            return responseDto;
+        }
+
+        responseDto.setStatusMessage("S");
+//        responseDto.setDetailMessage(
+//                "Rotation plan for " + String.valueOf(recCounts.get()) + " staff created successfully!");
+        responseDto.setDetailMessage(
+                "Rotation plan created successfully!");
+
+        return responseDto;
+
+    }
+
+    public RosterDMLResponseDto rosterActions(Long userId, RosterActionsReqBody reqBody, JdbcClient jdbcClient) {
+
+        int dmlCounts = 0;
+        int errCounts = 0;
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+
+        Map<String, Object> inProcParamMap = new HashMap<>();
+        AtomicInteger recCounts = new AtomicInteger(0);
+
+
+        try {
+
+//                calling procedure to create rotation plan based schedules..
+            simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withCatalogName("SC_MANAGE_ROSTER_PKG").withProcedureName("sc_action_rosters_p");
+
+
+            inProcParamMap.put("p_profile_id", reqBody.profileId());
+            inProcParamMap.put("p_user_id", userId);
+            inProcParamMap.put("p_start_date", reqBody.startDate());
+            inProcParamMap.put("p_end_date", reqBody.endDate());
+            inProcParamMap.put("p_persons", reqBody.persons());
+            inProcParamMap.put("p_action", reqBody.action());
+            inProcParamMap.put("p_comments", reqBody.comments());
+
+            SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
+            System.out.println("rosterActions inSource" + inSource);
+            Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+            System.out.println("rosterActions simpleJdbcCallResult: " + simpleJdbcCallResult);
+
+            String actionMessage = switch (reqBody.action()) {
+                case "INIT" -> "Selected schedules are submitted for approval";
+                case "APPROVED" -> "Selected schedules are approved";
+                case "RMI" -> "Selected schedules are returned for more information";
+                case "SUBMIT" -> "Selected schedules are submitted";
+                case "WITHD" -> "Selected schedules are withdrawn";
+                default -> "Action completed";
+            };
+
+
+            responseDto.setStatusMessage("S");
+            responseDto.setDetailMessage(actionMessage);
+
+            return responseDto;
+
+        } catch (Exception e) {
+            errCounts = errCounts + 1;
+            System.out.println("rosterActions exception , error:" + e.getMessage());
+            responseDto.setStatusMessage("E");
+            responseDto.setDetailMessage(e.getMessage());
+            return responseDto;
+        } finally {
+            inProcParamMap.clear();
+        }
+
+
+//        responseDto.setStatusMessage("S");
+//        responseDto.setDetailMessage(String.valueOf(dmlCounts) + " rotations created successfully, " + String.valueOf(errCounts) + " went in error");
+//        return responseDto;
+
+
+    }
+
+
+    public DemandAllocationRespBody getDemandAllocations(Long userId, DemandAllocationReqBody reqBody, JdbcClient jdbcClient) {
+
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sc_generate_demand_rosters_p");
+        Map<String, Object> inProcParamMap = new HashMap<>();
+
+        inProcParamMap.put("p_user_id", userId);
+        inProcParamMap.put("p_start_date", reqBody.startDate());
+        inProcParamMap.put("p_end_date", reqBody.endDate());
+        inProcParamMap.put("p_demand_template_id", reqBody.demandTemplateId());
+
+        SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
+        System.out.println("getDemandAllocations inSource" + inSource);
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+        System.out.println("getDemandAllocations simpleJdbcCallResult: " + simpleJdbcCallResult);
+
+        System.out.println("getDemandAllocations procedure completed ================");
+
+        DemandAllocationRespBody respBody = new DemandAllocationRespBody();
+
+        List<DemandAllocationSummary> summaryList = jdbcClient.sql(sqlDemandAllocationSummary)
+                .param("userId", userId)
+                .query(DemandAllocationSummary.class)
+                .list();
+
+
+        for (DemandAllocationSummary summary : summaryList) {
+
+            System.out.println("getDemandAllocations summary:" + summary);
+
+            List<DemandAllocationLines> lines = jdbcClient.sql(sqlDemandAllocationLines)
+                    .param("userId", userId)
+                    .param("demandTemplateLineId", summary.getDemandTemplateLineId())
+                    .param("effectiveDate", summary.getEffectiveDate())
+                    .query(DemandAllocationLines.class)
+                    .list();
+            System.out.println("getDemandAllocations lines:" + lines);
+
+            summary.setDemandAllocationLines(lines);
+
+
+        }
+
+        respBody.setAllocationSummaryList(summaryList);
+        return respBody;
+
+    }
+
+    public ValidateRosterResponse getValidateRosterResponse(Long userId, ValidateRosterReqBody reqBody, JdbcClient jdbcClient) {
+        Map<String, Object> objectMap = new HashMap<>();
+
+        objectMap.put("userId", userId);
+        objectMap.put("demandTemplateId", reqBody.demandTemplateId());
+
+        List<DemandLineResponse> demandLineResponses = jdbcClient.sql(sqlDemandLinesValidate)
+                .params(objectMap)
+                .query(DemandLineResponse.class)
+                .list();
+
+        System.out.println("getValidateRosterResponse  demandLineResponses:" + demandLineResponses);
+
+        objectMap.clear();
+
+
+        objectMap.put("startDate", reqBody.startDate());
+        objectMap.put("endDate", reqBody.endDate());
+        objectMap.put("userId", userId);
+        objectMap.put("profileId", reqBody.profileId());
+
+        List<ScheduleLineResponse> scheduleLineResponses = jdbcClient.sql(sqlScheduledValidate)
+                .params(objectMap)
+                .query(ScheduleLineResponse.class)
+                .list();
+
+        System.out.println("getValidateRosterResponse  scheduleLineResponses:" + scheduleLineResponses);
+
+        ValidateRosterResponse response = new ValidateRosterResponse(demandLineResponses, scheduleLineResponses);
+        objectMap.clear();
+
+        return response;
+
 
     }
 }
