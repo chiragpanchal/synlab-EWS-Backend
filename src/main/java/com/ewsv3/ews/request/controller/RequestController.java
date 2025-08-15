@@ -88,19 +88,27 @@ public class RequestController {
         } catch (Exception exception) {
             System.out.println("getRequests > exception:" + exception.getMessage());
 
-            String regex = "~~(.*?)~~";
-            String errorText = "";
-            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
-            java.util.regex.Matcher matcher = pattern.matcher(exception.getMessage());
-
+            String errorMsg = exception.getMessage();
+            String extracted = null;
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("~~(.*?)~~").matcher(errorMsg);
             if (matcher.find()) {
-                // Extracting the string between `~~`
-                errorText = matcher.group(1);
-            } else {
-                errorText = exception.getMessage();
+                extracted = matcher.group(1);
+                System.out.println("Extracted error: " + extracted);
             }
 
-            return new ResponseEntity<>(errorText, HttpStatus.BAD_REQUEST);
+//            String regex = "~~(.*?)~~";
+//            String errorText = "";
+//            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
+//            java.util.regex.Matcher matcher = pattern.matcher(exception.getMessage());
+//
+//            if (matcher.find()) {
+//                // Extracting the string between `~~`
+//                errorText = matcher.group(1);
+//            } else {
+//                errorText = exception.getMessage();
+//            }
+
+            return new ResponseEntity<>(extracted, HttpStatus.BAD_REQUEST);
         }
 
     }

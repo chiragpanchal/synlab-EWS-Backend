@@ -226,8 +226,10 @@ public class RequestService {
             });
 
         } catch (Exception e) {
+
+
             System.out.println("Error calling stored procedure: " + e.getMessage());
-            throw new RuntimeException("Failed to create request", e);
+            throw new RuntimeException("Failed to create request:" + e.getMessage(), e);
         }
     }
 
