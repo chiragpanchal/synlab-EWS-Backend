@@ -1,11 +1,15 @@
 package com.ewsv3.ews.accessprofiles.controller;
 
+import com.ewsv3.ews.accessprofiles.dto.AccessProfileLines;
 import com.ewsv3.ews.accessprofiles.dto.AccessProfileResponse;
+import com.ewsv3.ews.accessprofiles.dto.AccessProfiles;
+import com.ewsv3.ews.accessprofiles.dto.UserProfileAssoc;
 import com.ewsv3.ews.accessprofiles.dto.req.AccessProfileReq;
 import com.ewsv3.ews.accessprofiles.dto.req.AssessProfileId;
 import com.ewsv3.ews.accessprofiles.dto.resp.AccessProfileResp;
 import com.ewsv3.ews.accessprofiles.service.AccessProfileService;
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -62,4 +66,55 @@ public class AccessProfileController {
         }
     }
 
+    @PostMapping("save-profile")
+    public ResponseEntity<DMLResponseDto> saveAccessProfile(@RequestHeader Map<String, String> headers, @RequestBody AccessProfileResponse req) {
+
+        try {
+            accessProfileService.saveProfile(getCurrentUserId(), req, this.jdbcClient);
+            return new ResponseEntity<>(new DMLResponseDto("S", "Profile Saved successfully!"), HttpStatus.OK);
+
+        } catch (Exception exception) {
+            System.out.println("saveAccessProfile exception:" + exception.getMessage());
+            return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("delete-profile-line")
+    public ResponseEntity<DMLResponseDto> deleteProfileLine(@RequestHeader Map<String, String> headers, @RequestBody AccessProfileLines req) {
+
+        try {
+            DMLResponseDto dmlResponseDto = accessProfileService.deleteProfileLine(getCurrentUserId(), req, this.jdbcClient);
+            return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            System.out.println("deleteProfileLine exception:" + exception.getMessage());
+            return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("delete-user-assoc")
+    public ResponseEntity<DMLResponseDto> deleteUSerAssoc(@RequestHeader Map<String, String> headers, @RequestBody UserProfileAssoc req) {
+
+        try {
+            DMLResponseDto dmlResponseDto = accessProfileService.deleteUserProfileAssoc(getCurrentUserId(), req, this.jdbcClient);
+            return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            System.out.println("deleteUSerAssoc exception:" + exception.getMessage());
+            return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("delete-profile")
+    public ResponseEntity<DMLResponseDto> deleteProfile(@RequestHeader Map<String, String> headers, @RequestBody AccessProfiles req) {
+
+        try {
+            DMLResponseDto dmlResponseDto = accessProfileService.deleteProfile(getCurrentUserId(), req, this.jdbcClient);
+            return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            System.out.println("deleteProfile exception:" + exception.getMessage());
+            return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
+        }
+    }
 }

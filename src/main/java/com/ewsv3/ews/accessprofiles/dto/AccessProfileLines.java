@@ -9,7 +9,7 @@ public record AccessProfileLines(
         Long jobId,
         Long departmentId,
         Long gradeId,
-        Long employeeTypeId,
+        String employeeTypeId,
         String includeExcludeFlag,
         Long businessUnitId,
         String jobFamily,

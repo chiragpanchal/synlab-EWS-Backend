@@ -93,4 +93,146 @@ public class AccessProfileUtils {
                 sc_user_profile_assoc supa
             where
                 supa.profile_id = :profileId""";
+
+    public static String sqlInsertAccessProfile = """
+            insert into sc_access_profiles (
+                profile_id,
+                created_by,
+                last_updated_by,
+                skip_approval,
+                profile_name,
+                end_date,
+                start_date,
+                enterprise_id
+            ) values (
+                :profileId,
+                :createdBy,
+                :lastUpdatedBy,
+                :skipApproval,
+                :profileName,
+                :endDate,
+                :startDate,
+                1
+            )""";
+
+    public static String sqlUpdateAccessProfile = """
+            update sc_access_profiles
+            set
+                last_updated_by = :lastUpdatedBy,
+                skip_approval = :skipApproval,
+                profile_name = :profileName,
+                end_date = :endDate,
+                start_date = :startDate
+            where
+                profile_id = :profileId""";
+
+    public static String sqlDeleteAccessProfile = """
+            delete sc_access_profiles
+            where
+                profile_id = :profileId""";
+
+    public static String sqlInsertAccessProfileLines = """
+                insert into sc_access_profile_lines (
+                    profile_id,
+                    created_by,
+                    nationality,
+                    last_updated_by,
+                    job_id,
+                    department_id,
+                    shift_type,
+                    legal_entity_id,
+                    job_family,
+                    employee_catg,
+                    business_unit_id,
+                    access_profile_line_id,
+                    religion,
+                    person_id,
+                    employee_type_id,
+                    gender,
+                    project_id,
+                    grade_id,
+                    include_exclude_flag
+                ) values (
+                    :profileId,
+                    :createdBy,
+                    :nationality,
+                    :lastUpdatedBy,
+                    :jobId,
+                    :departmentId,
+                    :shiftType,
+                    :legalEntityId,
+                    :jobFamily,
+                    :employeeCatg,
+                    :businessUnitId,
+                    :accessProfileLineId,
+                    :religion,
+                    :personId,
+                    :employeeTypeId,
+                    :gender,
+                    :projectId,
+                    :gradeId,
+                    :includeExcludeFlag
+                )
+            """;
+
+    public static String sqlUpdateAccessProfileLine = """
+            update sc_access_profile_lines
+            set
+                nationality = :nationality,
+                last_updated_by = :lastUpdatedBy,
+                job_id = :jobId,
+                department_id = :departmentId,
+                shift_type = :shiftType,
+                legal_entity_id = :legalEntityId,
+                job_family = :jobFamily,
+                employee_catg = :employeeCatg,
+                business_unit_id = :businessUnitId,
+                religion = :religion,
+                person_id = :personId,
+                employee_type_id = :employeeTypeId,
+                gender = :gender,
+                project_id = :projectId,
+                grade_id = :gradeId,
+                include_exclude_flag = :includeExcludeFlag
+            where
+                access_profile_line_id = :accessProfileLineId""";
+
+    public static String sqlDeleteAccessProfileLine = """
+            delete sc_access_profile_lines
+            where
+                access_profile_line_id = :accessProfileLineId""";
+
+    public static String sqlInsertUserProfileAssoc = """
+            insert into sc_user_profile_assoc (
+                profile_id,
+                created_by,
+                last_updated_by,
+                user_id,
+                user_profile_assoc_id,
+                can_create,
+                user_type
+            ) values (
+                :profileId,
+                :createdBy,
+                :lastUpdatedBy,
+                :userId,
+                :userProfileAssocId,
+                :canCreate,
+                :userType
+            )""";
+
+    public static String sqlUpdateUserProfileAssoc = """
+            update sc_user_profile_assoc
+            set
+                last_updated_by = :lastUpdatedBy,
+                user_id = :userId,
+                can_create = :canCreate,
+                user_type = :userType
+            where
+                user_profile_assoc_id = :userProfileAssocId""";
+
+    public static String sqlDeleteUserProfileAssoc = """
+            delete sc_user_profile_assoc
+            where
+                  user_profile_assoc_id = :userProfileAssocId""";
 }

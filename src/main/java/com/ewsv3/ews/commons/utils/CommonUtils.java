@@ -17,7 +17,7 @@ public class CommonUtils {
                 and (lower(FULL_NAME) like '%'||lower(ltrim(rtrim(:strPerson)))||'%'
                 or lower(employee_number) like '%'||lower(ltrim(rtrim(:strPerson)))||'%')
             order by
-                full_name;""";
+                full_name""";
 
     public static String sqlDepartments = """
             select
@@ -43,7 +43,10 @@ public class CommonUtils {
                 project_name,
                 project_number
             from
-                sc_projects_v""";
+                sc_projects
+            where (lower(project_name) like '%'||lower(ltrim(rtrim(:strProject)))||'%'
+                or lower(project_number) like '%'||lower(ltrim(rtrim(:strProject)))||'%')
+            order by project_name""";
 
     public static String sqlJobFamily = """
             select distinct
@@ -140,5 +143,16 @@ public class CommonUtils {
                 and enabled = 'Y'
             order by
                 meaning""";
+
+    public static String sqlGrades = """
+            select
+                grade_id,
+                grade_name
+            from
+                sc_grades
+            where
+                enabled = 'Y'
+            order by
+                grade_name""";
 
 }

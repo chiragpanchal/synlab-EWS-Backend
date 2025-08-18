@@ -15,11 +15,12 @@ public class AllMasterDtoLov {
     List<NationalityDtoLov> nationalityDtoLovs;
     List<ReligionDtoLov> religionDtoLovs;
     List<ShiftTypeDtoLov> shiftTypeDtoLovs;
+    List<GradeDtoLov> gradeDtoLovs;
 
     public AllMasterDtoLov() {
     }
 
-    public AllMasterDtoLov(List<DepartmentDtoLov> departmentDtoLovs, List<JobDtoLov> jobDtoLovs, List<JobFamilyDtoLov> jobFamilyDtoLovs, List<BusinessUnitsDtoLov> businessUnitsDtoLovs, List<LegalEntityDtoLov> legalEntityDtoLovs, List<EmployeeTypesDtoLov> employeeTypesDtoLovs, List<EmploymentTypesDtoLov> employmentTypesDtoLovs, List<GenderDtoLov> genderDtoLovs, List<NationalityDtoLov> nationalityDtoLovs, List<ReligionDtoLov> religionDtoLovs, List<ShiftTypeDtoLov> shiftTypeDtoLovs) {
+    public AllMasterDtoLov(List<DepartmentDtoLov> departmentDtoLovs, List<JobDtoLov> jobDtoLovs, List<JobFamilyDtoLov> jobFamilyDtoLovs, List<BusinessUnitsDtoLov> businessUnitsDtoLovs, List<LegalEntityDtoLov> legalEntityDtoLovs, List<EmployeeTypesDtoLov> employeeTypesDtoLovs, List<EmploymentTypesDtoLov> employmentTypesDtoLovs, List<GenderDtoLov> genderDtoLovs, List<NationalityDtoLov> nationalityDtoLovs, List<ReligionDtoLov> religionDtoLovs, List<ShiftTypeDtoLov> shiftTypeDtoLovs, List<GradeDtoLov> gradeDtoLovs) {
         this.departmentDtoLovs = departmentDtoLovs;
         this.jobDtoLovs = jobDtoLovs;
         this.jobFamilyDtoLovs = jobFamilyDtoLovs;
@@ -31,6 +32,7 @@ public class AllMasterDtoLov {
         this.nationalityDtoLovs = nationalityDtoLovs;
         this.religionDtoLovs = religionDtoLovs;
         this.shiftTypeDtoLovs = shiftTypeDtoLovs;
+        this.gradeDtoLovs = gradeDtoLovs;
     }
 
     public List<DepartmentDtoLov> getDepartmentDtoLovs() {
@@ -119,5 +121,13 @@ public class AllMasterDtoLov {
 
     public void setShiftTypeDtoLovs(List<ShiftTypeDtoLov> shiftTypeDtoLovs) {
         this.shiftTypeDtoLovs = shiftTypeDtoLovs;
+    }
+
+    public List<GradeDtoLov> getGradeDtoLovs() {
+        return gradeDtoLovs;
+    }
+
+    public void setGradeDtoLovs(List<GradeDtoLov> gradeDtoLovs) {
+        this.gradeDtoLovs = gradeDtoLovs;
     }
 }

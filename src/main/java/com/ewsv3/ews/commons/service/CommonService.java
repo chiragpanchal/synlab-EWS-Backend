@@ -111,17 +111,16 @@ public class CommonService {
                 .list();
     }
 
+    public List<GradeDtoLov> getGrades(JdbcClient jdbcClient) {
+        return jdbcClient.sql(sqlGrades)
+                .query(GradeDtoLov.class)
+                .list();
+    }
+
     public AllMasterDtoLov allMasterDtoLov(JdbcClient jdbcClient) {
-
-        List<DepartmentDtoLov> departments = getDepartments(jdbcClient);
-        System.out.println("allMasterDtoLov departments:" + departments);
-
-        for (DepartmentDtoLov department : departments) {
-            System.out.println("allMasterDtoLov department:" + department);
-        }
-
+        
         return new AllMasterDtoLov(
-                departments,
+                getDepartments(jdbcClient),
                 getJobs(jdbcClient),
                 getJobFamily(jdbcClient),
                 getBusinessUnits(jdbcClient),
@@ -131,7 +130,8 @@ public class CommonService {
                 getGenders(jdbcClient),
                 getNationality(jdbcClient),
                 getReligion(jdbcClient),
-                getShiftTypes(jdbcClient)
+                getShiftTypes(jdbcClient),
+                getGrades(jdbcClient)
         );
     }
 
