@@ -14,4 +14,7 @@ public record AccessProfiles(
         LocalDateTime lastUpdateDate,
         String skipApproval
 ) {
+    public AccessProfiles() {
+        this(null, null, null, null, null, null, null, null, null);
+    }
 }

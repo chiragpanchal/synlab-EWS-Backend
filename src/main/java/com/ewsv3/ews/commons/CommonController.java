@@ -1,6 +1,8 @@
 package com.ewsv3.ews.commons;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.UserIdReqDto;
+import com.ewsv3.ews.commons.dto.UserProfileResponse;
 import com.ewsv3.ews.commons.dto.masters.*;
 import com.ewsv3.ews.commons.service.CommonService;
 import org.springframework.http.HttpStatus;
@@ -73,6 +75,19 @@ public class CommonController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    @PostMapping("user-from-user-id")
+    public ResponseEntity<UserProfileResponse> getUserFromUserId(@RequestHeader Map<String, String> header, @RequestBody UserIdReqDto dto) {
+
+        try {
+            UserProfileResponse userProfileResponse = this.commonService.getUserFromUserId(dto, this.jdbcClient);
+            return new ResponseEntity<>(userProfileResponse, HttpStatus.OK);
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 

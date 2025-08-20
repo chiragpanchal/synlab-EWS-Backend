@@ -1,5 +1,7 @@
 package com.ewsv3.ews.commons.service;
 
+import com.ewsv3.ews.commons.dto.UserIdReqDto;
+import com.ewsv3.ews.commons.dto.UserProfileResponse;
 import com.ewsv3.ews.commons.dto.masters.*;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -133,6 +135,16 @@ public class CommonService {
                 getShiftTypes(jdbcClient),
                 getGrades(jdbcClient)
         );
+    }
+
+    public UserProfileResponse getUserFromUserId(UserIdReqDto dto, JdbcClient jdbcClient){
+
+        UserProfileResponse userProfileResponse = jdbcClient.sql(CommonUtils.sqlGetUserFromUserId)
+                .param("userId", dto.userId())
+                .query(UserProfileResponse.class)
+                .single();
+
+        return userProfileResponse;
     }
 
 

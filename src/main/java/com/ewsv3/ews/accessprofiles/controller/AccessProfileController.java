@@ -70,6 +70,9 @@ public class AccessProfileController {
     public ResponseEntity<DMLResponseDto> saveAccessProfile(@RequestHeader Map<String, String> headers, @RequestBody AccessProfileResponse req) {
 
         try {
+            System.out.println("controller saveAccessProfile req.getAccessProfiles():" + req.getAccessProfiles());
+            System.out.println("controller saveAccessProfile req.getUserProfileAssocList().size():" + req.getUserProfileAssocList().size());
+            System.out.println("controller saveAccessProfile req.getAccessProfileLinesList().size():" + req.getAccessProfileLinesList().size());
             accessProfileService.saveProfile(getCurrentUserId(), req, this.jdbcClient);
             return new ResponseEntity<>(new DMLResponseDto("S", "Profile Saved successfully!"), HttpStatus.OK);
 

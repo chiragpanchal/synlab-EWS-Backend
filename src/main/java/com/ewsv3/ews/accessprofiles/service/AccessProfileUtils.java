@@ -7,8 +7,8 @@ public class AccessProfileUtils {
                 SELECT DISTINCT tkv.profile_id
                 FROM sc_timekeeper_person_v tkv
                 WHERE (:strPerson IS NULL
-                       OR tkv.person_name LIKE LOWER('%' || LTRIM(RTRIM(:strPerson)) || '%')
-                       OR tkv.employee_number LIKE LOWER('%' || LTRIM(RTRIM(:strPerson)) || '%'))
+                       OR LOWER(tkv.person_name) LIKE LOWER('%' || LTRIM(RTRIM(:strPerson)) || '%')
+                       OR LOWER(tkv.employee_number) LIKE LOWER('%' || LTRIM(RTRIM(:strPerson)) || '%'))
             ),
             timekeepers AS (
                 SELECT supa.profile_id,
@@ -17,13 +17,13 @@ public class AccessProfileUtils {
                 FROM sc_user_profile_assoc supa
                      LEFT JOIN sc_person_v mgr ON mgr.user_id = supa.user_id
                 WHERE (:strTimekeeper IS NULL
-                       OR mgr.full_name LIKE LOWER('%' || LTRIM(RTRIM(:strTimekeeper)) || '%')
-                       OR mgr.employee_number LIKE LOWER('%' || LTRIM(RTRIM(:strTimekeeper)) || '%'))
+                       OR LOWER(mgr.full_name) LIKE LOWER('%' || LTRIM(RTRIM(:strTimekeeper)) || '%')
+                       OR LOWER(mgr.employee_number) LIKE LOWER('%' || LTRIM(RTRIM(:strTimekeeper)) || '%'))
                 GROUP BY supa.profile_id
             )
             SELECT sap.profile_id,sap.profile_name, sap.start_date, sap.end_date, tk.timekeepers
             FROM sc_access_profiles sap
-                  JOIN profile_person pp ON sap.profile_id = pp.profile_id
+                  LEFT OUTER JOIN profile_person pp ON sap.profile_id = pp.profile_id
                   JOIN timekeepers tk ON sap.profile_id = tk.profile_id
             WHERE (:strProfileName IS NULL
                    OR LOWER(sap.profile_name) LIKE LOWER('%' || LTRIM(RTRIM(:strProfileName)) || '%'))""";
