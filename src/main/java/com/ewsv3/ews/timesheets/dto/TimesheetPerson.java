@@ -8,6 +8,7 @@ public record TimesheetPerson(
         String personName,
         String departmentName,
         String jobTitle,
-        String gradeName
+        String gradeName,
+        Long personUserId
 ) {
 }

@@ -2,6 +2,23 @@ package com.ewsv3.ews.timesheets.service;
 
 public class TimesheetUtils {
 
+
+    public static String sqlSelfRecord= """
+            select
+                person_id,
+                assignment_id,
+                employee_number,
+                assignment_number,
+                full_name person_name,
+                job_title,
+                department_name,
+                grade_name,
+                user_id person_user_id
+            from
+                sc_person_v
+            where
+                user_id = userId""";
+
     public static String sqlTimesheetPersonList = """
             select
                 person_id,
@@ -11,7 +28,8 @@ public class TimesheetUtils {
                 person_name,
                 job_title,
                 department_name,
-                grade_name
+                grade_name,
+                tkv.person_user_id
             from
                 (
                     select
@@ -22,7 +40,8 @@ public class TimesheetUtils {
                         tkv.person_name,
                         tkv.job_title,
                         tkv.department_name,
-                        tkv.grade_name
+                        tkv.grade_name,
+                        tkv.person_user_id
                     from
                         sc_timekeeper_person_v tkv
                     where
@@ -266,5 +285,93 @@ public class TimesheetUtils {
                 tts.item_key,
                 spc.pay_code_name
             order by tts.person_id, tts.effective_date, spc.pay_code_name""";
+
+    public static String sqlTimesheetPayCodeHrs= """
+            select
+                spc.pay_code_name,
+                sum(tts.reg_hrs) timesheet_hrs
+            from
+                sc_tts_timesheets tts,
+                sc_pay_codes      spc
+            where
+                tts.person_id in (
+                    select
+                        p.person_id
+                    from
+                        sc_timekeeper_person_v p
+                    where
+                            p.timekeeper_user_id = :userId
+                        and p.profile_id = :profileId
+                        and ( lower(
+                            p.employee_number
+                        ) like lower(
+                            :text
+                        )
+                              or lower(
+                            p.person_name
+                        ) like lower(
+                            :text
+                        ) )
+                        and nvl(
+                            p.hire_date,
+                            :startDate
+                        ) <= :startDate
+                        and nvl(
+                            p.termination_date,
+                            :endDate
+                        ) >= :endDate
+                )
+                and spc.pay_code_id = tts.pay_code_id
+                and tts.effective_date between :startDate and :endDate
+            group by
+                spc.pay_code_name
+            order by
+                spc.pay_code_name""";
+
+    public static String sqlTimesheetStatusCounts= """
+            select
+                sc_get_tts_status(
+                    tts.item_key
+                )                approval_status,
+                count(tts.tts_timesheet_id) timesheet_counts
+            from
+                sc_tts_timesheets tts
+            where
+                tts.person_id in (
+                    select
+                        p.person_id
+                    from
+                        sc_timekeeper_person_v p
+                    where
+                            p.timekeeper_user_id = :userId
+                        and p.profile_id = :profileId
+                        and ( lower(
+                            p.employee_number
+                        ) like lower(
+                            :text
+                        )
+                              or lower(
+                            p.person_name
+                        ) like lower(
+                            :text
+                        ) )
+                        and nvl(
+                            p.hire_date,
+                            :startDate
+                        ) <= :startDate
+                        and nvl(
+                            p.termination_date,
+                            :endDate
+                        ) >= :endDate
+                )
+                and tts.effective_date between :startDate and :endDate
+            group by
+                sc_get_tts_status(
+                    tts.item_key
+                )
+            order by
+                sc_get_tts_status(
+                    tts.item_key
+                )""";
 
 }

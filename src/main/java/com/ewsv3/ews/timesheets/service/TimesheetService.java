@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,9 +39,18 @@ public class TimesheetService {
                 .query(TimesheetPerson.class)
                 .list();
 
+
+        TimesheetPerson selfPersonRecord = jdbcClient.sql(sqlSelfRecord)
+                .param("userId", userId)
+                .query(TimesheetPerson.class)
+                .single();
+
         if (personList.isEmpty()) {
             return new ArrayList<>();
         }
+
+
+        personList.add(selfPersonRecord);
 
         // Bulk fetch all date summaries for all persons in one query
         List<TimesheetDateSummary> allDateSummaries = jdbcClient.sql(sqlTimesheetDateSummaryBulk)
@@ -65,13 +75,13 @@ public class TimesheetService {
         // Create maps for efficient lookup
         Map<Long, Map<LocalDate, TimesheetDateSummary>> dateSummaryMap = allDateSummaries.stream()
                 .collect(Collectors.groupingBy(
-                    TimesheetDateSummary::getPersonId,
-                    Collectors.toMap(TimesheetDateSummary::getEffectiveDate, Function.identity())
+                        TimesheetDateSummary::getPersonId,
+                        Collectors.toMap(TimesheetDateSummary::getEffectiveDate, Function.identity())
                 ));
 
         Map<String, List<TimesheetTableSummary>> tableSummaryMap = allTableSummaries.stream()
                 .collect(Collectors.groupingBy(
-                    ts -> ts.personId() + "_" + ts.effectiveDate()
+                        ts -> ts.personId() + "_" + ts.effectiveDate()
                 ));
 
         List<TimesheetPageResponseBody> pageResponseBody = new ArrayList<>();
@@ -114,6 +124,44 @@ public class TimesheetService {
 
         return pageResponseBody;
 
+
+    }
+
+    public TimesheetKpi getTimesheetKpi(Long userId,
+                                        String text,
+                                        TimesheetPageRequestBody requestBody,
+                                        JdbcClient jdbcClient) {
+
+
+        System.out.println("getTimesheetKpi requestBody:" + requestBody);
+
+        List<TimesheetPayCodeKpi> payCodeKpi = jdbcClient.sql(sqlTimesheetPayCodeHrs)
+                .param("userId", userId)
+                .param("profileId", requestBody.profileId())
+                .param("text", "%" + text + "%")
+                .param("startDate", requestBody.startDate())
+                .param("endDate", requestBody.endDate())
+                .query(TimesheetPayCodeKpi.class)
+                .list();
+        System.out.println("getTimesheetKpi payCodeKpi:" + payCodeKpi);
+
+        List<TimesheetStatusKpi> statusKpi = jdbcClient.sql(sqlTimesheetStatusCounts)
+                .param("userId", userId)
+                .param("profileId", requestBody.profileId())
+                .param("text", "%" + text + "%")
+                .param("startDate", requestBody.startDate())
+                .param("endDate", requestBody.endDate())
+                .query(TimesheetStatusKpi.class)
+                .list();
+
+        System.out.println("getTimesheetKpi statusKpi:" + statusKpi);
+
+        TimesheetKpi timesheetKpi = new TimesheetKpi(
+                payCodeKpi,
+                statusKpi
+        );
+
+        return timesheetKpi;
 
     }
 

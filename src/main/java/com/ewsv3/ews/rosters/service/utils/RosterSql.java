@@ -91,6 +91,63 @@ public class RosterSql {
                 spr.effective_date,
                 spr.time_start""";
 
+    // Optimized batch query to fetch all roster children for multiple persons at once
+    public static String RosterMemberChildBatchSql = """
+            SELECT
+                per.person_id,
+                per.assignment_id,
+                spr.person_roster_id,
+                spr.effective_date,
+                spr.time_start,
+                spr.time_end,
+                ( spr.time_end - spr.time_start ) * 24 sch_hrs,
+                spr.department_id                      sch_department_id,
+                spr.job_title_id                       sch_job_title_id,
+                spr.work_location_id                   sch_work_location_id,
+                sd.department_name                     sch_department,
+                sj.job_title                           sch_job_title,
+                loc.location_name                      sch_location,
+                spr.on_call,
+                spr.emergency,
+                spr.published,
+                swd.work_duration_id,
+                swd.work_duration_code,
+                swd.work_duration_name,
+                ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
+                fc.currency_code
+              FROM
+                sc_person_rosters spr,
+                sc_person_v       per,
+                sc_work_duration  swd,
+                sc_departments    sd,
+                sc_jobs           sj,
+                sc_work_locations loc,
+                sc_person_preferred_jobs pj,
+                sc_currencies            fc,
+                sc_timekeeper_person_v tkv
+             WHERE
+                    per.person_id = spr.person_id
+                   AND tkv.person_id = spr.person_id
+                   AND tkv.timekeeper_user_id = :userId
+                   AND tkv.profile_id = :profileId
+                   AND swd.work_duration_id (+) = spr.work_duration_id
+                   AND spr.effective_date BETWEEN :startDate AND :endDate
+                   AND 'Y'=  sc_person_rosters_filter_f(p_person_id =>spr.person_id , p_person_roster_id => spr.person_roster_id, p_start_date=> trunc(:startDate) , p_end_date=> trunc(:endDate) ,p_filter_flag=>:pFilterFlag)
+                   AND spr.department_id        = sd.department_id (+)
+                   AND spr.job_title_id         = sj.job_title_id (+)
+                   AND spr.work_location_id     = loc.work_location_id (+)
+                   and pj.person_id (+)         = spr.person_id
+                   and pj.job_title_id (+)      = spr.job_title_id
+                   and fc.currency_id (+)       = pj.currency_id
+                   AND (lower(tkv.employee_number) LIKE lower(:text)
+                       OR lower(tkv.person_name) LIKE lower(:text))
+                   AND nvl(tkv.hire_date, :startDate) <= :startDate
+                   AND nvl(tkv.termination_date, :endDate) >= :endDate
+             ORDER BY
+                spr.person_id,
+                spr.effective_date,
+                spr.time_start""";
+
     public static String getPersonRosterDataSql = """
             SELECT
                 spr.person_roster_id,

@@ -1,6 +1,7 @@
 package com.ewsv3.ews.timesheets.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.timesheets.dto.TimesheetKpi;
 import com.ewsv3.ews.timesheets.dto.TimesheetPageRequestBody;
 import com.ewsv3.ews.timesheets.dto.TimesheetPageResponseBody;
 import com.ewsv3.ews.timesheets.service.TimesheetService;
@@ -63,6 +64,26 @@ public class TimesheetController {
             return new ResponseEntity<>(timesheetData, HttpStatus.OK);
         } catch (Exception e) {
             System.out.println("Error page-table-data : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("timesheet-kpi")
+    public ResponseEntity<TimesheetKpi> getTimesheetKpi(@RequestHeader Map<String, String> headers,
+                                                        @RequestParam(defaultValue = "") String text,
+                                                        @RequestBody TimesheetPageRequestBody requestBody) {
+
+        try {
+            System.out.println("timesheet-kpi requestBody:" + requestBody);
+            TimesheetKpi timesheetKpi = this.timesheetService.getTimesheetKpi(
+                    getCurrentUserId(),
+                    text,
+                    requestBody,
+                    this.jdbcClient);
+            return new ResponseEntity<>(timesheetKpi, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error timesheet-kpi : " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
