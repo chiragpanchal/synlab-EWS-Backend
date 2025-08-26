@@ -46,6 +46,7 @@ public class TimesheetController {
                                                                                  @RequestParam(defaultValue = "100") int size,
                                                                                  @RequestParam(defaultValue = "") String text,
                                                                                  @RequestParam(defaultValue = "") String filterFlag,
+                                                                                 @RequestParam(defaultValue = "") String payCodeName,
                                                                                  @RequestBody TimesheetPageRequestBody requestBody) {
 
         try {
@@ -53,6 +54,7 @@ public class TimesheetController {
             System.out.println("page-table-data > size:" + size);
             System.out.println("page-table-data > text:" + text);
             System.out.println("page-table-data > filterFlag:" + filterFlag);
+            System.out.println("page-table-data > payCodeName:" + payCodeName);
             System.out.println("page-table-data requestBody:" + requestBody);
             List<TimesheetPageResponseBody> timesheetData = this.timesheetService.getTimesheetData(
                     getCurrentUserId(),
@@ -60,6 +62,7 @@ public class TimesheetController {
                     size,
                     text,
                     filterFlag,
+                    payCodeName,
                     requestBody, this.jdbcClient);
             return new ResponseEntity<>(timesheetData, HttpStatus.OK);
         } catch (Exception e) {

@@ -10,4 +10,9 @@ public record TimesheetTableSummary(
         Double timesheetHrs,
         String approvalStatus
 ) {
+
+
+    public TimesheetTableSummary() {
+        this(null, null, null, null, null, null);
+    }
 }
