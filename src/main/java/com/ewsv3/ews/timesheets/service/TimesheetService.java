@@ -214,6 +214,8 @@ public class TimesheetService {
 
     public TimesheetKpi getTimesheetKpi(Long userId,
                                         String text,
+                                        String filterFlag,
+                                        String payCodeName,
                                         TimesheetPageRequestBody requestBody,
                                         JdbcClient jdbcClient) {
 
@@ -226,6 +228,7 @@ public class TimesheetService {
             //self
             payCodeKpi = jdbcClient.sql(sqlSelfTimesheetPayCodeHrs)
                     .param("userId", userId)
+                    .param("filterFlag", filterFlag)
                     .param("startDate", requestBody.startDate())
                     .param("endDate", requestBody.endDate())
                     .query(TimesheetPayCodeKpi.class)
@@ -234,6 +237,7 @@ public class TimesheetService {
 
             statusKpi = jdbcClient.sql(sqlSelfTimesheetStatusCounts)
                     .param("userId", userId)
+                    .param("payCodeFlag", payCodeName)
                     .param("startDate", requestBody.startDate())
                     .param("endDate", requestBody.endDate())
                     .query(TimesheetStatusKpi.class)
@@ -243,6 +247,7 @@ public class TimesheetService {
             payCodeKpi = jdbcClient.sql(sqlLineManagerTimesheetPayCodeHrs)
                     .param("userId", userId)
                     .param("text", "%" + text + "%")
+                    .param("filterFlag", filterFlag)
                     .param("startDate", requestBody.startDate())
                     .param("endDate", requestBody.endDate())
                     .query(TimesheetPayCodeKpi.class)
@@ -252,6 +257,7 @@ public class TimesheetService {
             statusKpi = jdbcClient.sql(sqlLineManagerTimesheetStatusCounts)
                     .param("userId", userId)
                     .param("text", "%" + text + "%")
+                    .param("payCodeFlag", payCodeName)
                     .param("startDate", requestBody.startDate())
                     .param("endDate", requestBody.endDate())
                     .query(TimesheetStatusKpi.class)
@@ -262,6 +268,7 @@ public class TimesheetService {
                     .param("userId", userId)
                     .param("profileId", requestBody.profileId())
                     .param("text", "%" + text + "%")
+                    .param("filterFlag", filterFlag)
                     .param("startDate", requestBody.startDate())
                     .param("endDate", requestBody.endDate())
                     .query(TimesheetPayCodeKpi.class)
@@ -272,6 +279,7 @@ public class TimesheetService {
                     .param("userId", userId)
                     .param("profileId", requestBody.profileId())
                     .param("text", "%" + text + "%")
+                    .param("payCodeFlag", payCodeName)
                     .param("startDate", requestBody.startDate())
                     .param("endDate", requestBody.endDate())
                     .query(TimesheetStatusKpi.class)

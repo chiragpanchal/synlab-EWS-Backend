@@ -75,13 +75,19 @@ public class TimesheetController {
     @PostMapping("timesheet-kpi")
     public ResponseEntity<TimesheetKpi> getTimesheetKpi(@RequestHeader Map<String, String> headers,
                                                         @RequestParam(defaultValue = "") String text,
+                                                        @RequestParam(defaultValue = "") String filterFlag,
+                                                        @RequestParam(defaultValue = "") String payCodeName,
                                                         @RequestBody TimesheetPageRequestBody requestBody) {
 
         try {
             System.out.println("timesheet-kpi requestBody:" + requestBody);
+            System.out.println("timesheet-kpi filterFlag:" + filterFlag);
+            System.out.println("timesheet-kpi payCodeName:" + payCodeName);
             TimesheetKpi timesheetKpi = this.timesheetService.getTimesheetKpi(
                     getCurrentUserId(),
                     text,
+                    filterFlag,
+                    payCodeName,
                     requestBody,
                     this.jdbcClient);
             return new ResponseEntity<>(timesheetKpi, HttpStatus.OK);

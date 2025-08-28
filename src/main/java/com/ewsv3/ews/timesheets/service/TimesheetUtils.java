@@ -602,7 +602,6 @@ public class TimesheetUtils {
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
                 and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
             group by
                 spc.pay_code_name
             order by
@@ -621,7 +620,6 @@ public class TimesheetUtils {
                 per.person_id = tts.person_id
                 and per.user_id= :userId
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
                 and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
             group by
                 sc_get_tts_status(
@@ -763,6 +761,7 @@ public class TimesheetUtils {
                 )
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
             group by
                 spc.pay_code_name
             order by
@@ -805,6 +804,7 @@ public class TimesheetUtils {
                         ) >= :endDate
                 )
                 and tts.effective_date between :startDate and :endDate
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
             group by
                 sc_get_tts_status(
                     tts.item_key
