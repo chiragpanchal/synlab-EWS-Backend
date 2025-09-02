@@ -1,0 +1,24 @@
+package com.ewsv3.ews.timesheets.dto.form;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+public record TimesheetDetails(
+        Long ttsTimesheetId,
+        Long personId,
+        LocalDate effectiveDate,
+        LocalDateTime timeStart,
+        LocalDateTime timeEnd,
+        Long payCodeId,
+        Long departmentId,
+        Long jobTitleId,
+        Long projectId,
+        Long taskId,
+        Long expTypeId,
+        Double regHrs,
+        Long itemKey,
+        String timeHour,
+        Double allwValue,
+        Long personUserId
+) {
+}

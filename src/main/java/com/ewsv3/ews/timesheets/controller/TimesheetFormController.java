@@ -36,9 +36,9 @@ public class TimesheetFormController {
     }
 
     @PostMapping("pay-codes")
-    public ResponseEntity<List<PayCodeDto>> getPayCodes(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto){
+    public ResponseEntity<List<PayCodeDto>> getPayCodes(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto) {
 
-        try{
+        try {
             List<PayCodeDto> payCodes = this.timesheetFormService.getPayCodes(getCurrentUserId(), reqDto, this.jdbcClient);
             return new ResponseEntity<>(payCodes, HttpStatus.OK);
         } catch (Exception e) {
@@ -49,9 +49,9 @@ public class TimesheetFormController {
     }
 
     @PostMapping("ts-departments")
-    public ResponseEntity<List<TsDepartmentDto>> getDepartments(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto){
+    public ResponseEntity<List<TsDepartmentDto>> getDepartments(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto) {
 
-        try{
+        try {
             List<TsDepartmentDto> departments = this.timesheetFormService.getDepartments(getCurrentUserId(), reqDto, this.jdbcClient);
             return new ResponseEntity<>(departments, HttpStatus.OK);
         } catch (Exception e) {
@@ -62,9 +62,9 @@ public class TimesheetFormController {
     }
 
     @PostMapping("ts-jobs")
-    public ResponseEntity<List<TsJobDto>> getJobs(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto){
+    public ResponseEntity<List<TsJobDto>> getJobs(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto) {
 
-        try{
+        try {
             List<TsJobDto> jobs = this.timesheetFormService.getJobs(getCurrentUserId(), reqDto, this.jdbcClient);
             return new ResponseEntity<>(jobs, HttpStatus.OK);
         } catch (Exception e) {
@@ -75,9 +75,9 @@ public class TimesheetFormController {
     }
 
     @PostMapping("ts-project-tasks")
-    public ResponseEntity<List<ProjectTaskDto>> getProjectTasks(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto){
+    public ResponseEntity<List<ProjectTaskDto>> getProjectTasks(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto) {
 
-        try{
+        try {
             List<ProjectTaskDto> projectTasks = this.timesheetFormService.getProjectTasks(getCurrentUserId(), reqDto, this.jdbcClient);
             return new ResponseEntity<>(projectTasks, HttpStatus.OK);
         } catch (Exception e) {
@@ -88,13 +88,54 @@ public class TimesheetFormController {
     }
 
     @PostMapping("ts-expenditure-types")
-    public ResponseEntity<List<ExpTypeDto>> getExpenditureTypes(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto){
+    public ResponseEntity<List<ExpTypeDto>> getExpenditureTypes(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto) {
 
-        try{
+        try {
             List<ExpTypeDto> expenditureTypes = this.timesheetFormService.getExpenditureTypes(getCurrentUserId(), reqDto, this.jdbcClient);
             return new ResponseEntity<>(expenditureTypes, HttpStatus.OK);
         } catch (Exception e) {
             System.out.println("Error ts-expenditure-types : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("ts-masters")
+    public ResponseEntity<TsMasters> getTimesheetMasters(@RequestHeader Map<String, String> headers, @RequestBody TimesheetFormReqDto reqDto) {
+
+        try {
+            TsMasters timesheetMasters = this.timesheetFormService.getTimesheetMasters(getCurrentUserId(), reqDto, this.jdbcClient);
+            return new ResponseEntity<>(timesheetMasters, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error ts-masters : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("ts-details")
+    public ResponseEntity<List<TimesheetDetails>> getTimesheetDetails(@RequestHeader Map<String, String> headers, @RequestBody TimesheetDetailsReqDto reqDto) {
+
+        try {
+            System.out.println("ts-details reqDto:" + reqDto);
+            List<TimesheetDetails> timesheetdetails = this.timesheetFormService.getTimesheetdetails(getCurrentUserId(), reqDto, this.jdbcClient);
+            return new ResponseEntity<>(timesheetdetails, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error ts-masters : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("ts-timecard-details")
+    public ResponseEntity<List<TsTimecardData>> getTimecardData(@RequestHeader Map<String, String> headers, @RequestBody TimesheetDetailsReqDto reqDto) {
+
+        try {
+            System.out.println("ts-timecard-details reqDto:" + reqDto);
+            List<TsTimecardData> timecardData = this.timesheetFormService.getTimecardData(getCurrentUserId(), reqDto, this.jdbcClient);
+            return new ResponseEntity<>(timecardData, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error ts-masters : " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

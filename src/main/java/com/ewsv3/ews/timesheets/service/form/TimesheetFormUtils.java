@@ -81,10 +81,165 @@ public class TimesheetFormUtils {
     public static String sqlExpenditureList= """
             select
                 exp_type_id,
-                exp_type
+                exp_type,
+                project_id
             from
-                sc_project_exp_types
+                sc_project_exp_types et
             where
-                project_id = :projectId
-                order by EXP_TYPE_ID""";
+                exists (
+                    select
+                        'Y'
+                    from
+                        sc_person_project_assoc pra
+                    where
+                            pra.person_id = :personId
+                        and pra.project_id = et.project_id
+                )
+            order by
+                project_id,
+                exp_type_id""";
+
+    public static String sqlTimesheetDetails= """
+            select
+                tts.tts_timesheet_id,
+                tts.person_Id,
+                tts.effective_date,
+                tts.time_start,
+                tts.time_end,
+                tts.pay_code_id,
+                tts.cost_center_id department_Id,
+                tts.job_title_id,
+                tts.project_id,
+                tts.task_id,
+                tts.exp_type_id,
+                tts.reg_hrs,
+                tts.item_key,
+                tts.time_hour,
+                tts.allw_value,
+                per.user_id person_user_id
+            from
+                sc_tts_timesheets tts,
+                sc_person_v       per
+            where
+                    tts.person_id = :personId
+                and per.person_id = tts.person_id
+                and trunc(
+                    tts.effective_date
+                ) between :startDate and :endDate
+            order by
+                tts.effective_date,
+                tts.time_start""";
+
+    public static String sqlTsTimecardData= """
+            select
+                person_id,
+                effective_date,
+                listagg(distinct decode(
+                    work_duration_code,
+                    'OFF',
+                    work_duration_code,
+                    schedule_line
+                ),
+                                 ', ') within group(
+                order by
+                    sch_time_start
+                ) schedule_line,
+                listagg(distinct punch_line,
+                                 ', ') within group(
+                order by
+                    in_time
+                ) punch_line,
+                listagg(distinct leave_line,
+                                 ', ') within group(
+                order by
+                    leave_line
+                ) leave_line,
+                listagg(distinct holiday_line,
+                                 ', ') within group(
+                order by
+                    holiday_line
+                ) holiday_line,
+                listagg(distinct violation_line,
+                                 ', ') within group(
+                order by
+                    violation_line
+                ) violation_line
+            from
+                (
+                    select distinct
+                        st.person_id,
+                        st.effective_date,
+                        st.sch_time_start,
+                        st.in_time,
+                        decode(
+                            nvl(
+                                st.sch_hrs,
+                                0
+                            ),
+                            0,
+                            null,
+                            (sc_getshort_time_f(
+                                st.sch_time_start
+                            )
+                             || '-'
+                             || sc_getshort_time_f(
+                                st.sch_time_end
+                            )
+                             || '#'
+                             || round(
+                                st.sch_hrs,
+                                2
+                            ))
+                        )                 schedule_line,
+                        decode(
+                            nvl(
+                                st.act_hrs,
+                                0
+                            ),
+                            0,
+                            null,
+                            (sc_getshort_time_f(
+                                st.in_time
+                            )
+                             || '-'
+                             || sc_getshort_time_f(
+                                st.out_time
+                            )
+                             || '#'
+                             || round(
+                                st.act_hrs,
+                                2
+                            ))
+                        )                 punch_line,
+                        decode(
+                            nvl(
+                                st.absence_attendances_id,
+                                0
+                            ),
+                            0,
+                            null,
+                            st.time_type
+                        )                 leave_line,
+                        decode(
+                            nvl(
+                                st.holiday_id,
+                                0
+                            ),
+                            0,
+                            null,
+                            st.time_type
+                        )                 holiday_line,
+                        st.violation_code violation_line,
+                        st.work_duration_code
+                    from
+                        sc_timecards st
+                    where
+                            st.person_id = :personId
+                        and st.effective_date between :startDate and :endDate
+                    order by
+                        st.effective_date
+                )
+            group by
+                person_id,
+                effective_date""";
 }
