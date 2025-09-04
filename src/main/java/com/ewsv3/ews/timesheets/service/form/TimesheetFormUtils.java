@@ -116,6 +116,8 @@ public class TimesheetFormUtils {
                 tts.item_key,
                 tts.time_hour,
                 tts.allw_value,
+                tts.comments,
+                tts.person_roster_id,
                 per.user_id person_user_id
             from
                 sc_tts_timesheets tts,
@@ -242,4 +244,45 @@ public class TimesheetFormUtils {
             group by
                 person_id,
                 effective_date""";
+
+    public static String sqlTimesheetAudit= """
+            select
+                log.effective_date,
+                log.audit_date,
+                mgr.full_name      audit_user,
+                log.operation,
+                log.delete_comments,
+                log.reg_hrs,
+                spc.pay_code_name,
+                log.time_start,
+                log.time_end,
+                sd.department_name department,
+                sj.job_title,
+                prj.project_name,
+                tsk.task_name,
+                exp.exp_type       expenditure_type,
+                log.comments       timesheet_comments,
+                log.time_hour
+            from
+                sc_tts_timesheets_log log,
+                sc_departments        sd,
+                sc_jobs               sj,
+                sc_projects           prj,
+                sc_project_tasks      tsk,
+                sc_project_exp_types  exp,
+                sc_pay_codes          spc,
+                sc_person_v           mgr
+            where
+                    log.person_id = :personId
+                and log.effective_date between :startDate and :endDate
+                and log.cost_center_id  = sd.department_id
+                and log.job_title_id    = sj.job_title_id
+                and prj.project_id (+)  = log.project_id
+                and tsk.task_id (+)     = log.task_id
+                and exp.exp_type_id (+) = log.exp_type_id
+                and spc.pay_code_id     = log.pay_code_id
+                and mgr.user_id         = log.audit_user_id
+            order by
+                effective_date,
+                tts_timesheet_log_id desc""";
 }

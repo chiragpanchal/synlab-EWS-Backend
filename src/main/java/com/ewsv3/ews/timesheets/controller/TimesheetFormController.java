@@ -1,6 +1,7 @@
 package com.ewsv3.ews.timesheets.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.timesheets.dto.form.*;
 import com.ewsv3.ews.timesheets.service.form.TimesheetFormService;
 import org.springframework.http.HttpStatus;
@@ -121,7 +122,7 @@ public class TimesheetFormController {
             List<TimesheetDetails> timesheetdetails = this.timesheetFormService.getTimesheetdetails(getCurrentUserId(), reqDto, this.jdbcClient);
             return new ResponseEntity<>(timesheetdetails, HttpStatus.OK);
         } catch (Exception e) {
-            System.out.println("Error ts-masters : " + e.getMessage());
+            System.out.println("Error ts-details : " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -135,7 +136,49 @@ public class TimesheetFormController {
             List<TsTimecardData> timecardData = this.timesheetFormService.getTimecardData(getCurrentUserId(), reqDto, this.jdbcClient);
             return new ResponseEntity<>(timecardData, HttpStatus.OK);
         } catch (Exception e) {
-            System.out.println("Error ts-masters : " + e.getMessage());
+            System.out.println("Error ts-timecard-details : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("save-timesheets")
+    public ResponseEntity<DMLResponseDto> saveTimecardData(@RequestHeader Map<String, String> headers, @RequestBody List<TimesheetDetails> detailsList) {
+
+        try {
+            System.out.println("save-timesheets detailsList.size():" + detailsList.size());
+            DMLResponseDto dmlResponseDto = this.timesheetFormService.saveTimesheets(getCurrentUserId(), detailsList, this.jdbcClient);
+            return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error save-timesheets : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("delete-timesheets")
+    public ResponseEntity<DMLResponseDto> deleteTimecardData(@RequestHeader Map<String, String> headers, @RequestBody List<TimesheetDetails> detailsList) {
+
+        try {
+            System.out.println("delete-timesheets detailsList.size():" + detailsList.size());
+            DMLResponseDto dmlResponseDto = this.timesheetFormService.deleteTimesheets(getCurrentUserId(), detailsList, this.jdbcClient);
+            return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error delete-timesheets : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("timesheet-audit")
+    public ResponseEntity<List<TimesheetAuditDto>> getTimesheetAudit(@RequestHeader Map<String, String> headers, @RequestBody TimesheetDetailsReqDto reqDto) {
+
+        try {
+            System.out.println("timesheet-auditreqDto:" + reqDto);
+            List<TimesheetAuditDto> timesheetAudit = this.timesheetFormService.getTimesheetAudit(getCurrentUserId(), reqDto, this.jdbcClient);
+            return new ResponseEntity<>(timesheetAudit, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Error timesheet-audit : " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

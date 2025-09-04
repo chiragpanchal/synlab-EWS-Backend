@@ -18,8 +18,8 @@ public class TimesheetUtils {
                 sc_person_v per
             where
                 per.user_id = :userId
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_pay_code_flag=> :payCodeFlag )""";
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate ,p_tts_timesheet_id => null, p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeFlag )""";
 
     public static String sqlLineManagerRecords= """
             select
@@ -40,8 +40,8 @@ public class TimesheetUtils {
                     mgr.person_id = pm.manager_id
                 and mgr.user_id   = :userId
                 and per.person_id = pm.person_id
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate ,p_tts_timesheet_id => null, p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> per.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeFlag )
                 and ( lower(
                             per.employee_number
                         ) like lower(
@@ -90,8 +90,8 @@ public class TimesheetUtils {
                     where
                             tkv.timekeeper_user_id = :userId
                         and tkv.profile_id = :profileId
-                        and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tkv.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_filter_flag=> :filterFlag )
-                        and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tkv.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_pay_code_flag=> :payCodeFlag )
+                        and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tkv.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null , p_filter_flag=> :filterFlag )
+                        and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tkv.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeFlag )
                         and ( lower(
                             tkv.employee_number
                         ) like lower(
@@ -282,8 +282,8 @@ public class TimesheetUtils {
                     st.primary_row,
                     'N'
                 ) = 'Y'
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date, p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> st.person_id ,p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date,p_tts_timesheet_id => null, p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> st.person_id ,p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeFlag )
             group by
                 st.person_id,
                 st.effective_date
@@ -307,8 +307,8 @@ public class TimesheetUtils {
                     tts.person_id  = :personId
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id , p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date ,  p_tts_timesheet_id => tts.tts_timesheet_id ,p_pay_code_flag=> :payCodeFlag )
             group by
                 tts.person_id,
                 tts.effective_date,
@@ -405,8 +405,8 @@ public class TimesheetUtils {
                             :endDate
                         ) >= :endDate)
                 and st.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_tts_timesheet_id => null , p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeFlag )
                 and nvl(
                     st.primary_row,
                     'N'
@@ -461,8 +461,8 @@ public class TimesheetUtils {
                                            ) >= :endDate)
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id , p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id, p_pay_code_flag=> :payCodeFlag )
             group by
                 tts.person_id,
                 tts.effective_date,
@@ -541,8 +541,8 @@ public class TimesheetUtils {
                         and nvl(p.termination_date, :endDate) >= :endDate
                     )
                 and st.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date ,p_tts_timesheet_id => null ,  p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date ,p_tts_timesheet_id => null,  p_pay_code_flag=> :payCodeFlag )
                 and nvl(
                     st.primary_row,
                     'N'
@@ -579,8 +579,8 @@ public class TimesheetUtils {
                     )
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date ,p_tts_timesheet_id => tts.tts_timesheet_id , p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id, p_pay_code_flag=> :payCodeFlag )
             group by
                 tts.person_id,
                 tts.effective_date,
@@ -601,7 +601,7 @@ public class TimesheetUtils {
                 and per.user_id= :userId
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id ,p_filter_flag=> :filterFlag )
             group by
                 spc.pay_code_name
             order by
@@ -620,7 +620,7 @@ public class TimesheetUtils {
                 per.person_id = tts.person_id
                 and per.user_id= :userId
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date ,p_tts_timesheet_id => tts.tts_timesheet_id,  p_pay_code_flag=> :payCodeFlag )
             group by
                 sc_get_tts_status(
                     tts.item_key
@@ -668,8 +668,8 @@ public class TimesheetUtils {
                                            ) >= :endDate)
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id ,p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id, p_pay_code_flag=> :payCodeFlag )
             group by
                 spc.pay_code_name
             order by
@@ -713,8 +713,8 @@ public class TimesheetUtils {
                                                :endDate
                                            ) >= :endDate)
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id ,p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_tts_timesheet_id => tts.tts_timesheet_id, p_pay_code_flag=> :payCodeFlag )
             group by
                 sc_get_tts_status(
                     tts.item_key
@@ -761,7 +761,7 @@ public class TimesheetUtils {
                 )
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date ,p_tts_timesheet_id => tts.tts_timesheet_id,  p_filter_flag=> :filterFlag )
             group by
                 spc.pay_code_name
             order by
@@ -804,7 +804,7 @@ public class TimesheetUtils {
                         ) >= :endDate
                 )
                 and tts.effective_date between :startDate and :endDate
-                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date , p_pay_code_flag=> :payCodeFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date ,p_tts_timesheet_id => tts.tts_timesheet_id,  p_pay_code_flag=> :payCodeFlag )
             group by
                 sc_get_tts_status(
                     tts.item_key

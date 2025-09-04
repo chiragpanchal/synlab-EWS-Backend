@@ -19,6 +19,8 @@ public record TimesheetDetails(
         Long itemKey,
         String timeHour,
         Double allwValue,
+        String comments,
+        Long personRosterId,
         Long personUserId
 ) {
 }
