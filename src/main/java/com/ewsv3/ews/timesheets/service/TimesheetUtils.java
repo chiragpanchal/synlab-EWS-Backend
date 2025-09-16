@@ -90,8 +90,6 @@ public class TimesheetUtils {
                     where
                             tkv.timekeeper_user_id = :userId
                         and tkv.profile_id = :profileId
-                        and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tkv.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null , p_filter_flag=> :filterFlag )
-                        and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tkv.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeFlag )
                         and ( lower(
                             tkv.employee_number
                         ) like lower(
@@ -102,12 +100,8 @@ public class TimesheetUtils {
                         ) like lower(
                             :text
                         ) )
-            --            and 'Y'            = sc_team_timecards_filter_f(
-            --                tkv.person_id,
-            --                :startDate,
-            --                :endDate,
-            --                :pFilterFlag
-            --            )
+                        and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tkv.person_id , p_start_date=>:startDate , p_end_date=> :endDate,p_tts_timesheet_id => null, p_filter_flag=> :filterFlag )
+                        and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> tkv.person_id ,p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeFlag )
                         and nvl(
                             tkv.hire_date,
                             :startDate
@@ -476,6 +470,39 @@ public class TimesheetUtils {
                 st.person_id,
                 st.effective_date,
                 sum(st.sch_hrs) sch_hrs,
+                round(sum(st.act_hrs),2) punch_hrs,
+                count(distinct violation_code) violation_counts,
+                (
+                    select
+                        count(*)
+                    from
+                        sc_person_absences_t a
+                    where
+                            a.person_id = st.person_id
+                        and a.leave_date = st.effective_date
+                )               leave_counts
+            from
+                sc_timecards st
+            where
+                    st.person_id in (:personIds)
+                and st.effective_date between :startDate and :endDate
+                and st.absence_attendances_id is null
+                and st.holiday_id is null
+                and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date ,p_tts_timesheet_id => null ,  p_filter_flag=> :filterFlag )
+                and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date ,p_tts_timesheet_id => null,  p_pay_code_flag=> :payCodeFlag )
+            group by
+                st.person_id,
+                st.effective_date
+            order by
+                st.person_id, st.effective_date""";
+
+
+
+    public static String OLDsqlTimesheetDateSummaryBulk = """
+            select
+                st.person_id,
+                st.effective_date,
+                sum(st.sch_hrs) sch_hrs,
                 (
                     select
                         sum(st2.act_hrs)
@@ -531,14 +558,18 @@ public class TimesheetUtils {
                 sc_timecards st
             where
                     st.person_id in (
-                        select p.person_id
-                        from sc_timekeeper_person_v p
-                        where p.timekeeper_user_id = :userId
-                        and p.profile_id = :profileId
-                        and ( lower(p.employee_number) like lower(:text)
-                              or lower(p.person_name) like lower(:text) )
-                        and nvl(p.hire_date, :startDate) <= :startDate
-                        and nvl(p.termination_date, :endDate) >= :endDate
+                        select person_id from (
+                            select p.person_id
+                            from sc_timekeeper_person_v p
+                            where p.timekeeper_user_id = :userId
+                            and p.profile_id = :profileId
+                            and ( lower(p.employee_number) like lower(:text)
+                                  or lower(p.person_name) like lower(:text) )
+                            and nvl(p.hire_date, :startDate) <= :startDate
+                            and nvl(p.termination_date, :endDate) >= :endDate
+                            order by person_name)
+                        offset :offset * :pageSize rows
+                        fetch next :pageSize rows only
                     )
                 and st.effective_date between :startDate and :endDate
                 and 'Y'= sc_timesheet_status_filter_f(p_person_id=> st.person_id , p_start_date=>st.effective_date , p_end_date=> st.effective_date ,p_tts_timesheet_id => null ,  p_filter_flag=> :filterFlag )
@@ -567,16 +598,7 @@ public class TimesheetUtils {
                 sc_tts_timesheets tts,
                 sc_pay_codes      spc
             where
-                    tts.person_id in (
-                        select p.person_id 
-                        from sc_timekeeper_person_v p 
-                        where p.timekeeper_user_id = :userId 
-                        and p.profile_id = :profileId
-                        and ( lower(p.employee_number) like lower(:text) 
-                              or lower(p.person_name) like lower(:text) )
-                        and nvl(p.hire_date, :startDate) <= :startDate
-                        and nvl(p.termination_date, :endDate) >= :endDate
-                    )
+                    tts.person_id in (:personIds)
                 and spc.pay_code_id = tts.pay_code_id
                 and tts.effective_date between :startDate and :endDate
                 and 'Y'= sc_timesheet_status_filter_f(p_person_id=> tts.person_id , p_start_date=>tts.effective_date , p_end_date=> tts.effective_date ,p_tts_timesheet_id => tts.tts_timesheet_id , p_filter_flag=> :filterFlag )
