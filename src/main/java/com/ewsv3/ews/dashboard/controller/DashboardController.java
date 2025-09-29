@@ -2,6 +2,7 @@ package com.ewsv3.ews.dashboard.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.dashboard.dto.AwaitingActionsDto;
+import com.ewsv3.ews.dashboard.dto.AwaitingActionsSummaryDto;
 import com.ewsv3.ews.dashboard.dto.PendingRequests;
 import com.ewsv3.ews.dashboard.dto.PendingTeamRequestsDto;
 import com.ewsv3.ews.dashboard.dto.TeamViolations;
@@ -23,7 +24,7 @@ public class DashboardController {
     private final JdbcClient jdbcClient;
     private final DashboardService dashboardService;
 
-    public DashboardController( JdbcClient jdbcClient, DashboardService dashboardService) {
+    public DashboardController(JdbcClient jdbcClient, DashboardService dashboardService) {
         this.jdbcClient = jdbcClient;
         this.dashboardService = dashboardService;
     }
@@ -64,7 +65,6 @@ public class DashboardController {
     public ResponseEntity<List<TeamViolations>> getTeamViolations(@RequestHeader Map<String, String> headers) {
         try {
 
-
             List<TeamViolations> teamViolations = this.dashboardService.getTeamViolations(getCurrentUserId(),
                     this.jdbcClient);
             return new ResponseEntity<>(teamViolations, HttpStatus.OK);
@@ -92,11 +92,14 @@ public class DashboardController {
     }
 
     @GetMapping("/awaiting-actions")
-    public ResponseEntity<List<AwaitingActionsDto>> getAwaitingActions(@RequestHeader Map<String, String> headers) {
+    public ResponseEntity<List<AwaitingActionsSummaryDto>> getAwaitingActions(
+            @RequestHeader Map<String, String> headers) {
 
         try {
 
-            List<AwaitingActionsDto> awaitingActions = this.dashboardService.getAwaitingActions(getCurrentUserId(),
+            System.out.println("awaiting-actions getCurrentUserId" + getCurrentUserId());
+            List<AwaitingActionsSummaryDto> awaitingActions = this.dashboardService.getAwaitingActionsSummary(
+                    getCurrentUserId(),
                     this.jdbcClient);
             return new ResponseEntity<>(awaitingActions, HttpStatus.OK);
         } catch (Exception exception) {

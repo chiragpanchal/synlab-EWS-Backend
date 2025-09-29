@@ -42,7 +42,7 @@ public class DashboardUtils {
                 AND si.item_key = tts.item_key
                 AND si.completion_date IS NULL""";
 
-    static String ViolationCountsSql= """
+    static String ViolationCountsSql = """
             select * from (
             SELECT
                 tkv.person_name,
@@ -61,7 +61,7 @@ public class DashboardUtils {
                     tkv.timekeeper_user_id = :userId
                 AND st.person_id = tkv.person_id
                 AND st.violation_code IS NOT NULL
-                AND trunc(st.effective_date) BETWEEN :startDate AND :endDate                
+                AND trunc(st.effective_date) BETWEEN :startDate AND :endDate
             GROUP BY
                 tkv.person_name,
                 tkv.employee_number,
@@ -71,7 +71,7 @@ public class DashboardUtils {
                 tkv.department_name
             ORDER BY
                 tkv.person_name,
-                tkv.employee_number)                
+                tkv.employee_number)
                 """;
 
     static String PendingTeamRequestsSql = """
@@ -125,10 +125,9 @@ public class DashboardUtils {
                    AND st.task_id                               = si.task_id
                    AND per.person_id                            = si.selected_person_id
                    AND si.completion_date IS NULL
-                   AND nvl(
-                    wn.more_info_user_id,
-                    wn.to_user_id
-                ) = :userId
+                   and ( ( wn.more_info_user_id = :userId )
+                                     or ( wn.more_info_user_id is null
+                                          and wn.to_user_id = :userId ) )
                    AND wn.status                                = 'OPEN'
              GROUP BY
                 st.task_name,
@@ -138,4 +137,28 @@ public class DashboardUtils {
              ORDER BY
                 per.full_name,
                 st.task_name""";
+
+    static String AwaitingActionsSummarySql = """
+            select
+                st.task_name,
+                min(si.start_date)                    pending_since,
+                count(distinct si.selected_person_id) person_counts,
+                count(si.item_key)                    notification_counts
+            from
+                sc_notifications wn,
+                sc_items         si,
+                sc_tasks         st
+            where
+                    si.item_key = wn.item_key
+                and st.task_id    = si.task_id
+                and si.completion_date is null
+                and ( ( wn.more_info_user_id = :userId )
+                    or ( wn.more_info_user_id is null
+                        and wn.to_user_id = :userId ) )
+                and wn.status     = 'OPEN'
+            group by
+                st.task_name
+            order by
+                st.task_name
+            """;
 }
