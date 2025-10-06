@@ -14,6 +14,7 @@ public class CommonUtils {
             where
                 termination_date is null
                 and user_id is not null
+                and nvl(termination_date, trunc(sysdate))>= trunc(sysdate)
                 and (lower(FULL_NAME) like '%'||lower(ltrim(rtrim(:strPerson)))||'%'
                 or lower(employee_number) like '%'||lower(ltrim(rtrim(:strPerson)))||'%')
             order by

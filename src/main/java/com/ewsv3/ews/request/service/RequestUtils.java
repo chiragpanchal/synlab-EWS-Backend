@@ -95,12 +95,13 @@ public class RequestUtils {
                 mgr.user_Id,
                 mgr.full_Name,
                 mgr.email_Address,
-                usr.full_Name from_user
+                usr.full_Name from_user,
+                snc.comments
               FROM
                 sc_notifications  sn,
                 sc_notif_comments snc,
                 sc_person_v       mgr,
-                sc_person_v       usr 
+                sc_person_v       usr
              WHERE
                     sn.item_key = :itemKey
                    AND snc.notification_id = sn.notification_id
@@ -110,7 +111,7 @@ public class RequestUtils {
                 sn.notification_id,
                 usr.full_name""";
 
-    static String DestinationRostersSql= """
+    static String DestinationRostersSql = """
             select
                 per.person_id,
                 per.employee_number,

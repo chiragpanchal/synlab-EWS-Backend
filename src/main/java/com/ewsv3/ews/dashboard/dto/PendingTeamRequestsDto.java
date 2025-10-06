@@ -14,6 +14,7 @@ public record PendingTeamRequestsDto(
         LocalDateTime timeStart,
         LocalDateTime timeEnd,
         LocalDateTime startDate,
-        Long personRequestId
-) {
+        Long personRequestId,
+        Long itemKey,
+        String reason) {
 }

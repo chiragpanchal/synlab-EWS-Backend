@@ -5,8 +5,11 @@ import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.timesheets.dto.TimesheetKpi;
 import com.ewsv3.ews.timesheets.dto.TimesheetPageRequestBody;
 import com.ewsv3.ews.timesheets.dto.TimesheetPageResponseBody;
+import com.ewsv3.ews.timesheets.dto.submission.TimesheetActionReqBody;
+import com.ewsv3.ews.timesheets.dto.submission.TimesheetApprovalDates;
 import com.ewsv3.ews.timesheets.dto.submission.TimesheetApprovalReqBody;
 import com.ewsv3.ews.timesheets.dto.submission.TimesheetApprovalStatus;
+import com.ewsv3.ews.timesheets.dto.submission.TimesheetPeriodTypeReqBody;
 import com.ewsv3.ews.timesheets.dto.submission.TimesheetSubmitReqBody;
 import com.ewsv3.ews.timesheets.service.approval.TimesheetServiceApproval;
 import com.ewsv3.ews.timesheets.service.submission.TimesheetSubmissionService;
@@ -28,9 +31,10 @@ public class TimesheetSubmitController {
     private final TimesheetServiceApproval timesheetServiceApproval;
     private final JdbcClient jdbcClient;
 
-    public TimesheetSubmitController(TimesheetSubmissionService timesheetSubmissionService, JdbcClient jdbcClient) {
+    public TimesheetSubmitController(TimesheetSubmissionService timesheetSubmissionService,
+            TimesheetServiceApproval timesheetServiceApproval, JdbcClient jdbcClient) {
         this.timesheetSubmissionService = timesheetSubmissionService;
-        this.timesheetServiceApproval = new TimesheetServiceApproval();
+        this.timesheetServiceApproval = timesheetServiceApproval;
         this.jdbcClient = jdbcClient;
     }
 
@@ -53,6 +57,37 @@ public class TimesheetSubmitController {
             return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
 
         } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+    }
+
+    @PostMapping("action")
+    public ResponseEntity<DMLResponseDto> actionTimesheets(@RequestHeader Map<String, String> headers,
+            @RequestBody TimesheetActionReqBody reqBody) {
+
+        try {
+            System.out.println("action reqBody:" + reqBody);
+            DMLResponseDto dmlResponseDto = this.timesheetServiceApproval.actionTimesheets(getCurrentUserId(), reqBody);
+            return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+    }
+
+    @PostMapping("period-dates")
+    public ResponseEntity<List<TimesheetApprovalDates>> getApprovalPeriodDates(
+            @RequestBody TimesheetPeriodTypeReqBody requestBody) {
+
+        try {
+            System.out.println("period-dates requestBody: " + requestBody);
+            List<TimesheetApprovalDates> approvalDates = this.timesheetServiceApproval
+                    .getApprovalDates(getCurrentUserId(), requestBody, jdbcClient);
+            return new ResponseEntity<>(approvalDates, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("period-dates error: " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
@@ -83,6 +118,10 @@ public class TimesheetSubmitController {
             @RequestBody TimesheetPageRequestBody requestBody) {
 
         try {
+
+            System.out.println("get-timesheet-approvals-page payCodeName" + payCodeName);
+            System.out.println("get-timesheet-approvals-page requestBody" + requestBody);
+
             List<TimesheetPageResponseBody> timesheetApprovals = this.timesheetServiceApproval
                     .getTimesheetApprovalData(getCurrentUserId(),
                             page,

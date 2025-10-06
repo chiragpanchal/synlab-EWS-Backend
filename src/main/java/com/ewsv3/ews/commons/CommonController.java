@@ -19,7 +19,6 @@ import java.util.Map;
 @RequestMapping("/api/common/")
 public class CommonController {
 
-
     private final CommonService commonService;
     private final JdbcClient jdbcClient;
 
@@ -51,9 +50,11 @@ public class CommonController {
     }
 
     @PostMapping("all-person")
-    public ResponseEntity<List<PersonDtoLov>> getAllPerson(@RequestHeader Map<String, String> header, @RequestBody PersonRequestDto requestDto) {
+    public ResponseEntity<List<PersonDtoLov>> getAllPerson(@RequestHeader Map<String, String> header,
+            @RequestBody PersonRequestDto requestDto) {
 
         try {
+            System.out.println("all-person requestDto.strPerson():" + requestDto.strPerson());
             List<PersonDtoLov> personDtoLovs = this.commonService.getPerson(requestDto, this.jdbcClient);
             return new ResponseEntity<>(personDtoLovs, HttpStatus.OK);
         } catch (Exception exception) {
@@ -64,7 +65,8 @@ public class CommonController {
     }
 
     @PostMapping("all-projects")
-    public ResponseEntity<List<ProjectsDtoLov>> getAllProjects(@RequestHeader Map<String, String> header, @RequestBody ProjectRequestDto requestDto) {
+    public ResponseEntity<List<ProjectsDtoLov>> getAllProjects(@RequestHeader Map<String, String> header,
+            @RequestBody ProjectRequestDto requestDto) {
 
         try {
             List<ProjectsDtoLov> projectsDtoLovs = this.commonService.getProjects(requestDto, this.jdbcClient);
@@ -78,7 +80,8 @@ public class CommonController {
     }
 
     @PostMapping("user-from-user-id")
-    public ResponseEntity<UserProfileResponse> getUserFromUserId(@RequestHeader Map<String, String> header, @RequestBody UserIdReqDto dto) {
+    public ResponseEntity<UserProfileResponse> getUserFromUserId(@RequestHeader Map<String, String> header,
+            @RequestBody UserIdReqDto dto) {
 
         try {
             UserProfileResponse userProfileResponse = this.commonService.getUserFromUserId(dto, this.jdbcClient);
@@ -89,6 +92,5 @@ public class CommonController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
 }

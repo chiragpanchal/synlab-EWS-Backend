@@ -86,19 +86,23 @@ public class DashboardUtils {
                 spra.time_start,
                 spra.time_end,
                 si.start_date,
-                spra.person_request_id
+                spra.person_request_id,
+                spra.item_key,
+                srr.reason
               FROM
                 sc_person_requests_appr spra,
                 sc_requests_master      srm,
                 sc_items                si,
                 sc_person_v             login_user,
-                sc_person_v             per
+                sc_person_v             per,
+                sc_request_reasons      srr
              WHERE
                     spra.person_id = per.person_id
                    AND srm.request_master_id  = spra.request_master_id
                    AND si.item_key            = spra.item_key
                    AND si.completion_date IS NULL
                    AND login_user.user_id     = :userId
+                   AND srr.request_master_id (+) = spra.request_master_id
                    AND ( si.selected_person_id = login_user.person_id
                     OR si.created_by_person_id = login_user.person_id )
              ORDER BY
