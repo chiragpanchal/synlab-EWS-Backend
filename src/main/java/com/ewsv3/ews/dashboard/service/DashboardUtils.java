@@ -110,37 +110,37 @@ public class DashboardUtils {
                 per.full_name,
                 srm.request_name""";
 
-    static String AwaitingActionsSql = """
-            SELECT
-                st.task_name,
-                per.person_id,
-                per.full_name,
-                per.employee_number,
-                MIN(si.start_date)                    pending_since,
-                COUNT(DISTINCT si.selected_person_id) person_counts,
-                COUNT(si.item_key)                    notification_counts
-              FROM
-                sc_notifications wn,
-                sc_items         si,
-                sc_tasks         st,
-                sc_person_v      per
-             WHERE
-                    si.item_key = wn.item_key
-                   AND st.task_id                               = si.task_id
-                   AND per.person_id                            = si.selected_person_id
-                   AND si.completion_date IS NULL
-                   and ( ( wn.more_info_user_id = :userId )
-                                     or ( wn.more_info_user_id is null
-                                          and wn.to_user_id = :userId ) )
-                   AND wn.status                                = 'OPEN'
-             GROUP BY
-                st.task_name,
-                per.person_id,
-                per.full_name,
-                per.employee_number
-             ORDER BY
-                per.full_name,
-                st.task_name""";
+    // static String AwaitingActionsSql = """
+    // SELECT
+    // st.task_name,
+    // per.person_id,
+    // per.full_name,
+    // per.employee_number,
+    // MIN(si.start_date) pending_since,
+    // COUNT(DISTINCT si.selected_person_id) person_counts,
+    // COUNT(si.item_key) notification_counts
+    // FROM
+    // sc_notifications wn,
+    // sc_items si,
+    // sc_tasks st,
+    // sc_person_v per
+    // WHERE
+    // si.item_key = wn.item_key
+    // AND st.task_id = si.task_id
+    // AND per.person_id = si.selected_person_id
+    // AND si.completion_date IS NULL
+    // and ( ( wn.more_info_user_id = :userId )
+    // or ( wn.more_info_user_id is null
+    // and wn.to_user_id = :userId ) )
+    // AND wn.status = 'OPEN'
+    // GROUP BY
+    // st.task_name,
+    // per.person_id,
+    // per.full_name,
+    // per.employee_number
+    // ORDER BY
+    // per.full_name,
+    // st.task_name""";
 
     static String AwaitingActionsSummarySql = """
             select
@@ -165,4 +165,5 @@ public class DashboardUtils {
             order by
                 st.task_name
             """;
+
 }

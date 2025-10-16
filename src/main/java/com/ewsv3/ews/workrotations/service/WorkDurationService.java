@@ -17,39 +17,43 @@ public class WorkDurationService {
         this.jdbcClient = jdbcClient;
     }
 
-
-//    public List<WorkDuration> getWorkDurations(Long userId, WorkDurationRequestBody requestBody) {
-//        try {
-//            System.out.println("getWorkDurations > requestBody: " + requestBody);
-//            String searchText = requestBody.searchText() != null ? requestBody.searchText() : "";
-//            String activeOnly = requestBody.activeOnly() != null ? requestBody.activeOnly() : "N";
-//
-//            System.out.println("getWorkDurations service > searchText: " + searchText);
-//            System.out.println("getWorkDurations service > activeOnly: " + activeOnly);
-//            Long workDurationId = (requestBody.workDurationId() != null && requestBody.workDurationId() == 0) ? null
-//                    : requestBody.workDurationId();
-//
-//            System.out.println("getWorkDurations service > workDurationId: " + workDurationId);
-//
-//            List<WorkDuration> list = jdbcClient
-//                    .sql(workrotationsUtils.GetWorkDurationSql)
-//                    .param("workDurationId", workDurationId)
-//                    .param("searchText", "%" + searchText.toLowerCase() + "%")
-//                    .param("searchText", "%" + searchText.toLowerCase() + "%")
-//                    .param("activeOnly", activeOnly)
-//                    .param("activeOnly", activeOnly)
-//                    .query(WorkDuration.class)
-//                    .list();
-//
-//            System.out.println("getWorkDurations service > result count: " + list.size());
-//            return list;
-//        } catch (Exception e) {
-//            System.out.println("Error getWorkDurations service : " + e.getMessage());
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
-
+    // public List<WorkDuration> getWorkDurations(Long userId,
+    // WorkDurationRequestBody requestBody) {
+    // try {
+    // System.out.println("getWorkDurations > requestBody: " + requestBody);
+    // String searchText = requestBody.searchText() != null ?
+    // requestBody.searchText() : "";
+    // String activeOnly = requestBody.activeOnly() != null ?
+    // requestBody.activeOnly() : "N";
+    //
+    // System.out.println("getWorkDurations service > searchText: " + searchText);
+    // System.out.println("getWorkDurations service > activeOnly: " + activeOnly);
+    // Long workDurationId = (requestBody.workDurationId() != null &&
+    // requestBody.workDurationId() == 0) ? null
+    // : requestBody.workDurationId();
+    //
+    // System.out.println("getWorkDurations service > workDurationId: " +
+    // workDurationId);
+    //
+    // List<WorkDuration> list = jdbcClient
+    // .sql(workrotationsUtils.GetWorkDurationSql)
+    // .param("workDurationId", workDurationId)
+    // .param("searchText", "%" + searchText.toLowerCase() + "%")
+    // .param("searchText", "%" + searchText.toLowerCase() + "%")
+    // .param("activeOnly", activeOnly)
+    // .param("activeOnly", activeOnly)
+    // .query(WorkDuration.class)
+    // .list();
+    //
+    // System.out.println("getWorkDurations service > result count: " +
+    // list.size());
+    // return list;
+    // } catch (Exception e) {
+    // System.out.println("Error getWorkDurations service : " + e.getMessage());
+    // e.printStackTrace();
+    // return null;
+    // }
+    // }
 
     public List<WorkDuration> getWorkDurations(Long userId, WorkDurationRequestBody requestBody) {
 
@@ -60,15 +64,16 @@ public class WorkDurationService {
 
             System.out.println("getWorkDurations service > searchText: " + searchText);
             System.out.println("getWorkDurations service > activeOnly: " + activeOnly);
-//            Long workDurationId = (requestBody.workDurationId() != null && requestBody.workDurationId() == 0) ? null
-//                    : requestBody.workDurationId();
+            // Long workDurationId = (requestBody.workDurationId() != null &&
+            // requestBody.workDurationId() == 0) ? null
+            // : requestBody.workDurationId();
 
             System.out.println("getWorkDurations service > workDurationId: " + requestBody.workDurationId());
 
-             Map<String, Object> params = Map.of(
-             "workDurationId",requestBody.workDurationId(),
-             "searchText", "%" + searchText + "%",
-             "activeOnly", activeOnly);
+            Map<String, Object> params = Map.of(
+                    "workDurationId", requestBody.workDurationId(),
+                    "searchText", "%" + searchText + "%",
+                    "activeOnly", activeOnly);
 
             System.out.println("getWorkDurations service > params: " + params);
 
@@ -92,7 +97,7 @@ public class WorkDurationService {
         System.out.println("getWorkRotations service > requestBody: " + requestBody);
         List<WorkRotation> list = jdbcClient
                 .sql(workrotationsUtils.GetWorkRotationSql)
-//                .param("workRotationId", requestBody.workRotationId())
+                // .param("workRotationId", requestBody.workRotationId())
                 .param("workRotationId", requestBody.workRotationId() != null ? requestBody.workRotationId() : 0)
                 .query(WorkRotation.class)
                 .list();
@@ -249,7 +254,7 @@ public class WorkDurationService {
         System.out.println("Saving new WorkRotation: iteration: " + iterationForDb);
 
         System.out.println("Saving new WorkRotation: iterationForDb: " + iterationForDb);
-        if (workRotation.workRotationId() == null || workRotation.workRotationId() == 0 ) { // inserting
+        if (workRotation.workRotationId() == null || workRotation.workRotationId() == 0) { // inserting
             // Logic to insert a new WorkRotation
             System.out.println("Saving new WorkRotation: " + workRotation);
 

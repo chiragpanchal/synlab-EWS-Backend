@@ -1,8 +1,11 @@
 package com.ewsv3.ews.request.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.request.dto.*;
 import com.ewsv3.ews.request.service.RequestService;
+import com.ewsv3.ews.timesheets.dto.submission.TimesheetActionReqBody;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -52,7 +55,7 @@ public class RequestController {
     @PostMapping("person-requests")
     @CrossOrigin
     public ResponseEntity<List<RequestResp>> getRequests(@RequestHeader Map<String, String> headers,
-                                                         @RequestBody PersonRequestReqBody reqBody) {
+            @RequestBody PersonRequestReqBody reqBody) {
 
         try {
             Long userId = getCurrentUserId();
@@ -96,17 +99,17 @@ public class RequestController {
                 System.out.println("Extracted error: " + extracted);
             }
 
-//            String regex = "~~(.*?)~~";
-//            String errorText = "";
-//            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
-//            java.util.regex.Matcher matcher = pattern.matcher(exception.getMessage());
-//
-//            if (matcher.find()) {
-//                // Extracting the string between `~~`
-//                errorText = matcher.group(1);
-//            } else {
-//                errorText = exception.getMessage();
-//            }
+            // String regex = "~~(.*?)~~";
+            // String errorText = "";
+            // java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
+            // java.util.regex.Matcher matcher = pattern.matcher(exception.getMessage());
+            //
+            // if (matcher.find()) {
+            // // Extracting the string between `~~`
+            // errorText = matcher.group(1);
+            // } else {
+            // errorText = exception.getMessage();
+            // }
 
             return new ResponseEntity<>(extracted, HttpStatus.BAD_REQUEST);
         }
@@ -137,20 +140,56 @@ public class RequestController {
 
     @GetMapping("dest-rosters")
     @CrossOrigin
-    public ResponseEntity<List<DestinationRosterResponseBody>> getDestinationRosters(@RequestHeader Map<String, String> headers,
-                                                                     @RequestBody DestinationRosterReqBody reqBody) {
+    public ResponseEntity<List<DestinationRosterResponseBody>> getDestinationRosters(
+            @RequestHeader Map<String, String> headers,
+            @RequestBody DestinationRosterReqBody reqBody) {
 
         System.out.println("getDestinationRosters reqBody:" + reqBody);
 
         try {
 
-            List<DestinationRosterResponseBody> destinationRosters = this.requestService.getDestinationRosters(reqBody, this.jdbcClient);
+            List<DestinationRosterResponseBody> destinationRosters = this.requestService.getDestinationRosters(reqBody,
+                    this.jdbcClient);
             return new ResponseEntity<>(destinationRosters, HttpStatus.OK);
 
         } catch (Exception exception) {
             System.out.println("getRequests > exception:" + exception.getMessage());
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @GetMapping("request-notifications")
+    @CrossOrigin
+    public ResponseEntity<List<RequestNotificationResponse>> getRequestNotifications(
+            @RequestHeader Map<String, String> headers) {
+
+        System.out.println("start request-notifications");
+
+        try {
+            List<RequestNotificationResponse> requestNotifications = this.requestService
+                    .getRequestNotifications(getCurrentUserId(), jdbcClient);
+            return new ResponseEntity<>(requestNotifications, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            System.out.println("request-notifications > exception:" + exception.getMessage());
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("request-action")
+    public ResponseEntity<DMLResponseDto> actionTimesheets(@RequestHeader Map<String, String> headers,
+            @RequestBody RequestActionReqBody reqBody) {
+
+        try {
+            System.out.println("action reqBody:" + reqBody);
+            DMLResponseDto dmlResponseDto = this.requestService.actionRequests(getCurrentUserId(), reqBody);
+            return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
     }

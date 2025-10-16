@@ -1,6 +1,9 @@
 package com.ewsv3.ews.request.service;
 
+import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.request.dto.*;
+import com.ewsv3.ews.timesheets.dto.submission.TimesheetActionReqBody;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SqlInOutParameter;
 import org.springframework.jdbc.core.SqlOutParameter;
@@ -21,7 +24,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.ewsv3.ews.request.service.RequestUtils.*;
 
-
 @Service
 public class RequestService {
 
@@ -35,7 +37,7 @@ public class RequestService {
         // Try with schema specification and enable debugging
         this.simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate)
                 .withProcedureName("SC_PERSON_REQUESTS_P")
-                .withoutProcedureColumnMetaDataAccess();  // Disable metadata access to avoid discovery issues
+                .withoutProcedureColumnMetaDataAccess(); // Disable metadata access to avoid discovery issues
     }
 
     // @PostConstruct
@@ -187,15 +189,15 @@ public class RequestService {
                 cs.setString(23, reqBody.comments()); // p_comments
                 cs.setString(24, "INS"); // p_dml_mode
                 cs.setObject(25, reqBody.requestReasonId(), Types.NUMERIC);
-//                if (reqBody.requestReasonId() != null) {
-//                    cs.setLong(25, reqBody.requestReasonId()); // p_request_reason_id
-//                } else {
-//                    cs.setNull(25, Types.NUMERIC);
-//                }
+                // if (reqBody.requestReasonId() != null) {
+                // cs.setLong(25, reqBody.requestReasonId()); // p_request_reason_id
+                // } else {
+                // cs.setNull(25, Types.NUMERIC);
+                // }
                 cs.setNull(26, Types.TIMESTAMP); // p_new_time_start
                 cs.setNull(27, Types.TIMESTAMP); // p_new_time_end
                 cs.setObject(28, reqBody.sPersonRosterId(), Types.NUMERIC);
-//                cs.setNull(28, Types.NUMERIC); // p_s_person_roster_id
+                // cs.setNull(28, Types.NUMERIC); // p_s_person_roster_id
                 cs.setNull(29, Types.NUMERIC); // p_d_person_roster_id
 
                 // Register OUT parameters
@@ -227,7 +229,6 @@ public class RequestService {
 
         } catch (Exception e) {
 
-
             System.out.println("Error calling stored procedure: " + e.getMessage());
             throw new RuntimeException("Failed to create request:" + e.getMessage(), e);
         }
@@ -242,13 +243,93 @@ public class RequestService {
 
     }
 
-    public List<DestinationRosterResponseBody> getDestinationRosters(DestinationRosterReqBody reqBody, JdbcClient jdbcClient) {
+    public List<DestinationRosterResponseBody> getDestinationRosters(DestinationRosterReqBody reqBody,
+            JdbcClient jdbcClient) {
         Map<String, Object> reqApprovalMap = new HashMap<>();
         reqApprovalMap.put("personRosterId", reqBody.personRosterId());
-        List<DestinationRosterResponseBody> rosterResponseBodyList = jdbcClient.sql(DestinationRostersSql).params(reqApprovalMap)
+        List<DestinationRosterResponseBody> rosterResponseBodyList = jdbcClient.sql(DestinationRostersSql)
+                .params(reqApprovalMap)
                 .query(DestinationRosterResponseBody.class).list();
 
         return rosterResponseBodyList;
+    }
+
+    public List<RequestNotificationResponse> getRequestNotifications(Long userId, JdbcClient jdbcClient) {
+
+        List<RequestNotificationResponse> list = jdbcClient.sql(UserPendingNotifications)
+                .param("userId", userId)
+                .query(RequestNotificationResponse.class)
+                .list();
+
+        return list;
+    }
+
+    public DMLResponseDto actionRequests(Long userId, RequestActionReqBody reqBody) {
+
+        final AtomicReference<String>[] errorMessage = new AtomicReference[] { new AtomicReference<>("") };
+        final int[] recCounts = { 0 };
+
+        Map<String, Object> inParamMap = new HashMap<>();
+        inParamMap.put("p_user_id", userId);
+        inParamMap.put("p_person_id", reqBody.personId());
+        inParamMap.put("p_item_key", reqBody.itemKey());
+        inParamMap.put("p_request_name", reqBody.requestName());
+        inParamMap.put("p_reason", reqBody.reason());
+        inParamMap.put("p_from_action", reqBody.fromAction());
+        inParamMap.put("p_fwd_user_id", reqBody.fwdUserId());
+        inParamMap.put("p_rmi_user_id", reqBody.rmiUserId());
+        inParamMap.put("p_comments", reqBody.comments());
+
+        SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+        System.out.println(inSource);
+        inParamMap.clear();
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_BULK_REQUEST_ACTIONS_P");
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+        System.out.println("actionRequests simpleJdbcCallResult :" + simpleJdbcCallResult);
+
+        AtomicReference<Object> sMessage = new AtomicReference<>();
+
+        simpleJdbcCallResult.forEach((s, o) -> {
+            System.out.println(s);
+            System.out.println(o);
+
+            if (s.equals("P_OUT")) {
+                String strMessage = o.toString();
+                System.out.println("actionRequests strMessage:" + strMessage);
+                sMessage.set(o);
+            }
+        });
+
+        if (sMessage.get() != null) {
+            System.out.println("actionRequests sMessage.get():" + sMessage.get());
+            String messageString = sMessage.get().toString();
+
+            String flag = messageString.substring(0, 1);
+            System.out.println("flag:" + flag);
+            if (flag.equals("E")) {
+                errorMessage[0].set(messageString.length() > 1000 ? messageString.substring(0, 1000)
+                        : messageString);
+            } else {
+                String[] parts = messageString.split("#");
+                if (parts.length > 1) {
+                    recCounts[0] = recCounts[0] + Integer.parseInt(parts[1]);
+                    System.out.println("actionRequests recCounts:" + recCounts[0]);
+                }
+            }
+        }
+
+        if (errorMessage[0].get().isEmpty()) {
+            if (recCounts[0] == 0) {
+                return new DMLResponseDto("S", "No Requests submitted");
+            } else {
+                return new DMLResponseDto("S", recCounts[0] + " requests submitted successfully");
+            }
+
+        } else {
+            return new DMLResponseDto("E", recCounts[0] + errorMessage[0].get());
+        }
+
     }
 
 }

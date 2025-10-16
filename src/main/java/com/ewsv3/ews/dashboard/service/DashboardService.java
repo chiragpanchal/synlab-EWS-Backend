@@ -84,20 +84,23 @@ public class DashboardService {
 
         }
 
-        public List<AwaitingActionsDto> getAwaitingActions(long userId, JdbcClient jdbcClient) {
+        // public List<AwaitingActionsDto> getAwaitingActions(long userId, JdbcClient
+        // jdbcClient) {
 
-                Map<String, Object> personDateMap = new HashMap<>();
-                personDateMap.put("userId", userId);
+        // Map<String, Object> personDateMap = new HashMap<>();
+        // personDateMap.put("userId", userId);
 
-                // get open requests counts;
-                List<AwaitingActionsDto> awaitingActionsDtos = jdbcClient.sql(AwaitingActionsSql).params(personDateMap)
-                                .query(AwaitingActionsDto.class).list();
+        // // get open requests counts;
+        // List<AwaitingActionsDto> awaitingActionsDtos =
+        // jdbcClient.sql(AwaitingActionsSql).params(personDateMap)
+        // .query(AwaitingActionsDto.class).list();
 
-                System.out.println("getAwaitingActions awaitingActionsDtos:" + awaitingActionsDtos);
+        // System.out.println("getAwaitingActions awaitingActionsDtos:" +
+        // awaitingActionsDtos);
 
-                return awaitingActionsDtos;
+        // return awaitingActionsDtos;
 
-        }
+        // }
 
         public List<AwaitingActionsSummaryDto> getAwaitingActionsSummary(long userId, JdbcClient jdbcClient) {
 
