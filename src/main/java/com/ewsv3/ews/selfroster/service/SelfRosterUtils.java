@@ -2,7 +2,7 @@ package com.ewsv3.ews.selfroster.service;
 
 public class SelfRosterUtils {
 
-    static String sqlGetSelfRosters = """
+    public static String sqlGetSelfRosters = """
             select
                 sr.self_roster_id,
                 sr.from_date,
@@ -28,7 +28,7 @@ public class SelfRosterUtils {
                 self_roster_id
                 """;
 
-    static String sqlGetSelfRosterLines = """
+    public static String sqlGetSelfRosterLines = """
             select
                     self_roster_line_id,
                     self_roster_id,
@@ -58,5 +58,36 @@ public class SelfRosterUtils {
                     srl.self_roster_id = :selfRosterId""";
 
     static String sqlGetSelfRosterApprovals = "";
+
+    public static String sqlSelfRosterDepartmentList = """
+            select
+                sd.department_id,
+                sd.department_name
+            from
+                sc_person_preferred_cc pc,
+                sc_departments         sd,
+                sc_person_v            per
+            where
+                    sd.department_id = pc.cost_center_id
+                and pc.person_id = per.person_id
+                and per.user_id = :userId""";
+
+    public static String sqlSelfRosterJobList = """
+            select
+                sj.job_title_id,
+                sj.job_title,
+                pj.per_hr_sal,
+                sc.currency_code,
+                pj.pay_code_id
+            from
+                sc_person_preferred_jobs pj,
+                sc_jobs                  sj,
+                sc_currencies            sc,
+                sc_person_v            per
+            where
+                    sj.job_title_id = pj.job_title_id
+                and pj.person_id = per.person_id
+                and sc.currency_id=pj.currency_id
+                and per.user_id = :userId""";
 
 }
