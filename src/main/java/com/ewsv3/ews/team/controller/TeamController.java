@@ -2,6 +2,7 @@ package com.ewsv3.ews.team.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.team.dto.*;
+import com.ewsv3.ews.team.service.LeaveService;
 import com.ewsv3.ews.team.service.TeamService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,10 +23,12 @@ public class TeamController {
 
     private final JdbcClient jdbcClient;
     private final TeamService teamService;
+    private final LeaveService leaveService;
 
-    public TeamController(JdbcClient jdbcClient, TeamService teamService) {
+    public TeamController(JdbcClient jdbcClient, TeamService teamService, LeaveService leaveService) {
         this.jdbcClient = jdbcClient;
         this.teamService = teamService;
+        this.leaveService = leaveService;
     }
 
     private Long getCurrentUserId() {
@@ -37,14 +40,13 @@ public class TeamController {
         throw new RuntimeException("User not authenticated or invalid token");
     }
 
-
     @GetMapping("team-timecards-simple")
     public ResponseEntity<List<TeamTimecardSimple>> getTeamTimecardsSimple(@RequestHeader Map<String, String> headers,
-                                                                           @RequestParam(defaultValue = "0") int page,
-                                                                           @RequestParam(defaultValue = "100") int size,
-                                                                           @RequestParam(defaultValue = "") String text,
-                                                                           @RequestParam(defaultValue = "") String filterFlag,
-                                                                           @RequestBody ProfileDatesRequestBody requestBody) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(defaultValue = "") String text,
+            @RequestParam(defaultValue = "") String filterFlag,
+            @RequestBody ProfileDatesRequestBody requestBody) {
 
         System.out.println("getTeamTimecardsSimple > page:" + page);
         System.out.println("getTeamTimecardsSimple > size:" + size);
@@ -77,7 +79,7 @@ public class TeamController {
 
     @PostMapping("timecards")
     public ResponseEntity<TeamMembersResponse> getTeamTimecards(@RequestHeader Map<String, String> headers,
-                                                                @RequestBody ProfileDatesRequestBody requestBody) {
+            @RequestBody ProfileDatesRequestBody requestBody) {
 
         try {
             System.out.println("getTeamTimecards > requestBody:" + requestBody);
@@ -177,6 +179,24 @@ public class TeamController {
 
         } catch (Exception exception) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("person-leaves")
+    public ResponseEntity<List<PersonLeaveDto>> getPersonLeaves(
+            @RequestHeader Map<String, String> headers,
+            @RequestBody ProfileDatesRequestBody requestBody) {
+
+        try {
+            System.out.println("person-leaves requestBody:" + requestBody);
+            List<PersonLeaveDto> personLeaves = this.leaveService.getPersonLeaves(getCurrentUserId(), requestBody,
+                    jdbcClient);
+            return new ResponseEntity<>(personLeaves, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            System.out.println("person-leaves ERROR:" + exception.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
     }

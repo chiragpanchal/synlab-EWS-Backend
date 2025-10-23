@@ -22,6 +22,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.ewsv3.ews.rosters.service.utils.RosterSql.*;
@@ -427,7 +428,8 @@ public class RosterService {
                     inParamMap.put("p_person_roster_id", requestBody.personRosterId());
 
                     SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-                    System.out.println(inSource);
+                    System.out.println("createSpotRoster requestBody.personRosterId()" + requestBody.personRosterId());
+                    System.out.println("createSpotRoster inSource" + inSource);
                     // simpleJdbcCall = new
                     // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
                     simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_SPOT_ROSTER_P");
@@ -988,7 +990,7 @@ public class RosterService {
 
         System.out.println("dragDropPersonRoster: reqBody:" + reqBody);
 
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DRAP_DRAP_ROSTERS_P");
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DRAG_DROP_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
         inParamMap.put("p_user_id", userId);
@@ -1031,10 +1033,85 @@ public class RosterService {
             responseDto.setDetailMessage(errorMessage.get());
         } else {
             responseDto.setStatusMessage("S");
-            responseDto.setDetailMessage(String.valueOf(transCounts.get()) + " schedule replaced successfully!");
+            if (transCounts.get() == 0) {
+                responseDto.setDetailMessage("No schedule replaced.");
+            } else {
+                responseDto.setDetailMessage(String.valueOf(transCounts.get()) + " schedule replaced successfully!");
+            }
+
         }
 
         inParamMap.clear();
+
+        return responseDto;
+
+    }
+
+    public RosterDMLResponseDto quickCopyPersonRoster(Long userId, QuickCopyReqBody reqBody, JdbcClient jdbcClient) {
+
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+        AtomicReference<String> errorMessage = new AtomicReference<>("");
+        AtomicInteger transCounts = new AtomicInteger();
+
+        System.out.println("quickCopyPersonRoster: reqBody:" + reqBody);
+
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_QUICK_COPY_ROSTERS_P");
+        Map<String, Object> inParamMap = new HashMap<>();
+
+        List<QuickCopyPersonDateReqBody> collepersonDateReqBodiesct = reqBody.quickCopyPersonDateReqBodies().stream()
+                .collect(Collectors.toList());
+
+        for (QuickCopyPersonDateReqBody personDate : collepersonDateReqBodiesct) {
+            inParamMap.put("p_user_id", userId);
+            inParamMap.put("p_person_roster_id", reqBody.personRosterId());
+            inParamMap.put("p_person_id", personDate.personId());
+            inParamMap.put("p_effective_date", personDate.effectiveDate());
+
+            SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+            System.out.println(inSource);
+            Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+            AtomicReference<Object> sMessage = new AtomicReference<>();
+
+            simpleJdbcCallResult.forEach((s, o) -> {
+                System.out.println(s);
+                System.out.println(o);
+
+                if (s.equals("P_OUT")) {
+                    String strMessage = o.toString();
+                    System.out.println("strMessage:" + strMessage);
+                    sMessage.set(o);
+                }
+            });
+
+            System.out.println("sMessage.get():" + sMessage.get());
+            String messageString = sMessage.get().toString();
+
+            String flag = messageString.substring(0, 1);
+            System.out.println("flag:" + flag);
+            if (flag.equals("E")) {
+                errorMessage.set(messageString.substring(2));
+            } else {
+                // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
+                transCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
+                System.out.println("transCounts:" + transCounts);
+            }
+
+            if (!errorMessage.get().isEmpty()) {
+                responseDto.setStatusMessage("E");
+                responseDto.setDetailMessage(errorMessage.get());
+                return responseDto;
+            }
+
+            inParamMap.clear();
+        }
+
+        responseDto.setStatusMessage("S");
+        if (transCounts.get() == 0) {
+            responseDto.setDetailMessage("No schedule copied.");
+        } else {
+            responseDto.setDetailMessage(String.valueOf(transCounts.get()) + " schedule copied successfully!");
+        }
 
         return responseDto;
 

@@ -370,4 +370,25 @@ public class RosterController {
 
     }
 
+    @PostMapping("/quick-copy")
+    @CrossOrigin
+    public ResponseEntity<RosterDMLResponseDto> quickCopyPersonRoster(@RequestHeader Map<String, String> header,
+            @RequestBody QuickCopyReqBody requestBody) {
+        try {
+            System.out.println("quick-copy > getCurrentUserId():" + getCurrentUserId());
+            System.out.println("quick-copy > requestBody:" + requestBody);
+
+            RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.quickCopyPersonRoster(
+                    getCurrentUserId(),
+                    requestBody,
+                    jdbcClient);
+            return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
+        } catch (Exception exception) {
+            System.out.println(exception.getMessage());
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
 }
