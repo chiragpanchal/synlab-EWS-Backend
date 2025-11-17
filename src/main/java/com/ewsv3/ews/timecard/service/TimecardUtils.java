@@ -23,7 +23,7 @@ public class TimecardUtils {
                 st.in_time,
                 st.out_time,
                 st.act_hrs,
-                st.time_type,
+                (lv.absence_name ||'-'|| ph.holiday_name) time_type,
                 nvl(st.primary_row,'N') primary_row,
                 st.violation_code,
                 sw.work_duration_code,
@@ -42,7 +42,9 @@ public class TimecardUtils {
                 sc_departments    sd,
                 sc_jobs           sj,
                 sc_work_locations sl,
-                sc_work_duration  sw
+                sc_work_duration  sw,
+                sc_person_absences_t lv,
+                sc_person_holidays ph
             WHERE
                     st.person_id = :person_id
                 AND effective_date BETWEEN :start_date AND :end_date
@@ -51,6 +53,10 @@ public class TimecardUtils {
                 AND sl.work_location_id (+) = st.work_location_id
                 AND nvl(st.primary_row,'N') = 'Y'
                 AND sw.work_duration_id (+) = st.work_duration_id
+                AND lv.person_id(+) = st.person_Id
+                AND lv.leave_date(+) = st.effective_date
+                AND ph.person_id(+) = st.person_Id
+                AND ph.holiday_date(+) = st.effective_date
             ORDER BY
                 st.effective_date, st.sch_time_start, st.in_time""";
 

@@ -144,7 +144,7 @@ public class TeamUtils {
                 st.in_time,
                 st.out_time,
                 st.act_hrs,
-                st.time_type,
+                (lv.absence_name ||'-'|| ph.holiday_name) time_type,
                 nvl(st.primary_row,'N') primary_row,
                 st.violation_code,
                 swd.work_duration_code
@@ -155,7 +155,9 @@ public class TeamUtils {
                 sc_work_locations sl,
                 sc_timekeeper_person_v tkv,
                 sc_person_rosters spr,
-                sc_work_duration  swd
+                sc_work_duration  swd,
+                sc_person_absences_t lv,
+                sc_person_holidays ph
             WHERE  tkv.timekeeper_user_id = :userId
                 AND tkv.profile_id = :profileId
                 AND st.person_id = tkv.person_id
@@ -166,6 +168,10 @@ public class TeamUtils {
                 AND nvl(st.primary_row,'N') = 'Y'
                 AND spr.person_roster_id (+) = st.person_roster_id
                 AND swd.work_duration_id (+) = spr.work_duration_id
+                AND lv.person_id(+) = st.person_Id
+                AND lv.leave_date(+) = st.effective_date
+                AND ph.person_id(+) = st.person_Id
+                AND ph.holiday_date(+) = st.effective_date
             """;
 
     static String MemberAllTimecardActualsSql =

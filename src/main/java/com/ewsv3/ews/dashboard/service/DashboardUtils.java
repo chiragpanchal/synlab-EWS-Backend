@@ -72,9 +72,136 @@ public class DashboardUtils {
             ORDER BY
                 tkv.person_name,
                 tkv.employee_number)
-                """;
+            """;
 
     static String PendingTeamRequestsSql = """
+            select
+                request_name,
+                person_id,
+                user_id,
+                full_name,
+                employee_number,
+                date_start,
+                date_end,
+                time_start,
+                time_end,
+                start_date,
+                person_request_id,
+                item_key,
+                reason,
+                comments,
+                listagg(to_char(
+                    sch_time_start,
+                    'hh:mi am'
+                )
+                        || ' - '
+                        || to_char(
+                    sch_time_end,
+                    'hh:mi am'
+                ),
+                        ', ') within group(
+                order by
+                    sch_time_end
+                ) schedules,
+                listagg(punch_lines,
+                        ', ') within group(
+                order by
+                    punch_lines
+                ) punches,
+                listagg(violation_code,
+                        ', ') within group(
+                order by
+                    violation_code
+                ) violation_code
+            from
+                (
+                    select
+                        srm.request_name,
+                        per.person_id,
+                        per.user_id,
+                        per.full_name,
+                        per.employee_number,
+                        spra.date_start,
+                        spra.date_end,
+                        spra.time_start,
+                        spra.time_end,
+                        si.start_date,
+                        spra.person_request_id,
+                        spra.item_key,
+                        srr.reason,
+                        spra.comments,
+                        sch_time_start,
+                        sch_time_end,
+                        (
+                            select
+                                listagg(to_char(
+                                    in_time,
+                                    'hh:mi am'
+                                )
+                                        || ' - '
+                                        || to_char(
+                                    out_time,
+                                    'hh:mi am'
+                                ),
+                                        ', ') within group(
+                                order by
+                                    in_time
+                                )
+                            from
+                                sc_timecards st2
+                            where
+                                    st2.person_id = per.person_id
+                                and st2.person_roster_id = st.person_roster_id
+                                and st2.absence_attendances_id is null
+                                and st2.holiday_id is null
+                                and st2.person_request_id is null
+                        ) punch_lines,
+                        st.violation_code
+                    from
+                        sc_person_requests_appr spra,
+                        sc_requests_master      srm,
+                        sc_items                si,
+                        sc_person_v             login_user,
+                        sc_person_v             per,
+                        sc_request_reasons      srr,
+                        sc_timecards            st
+                    where
+                            spra.person_id = per.person_id
+                        and srm.request_master_id     = spra.request_master_id
+                        and si.item_key               = spra.item_key
+                        and si.completion_date is null
+                        and login_user.user_id        = :userId
+                        and srr.request_master_id (+) = spra.request_master_id
+                        and st.person_id              = spra.person_id
+                        and st.effective_date         = spra.date_start
+                        and st.primary_row            = 'Y'
+                        and ( si.selected_person_id = login_user.person_id
+                              or si.created_by_person_id    = login_user.person_id )
+                    order by
+                        si.start_date desc,
+                        per.full_name,
+                        srm.request_name
+                )
+            group by
+                request_name,
+                person_id,
+                user_id,
+                full_name,
+                employee_number,
+                date_start,
+                date_end,
+                time_start,
+                time_end,
+                start_date,
+                person_request_id,
+                item_key,
+                reason,
+                comments
+            order by
+                start_date desc
+            """;
+
+    static String PendingTeamRequestsSqlOLD = """
             SELECT
                 srm.request_name,
                 per.person_id,
@@ -88,7 +215,8 @@ public class DashboardUtils {
                 si.start_date,
                 spra.person_request_id,
                 spra.item_key,
-                srr.reason
+                srr.reason,
+                spra.comments
               FROM
                 sc_person_requests_appr spra,
                 sc_requests_master      srm,

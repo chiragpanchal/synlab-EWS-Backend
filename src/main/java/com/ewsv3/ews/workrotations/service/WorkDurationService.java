@@ -1,5 +1,6 @@
 package com.ewsv3.ews.workrotations.service;
 
+import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.workrotations.dto.*;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -127,7 +128,7 @@ public class WorkDurationService {
             throw new IllegalArgumentException("WorkDuration cannot be null");
         }
 
-        if (workDuration.workDurationId() == null) { // inserting
+        if (workDuration.workDurationId() == null || workDuration.workDurationId() == 0) { // inserting
             // Logic to insert a new WorkDuration
             System.out.println("Saving new WorkDuration: " + workDuration);
 
@@ -332,7 +333,7 @@ public class WorkDurationService {
             throw new IllegalArgumentException("WorkRotationLine cannot be null");
         }
 
-        if (workRotationLine.workRotationLineId() == null) { // inserting
+        if (workRotationLine.workRotationLineId() == null || workRotationLine.workRotationLineId() ==0 ) { // inserting
             // Logic to insert a new WorkRotationLine
             System.out.println("Saving new WorkRotationLine: " + workRotationLine);
 
@@ -408,6 +409,7 @@ public class WorkDurationService {
                 .update();
 
         System.out.println("Deleted WorkRotationLine, delCounts: " + delCounts);
+
 
         return delCounts; // Return the deleted WorkRotationLine object
     }

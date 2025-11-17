@@ -16,5 +16,9 @@ public record PendingTeamRequestsDto(
         LocalDateTime startDate,
         Long personRequestId,
         Long itemKey,
-        String reason) {
+        String reason,
+        String comments,
+        String schedules,
+        String punches,
+        String violation_code) {
 }

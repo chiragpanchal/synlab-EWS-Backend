@@ -1,17 +1,16 @@
 package com.ewsv3.ews.workrotations.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.workrotations.dto.*;
 import com.ewsv3.ews.workrotations.service.WorkDurationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rostersettings/")
@@ -19,7 +18,7 @@ public class WorkDurationController {
 
     private final WorkDurationService workDurationService;
 
-    public WorkDurationController( WorkDurationService workDurationService) {
+    public WorkDurationController(WorkDurationService workDurationService) {
         this.workDurationService = workDurationService;
     }
 
@@ -34,7 +33,7 @@ public class WorkDurationController {
     }
 
     @PostMapping("/workdurations")
-    public ResponseEntity<?> getWorkDurations(@RequestBody WorkDurationRequestBody requestBody) {
+    public ResponseEntity<?> getWorkDurations(@RequestHeader Map<String, String> header, @RequestBody WorkDurationRequestBody requestBody) {
 
         try {
 
@@ -52,7 +51,7 @@ public class WorkDurationController {
     }
 
     @PostMapping("/workrotations")
-    public ResponseEntity<?> getWorkRotations(@RequestBody WorkRotationRequestBody requestBody) {
+    public ResponseEntity<?> getWorkRotations(@RequestHeader Map<String, String> header, @RequestBody WorkRotationRequestBody requestBody) {
         try {
             System.out.println("getWorkRotations requestBody: " + requestBody);
             List<WorkRotation> list = workDurationService.getWorkRotations(getCurrentUserId(), requestBody);
@@ -66,6 +65,7 @@ public class WorkDurationController {
 
     @PostMapping("/workrotationlines")
     public ResponseEntity<?> getWorkRotationLines(
+            @RequestHeader Map<String, String> header,
             @RequestBody WorkRotationLineRequestDto requestBody) {
         try {
             List<WorkRotationLine> list = workDurationService.getWorkRotationLines(getCurrentUserId(),
@@ -80,7 +80,7 @@ public class WorkDurationController {
     }
 
     @PostMapping("/saveworkduration")
-    public ResponseEntity<?> saveWorkDuration(@RequestBody WorkDuration workDuration) {
+    public ResponseEntity<?> saveWorkDuration(@RequestHeader Map<String, String> header, @RequestBody WorkDuration workDuration) {
         try {
             WorkDuration savedWorkDuration = workDurationService.saveWorkDuration(getCurrentUserId(), workDuration);
             return ResponseEntity.ok(savedWorkDuration);
@@ -95,7 +95,7 @@ public class WorkDurationController {
     }
 
     @PostMapping("/saveworkrotation")
-    public ResponseEntity<?> saveWorkRotation(@RequestBody WorkRotation workRotation) {
+    public ResponseEntity<?> saveWorkRotation(@RequestHeader Map<String, String> header, @RequestBody WorkRotation workRotation) {
         try {
             System.out.println("Saving work rotation: " + workRotation);
             WorkRotation savedWorkRotation = workDurationService.saveWorkRotation(getCurrentUserId(), workRotation);
@@ -111,7 +111,7 @@ public class WorkDurationController {
     }
 
     @PostMapping("/deleteworkrotation")
-    public ResponseEntity<?> deleteWorkRotation(@RequestBody WorkRotation workRotation) {
+    public ResponseEntity<?> deleteWorkRotation(@RequestHeader Map<String, String> header, @RequestBody WorkRotation workRotation) {
         try {
             Integer delCounts = workDurationService.deleteWorkRotation(getCurrentUserId(), workRotation);
             return ResponseEntity.ok(delCounts);
@@ -126,9 +126,9 @@ public class WorkDurationController {
     }
 
     @PostMapping("/saveworkrotationline")
-    public ResponseEntity<?> saveWorkRotationLine(@RequestBody WorkRotationLine workRotationLine) {
+    public ResponseEntity<?> saveWorkRotationLine(@RequestHeader Map<String, String> header, @RequestBody WorkRotationLine workRotationLine) {
         try {
-            
+
             System.out.println("Saving work rotation line: " + workRotationLine);
             WorkRotationLine savedWorkRotationLine = workDurationService.saveWorkRotationLine(getCurrentUserId(),
                     workRotationLine);
@@ -145,11 +145,12 @@ public class WorkDurationController {
     }
 
     @PostMapping("/deleteworkrotationline")
-    public ResponseEntity<?> deleteWorkRotationLine(@RequestBody WorkRotationLine workRotationLine) {
+    public ResponseEntity<?> deleteWorkRotationLine(@RequestHeader Map<String, String> header, @RequestBody WorkRotationLine workRotationLine) {
         try {
             Integer delCounts = workDurationService.deleteWorkRotationLine(getCurrentUserId(),
                     workRotationLine);
-            return ResponseEntity.ok(delCounts);
+            DMLResponseDto dto = new DMLResponseDto("S", delCounts + " rotation lines deleted successfully");
+            return ResponseEntity.ok(dto);
         } catch (Exception e) {
             System.out.println("Error deleting work rotation: " + e.getMessage());
             if (e.getMessage() != null && e.getMessage().contains("ORA-02292")) {
