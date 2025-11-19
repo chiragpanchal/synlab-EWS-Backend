@@ -9,19 +9,21 @@ public class RosterLines {
     private String personName;
     private String jobTitle;
     private String departmentName;
+    private String errorString;
     private List<RosterLinesChildDates> children;
 
     public RosterLines() {
     }
 
     public RosterLines(long personId, long assignmentId, String employeeNumber, String personName, String jobTitle,
-            String departmentName, List<RosterLinesChildDates> children) {
+                       String departmentName, String errorString, List<RosterLinesChildDates> children) {
         this.personId = personId;
         this.assignmentId = assignmentId;
         this.employeeNumber = employeeNumber;
         this.personName = personName;
         this.jobTitle = jobTitle;
         this.departmentName = departmentName;
+        this.errorString = errorString;
         this.children = children;
     }
 
@@ -79,5 +81,13 @@ public class RosterLines {
 
     public void setChildren(List<RosterLinesChildDates> children) {
         this.children = children;
+    }
+
+    public String getErrorString() {
+        return errorString;
+    }
+
+    public void setErrorString(String errorString) {
+        this.errorString = errorString;
     }
 }

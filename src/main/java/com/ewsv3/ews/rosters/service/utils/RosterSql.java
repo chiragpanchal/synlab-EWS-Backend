@@ -8,7 +8,13 @@ public class RosterSql {
                             employee_number,
                             person_Name,
                             job_title,
-                            department_name
+                            department_name,
+                            sc_get_schedule_rule_error_f (
+                                                            p_profile_id =>:profileId,
+                                                            p_person_id  => person_id,
+                                                            p_start_date => :startDate,
+                                                            p_end_date   => :endDate
+                                                        ) error_string
                           FROM
                             (
                                 SELECT
