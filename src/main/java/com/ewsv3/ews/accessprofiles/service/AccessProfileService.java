@@ -91,6 +91,14 @@ public class AccessProfileService {
         AccessProfiles profile = new AccessProfiles();
         long generatedAccessProfileId = 0L;
 
+        if (profileResponse.getUserProfileAssocList().isEmpty()) {
+            throw new RuntimeException("A profile should have at least one owner who acts as the timekeeper/scheduler");
+        }
+
+        if (profileResponse.getAccessProfileLinesList().isEmpty()) {
+            throw new RuntimeException("A profile should have at least one criterion that determines which staff it contains");
+        }
+
         AccessProfileResponse existingProfile = null;
 
         if (profileResponse.getAccessProfiles().profileId() > 0) {
