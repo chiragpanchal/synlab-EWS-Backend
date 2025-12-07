@@ -62,7 +62,7 @@ public class AttendConsService {
 
         List<Long> personList = personRespBodies.stream().map(AttendTimecardPersonRespBody::personId).collect(Collectors.toList());
 
-        System.out.println("personList.size():"+ personList.size());
+        //System.out.println("personList.size():"+ personList.size());
 
 //        AttendanceConsolidationResp resp = null;
         if (!personRespBodies.isEmpty()) {
@@ -73,7 +73,7 @@ public class AttendConsService {
                     .query(AttendSchViolRespBody.class)
                     .list();
 
-            System.out.println("schViolRespBodies.size():"+schViolRespBodies.size());
+            //System.out.println("schViolRespBodies.size():"+schViolRespBodies.size());
 
 
             List<AttendActualLinesRespBody> actualLinesRespBodies = jdbcClient.sql(getActuals)
@@ -83,7 +83,7 @@ public class AttendConsService {
                     .query(AttendActualLinesRespBody.class)
                     .list();
 
-            System.out.println("actualLinesRespBodies.size():"+actualLinesRespBodies.size());
+            //System.out.println("actualLinesRespBodies.size():"+actualLinesRespBodies.size());
 
 
             List<AttendLeavesRespBody> leavesRespBodies = jdbcClient.sql(getLeaves)
@@ -93,7 +93,7 @@ public class AttendConsService {
                     .query(AttendLeavesRespBody.class)
                     .list();
 
-            System.out.println("leavesRespBodies.size():"+leavesRespBodies.size());
+            //System.out.println("leavesRespBodies.size():"+leavesRespBodies.size());
 
 
             List<AttendHolidaysRespBody> holidaysRespBodies = jdbcClient.sql(getHolidays)
@@ -102,7 +102,7 @@ public class AttendConsService {
                     .param("endDate", reqBody.endDate())
                     .query(AttendHolidaysRespBody.class)
                     .list();
-            System.out.println("holidaysRespBodies.size():"+holidaysRespBodies.size());
+            //System.out.println("holidaysRespBodies.size():"+holidaysRespBodies.size());
 //            resp = new AttendanceConsolidationResp();
 
 

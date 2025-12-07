@@ -17,7 +17,7 @@ public class LeaveService {
 
         List<PersonLeaveDto> list = new ArrayList<PersonLeaveDto>();
 
-        System.out.println("getPersonLeaves: requestBody:" + requestBody);
+        //System.out.println("getPersonLeaves: requestBody:" + requestBody);
         if (requestBody.profileId() == -1) {
             // self timesheets
             list = jdbcClient.sql(LeaveServiceUtils.sqlSelfLeaveData)
@@ -47,7 +47,7 @@ public class LeaveService {
 
         }
 
-        System.out.println("getPersonLeaves  list.size():" + list.size());
+        //System.out.println("getPersonLeaves  list.size():" + list.size());
 
         return list;
 

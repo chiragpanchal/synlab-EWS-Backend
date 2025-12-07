@@ -18,9 +18,9 @@ public class UserTaskService {
      * With proper composite key, duplicates should be handled at entity level
      */
     public List<UserTask> getUserTasks(Long userId) {
-        System.out.println("getUserTasks userId: " + userId);
+        //System.out.println("getUserTasks userId: " + userId);
         List<UserTask> allTasks = userTaskRepository.findAccessibleTasksByUserId(userId);
-        System.out.println("Total tasks fetched from DB: " + allTasks.size());
+        //System.out.println("Total tasks fetched from DB: " + allTasks.size());
         
         // Return all tasks - composite key should ensure uniqueness
         return allTasks;

@@ -7,6 +7,8 @@ import com.ewsv3.ews.timesheets.dto.bulk.BulkTimesheetDetails;
 import com.ewsv3.ews.timesheets.dto.bulk.BulkTimesheetMasterDto;
 import com.ewsv3.ews.timesheets.dto.form.TimesheetDetails;
 import com.ewsv3.ews.timesheets.service.bulk.TimesheetBulkService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -14,12 +16,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bulk-timesheet/")
 public class TimesheetBulkController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TimesheetBulkController.class);
 
     private final JdbcClient jdbcClient;
     private final TimesheetBulkService timesheetBulkService;
@@ -42,16 +47,21 @@ public class TimesheetBulkController {
     public ResponseEntity<BulkTimesheetMasterDto> getBulkTimesheetMasters(@RequestHeader Map<String, String> headers, @RequestParam(defaultValue = "0") int page,
                                                                           @RequestParam(defaultValue = "20") int size, @RequestBody TimesheetPageRequestBody requestBody) {
 
+        logger.info("getBulkTimesheetMasters - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+
         try {
-            System.out.println("bulk-timesheet-masters page:" + page);
-            System.out.println("bulk-timesheet-masters size:" + size);
-            System.out.println("bulk-timesheet-masters requestBody:" + requestBody);
+            //System.out.println("bulk-timesheet-masters page:" + page);
+            //System.out.println("bulk-timesheet-masters size:" + size);
+            //System.out.println("bulk-timesheet-masters requestBody:" + requestBody);
             BulkTimesheetMasterDto bulkMasters = this.timesheetBulkService.getBulkMasters(getCurrentUserId(), page, size, requestBody, this.jdbcClient);
+
+            logger.info("getBulkTimesheetMasters - Exit - Time: {}, Response: {}", LocalDateTime.now(), bulkMasters);
 
             return new ResponseEntity<>(bulkMasters, HttpStatus.OK);
 
         } catch (Exception e) {
-            System.out.println("Error bulk-timesheet-data : " + e.getMessage());
+            //System.out.println("Error bulk-timesheet-data : " + e.getMessage());
+            logger.error("getBulkTimesheetMasters - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -61,31 +71,41 @@ public class TimesheetBulkController {
     public ResponseEntity<List<BulkTimesheetDetails>> getBulkTimesheets(@RequestHeader Map<String, String> headers, @RequestParam(defaultValue = "0") int page,
                                                                         @RequestParam(defaultValue = "20") int size, @RequestBody TimesheetPageRequestBody requestBody) {
 
+        logger.info("getBulkTimesheets - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+
         try {
-            System.out.println("bulk-timesheet-data page:" + page);
-            System.out.println("bulk-timesheet-data size:" + size);
-            System.out.println("bulk-timesheet-data requestBody:" + requestBody);
+            //System.out.println("bulk-timesheet-data page:" + page);
+            //System.out.println("bulk-timesheet-data size:" + size);
+            //System.out.println("bulk-timesheet-data requestBody:" + requestBody);
             List<BulkTimesheetDetails> bulkTimesheets = this.timesheetBulkService.getBulkTimesheets(getCurrentUserId(), requestBody, page, size, this.jdbcClient);
+
+            logger.info("getBulkTimesheets - Exit - Time: {}, Response Count: {}", LocalDateTime.now(), bulkTimesheets.size());
 
             return new ResponseEntity<>(bulkTimesheets, HttpStatus.OK);
 
         } catch (Exception e) {
-            System.out.println("Error bulk-timesheet-data : " + e.getMessage());
+            //System.out.println("Error bulk-timesheet-data : " + e.getMessage());
+            logger.error("getBulkTimesheets - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @PostMapping("save-bulk-timesheet")
-    public ResponseEntity<DMLResponseDto> getBulkTimesheets(@RequestHeader Map<String, String> headers, @RequestBody List<TimesheetDetails> requestBody) {
+    public ResponseEntity<DMLResponseDto> saveBulkTimesheets(@RequestHeader Map<String, String> headers, @RequestBody List<TimesheetDetails> requestBody) {
+
+        logger.info("saveBulkTimesheets - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
 
         try {
             DMLResponseDto dmlResponseDto = this.timesheetBulkService.saveBulkTimesheets(getCurrentUserId(), requestBody, this.jdbcClient);
 
+            logger.info("saveBulkTimesheets - Exit - Time: {}, Response: {}", LocalDateTime.now(), dmlResponseDto);
+
             return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
 
         } catch (Exception e) {
-            System.out.println("Error save-bulk-timesheet : " + e.getMessage());
+            //System.out.println("Error save-bulk-timesheet : " + e.getMessage());
+            logger.error("saveBulkTimesheets - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

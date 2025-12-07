@@ -51,41 +51,41 @@ public class TimesheetSubmissionService {
 
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-        System.out.println(inSource);
+        //System.out.println(inSource);
         inParamMap.clear();
         // simpleJdbcCall = new
         // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_BULK_TIMESHEET_SUBMISSION_P");
         Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
-        System.out.println("submitTimesheets simpleJdbcCallResult :" + simpleJdbcCallResult);
+        //System.out.println("submitTimesheets simpleJdbcCallResult :" + simpleJdbcCallResult);
 
         AtomicReference<Object> sMessage = new AtomicReference<>();
 
         simpleJdbcCallResult.forEach((s, o) -> {
-            System.out.println(s);
-            System.out.println(o);
+            //System.out.println(s);
+            //System.out.println(o);
 
             if (s.equals("P_OUT")) {
                 String strMessage = o.toString();
-                System.out.println("strMessage:" + strMessage);
+                //System.out.println("strMessage:" + strMessage);
                 sMessage.set(o);
             }
         });
 
         if (sMessage.get() != null) {
-            System.out.println("sMessage.get():" + sMessage.get());
+            //System.out.println("sMessage.get():" + sMessage.get());
             String messageString = sMessage.get().toString();
 
             String flag = messageString.substring(0, 1);
-            System.out.println("flag:" + flag);
+            //System.out.println("flag:" + flag);
             if (flag.equals("E")) {
                 errorMessage[0].set(messageString.length() > 1000 ? messageString.substring(0, 1000) : messageString);
             } else {
                 String[] parts = messageString.split("#");
                 if (parts.length > 1) {
                     recCounts[0] = recCounts[0] + Integer.parseInt(parts[1]);
-                    System.out.println("recCounts:" + recCounts[0]);
+                    //System.out.println("recCounts:" + recCounts[0]);
                 }
             }
         }

@@ -52,7 +52,7 @@ public class TeamService {
 
             for (TimecardLine line : timecardLines) {
 
-                System.out.println("getTeamTimecards line:" + line);
+                //System.out.println("getTeamTimecards line:" + line);
 
                 Map<String, Object> tlObject = new HashMap<>();
                 tlObject.put("person_id", member.getPersonId());
@@ -87,7 +87,7 @@ public class TeamService {
                 "pFilterFlag", filterFlag
         );
 
-        System.out.println("getTeamTimecardsSimpleV2 objectMap:" + objectMap);
+        //System.out.println("getTeamTimecardsSimpleV2 objectMap:" + objectMap);
 
         List<TeamTimecardSimple> timecardSimples = jdbcClient.sql(TramSimpleSql).params(objectMap).query(TeamTimecardSimple.class).list();
 
@@ -127,8 +127,8 @@ public class TeamService {
             filledChildren.sort(Comparator.comparing(TeamTimecardSimpleChild::effectiveDate));
 
 //            System.out.println("getTeamTimecardsSimpleV2 filledChildren:" + filledChildren);
-            System.out.println("============================================================");
-            System.out.println("getTeamTimecardsSimpleV2 timecardSimple.getEmployeeNumber():" + timecardSimple.getEmployeeNumber());
+            //System.out.println("============================================================");
+            //System.out.println("getTeamTimecardsSimpleV2 timecardSimple.getEmployeeNumber():" + timecardSimple.getEmployeeNumber());
 //            for (TeamTimecardSimpleChild child : filledChildren) {
 //                System.out.println("getTeamTimecardsSimpleV2 child.child.effectiveDate():" + child.effectiveDate());
 //                System.out.println("getTeamTimecardsSimpleV2 child.child.actHrs():" + child.actHrs());
@@ -156,7 +156,7 @@ public class TeamService {
         objectMap.put("pageSize", 100);
 
 
-        System.out.println("getTeamTimecardsSimple objectMap:" + objectMap);
+        //System.out.println("getTeamTimecardsSimple objectMap:" + objectMap);
 
         List<TeamTimecardSimple> timecardSimples = jdbcClient.sql(TramSimpleSql).params(objectMap).query(TeamTimecardSimple.class).list();
 
@@ -223,7 +223,7 @@ public class TeamService {
             return members;
         }).thenApply(members -> {
             // This will execute after all futures are complete
-            System.out.println("getTeamTimecards2 members:" + members);
+            //System.out.println("getTeamTimecards2 members:" + members);
             return members;
         }).exceptionally(ex -> {
             ex.printStackTrace();
@@ -336,30 +336,30 @@ public class TeamService {
                 List<TimecardLine> timecardLines = timecardLineFuture.get();
                 List<TimecardActuals> actuals = timecardActualsFuture.get();
 
-                System.out.println("getTeamTimecards2 timecardLines:" + timecardLines);
-                System.out.println("getTeamTimecards2 actuals:" + actuals);
+                //System.out.println("getTeamTimecards2 timecardLines:" + timecardLines);
+                //System.out.println("getTeamTimecards2 actuals:" + actuals);
 
 // Map timecard actuals by personRosterId and by personId+effectiveDate for quick access
                 Map<Long, List<TimecardActuals>> actualsByRosterId = actuals.stream()
                         .filter(actual -> actual.personRosterId() != null)
                         .collect(Collectors.groupingBy(TimecardActuals::personRosterId));
 
-                System.out.println("getTeamTimecards2 actualsByRosterId:" + actualsByRosterId);
+                //System.out.println("getTeamTimecards2 actualsByRosterId:" + actualsByRosterId);
 
                 Map<String, List<TimecardActuals>> actualsByPersonIdAndDate = actuals.stream()
                         .filter(actual -> actual.personRosterId() == null)
                         .collect(Collectors.groupingBy(actual -> actual.personId() + "|" + actual.effectiveDate().toString()));
 
-                System.out.println("getTeamTimecards2 actualsByPersonIdAndDate:" + actualsByPersonIdAndDate);
+                //System.out.println("getTeamTimecards2 actualsByPersonIdAndDate:" + actualsByPersonIdAndDate);
 
                 // Map timecard lines by personId for quick access
                 Map<Long, List<TimecardLine>> linesByPersonId = timecardLines.stream()
                         .peek(line -> {
-                            System.out.println("getTeamTimecards2 line.getPersonId():" + line.getPersonId());
-                            System.out.println("getTeamTimecards2 line.getPersonRosterId():" + line.getPersonRosterId());
+                            //System.out.println("getTeamTimecards2 line.getPersonId():" + line.getPersonId());
+                            //System.out.println("getTeamTimecards2 line.getPersonRosterId():" + line.getPersonRosterId());
                             if (line.getPersonRosterId() != null) {
                                 line.setTimecardActuals(actualsByRosterId.getOrDefault(line.getPersonRosterId(), new ArrayList<>()));
-                                System.out.println("getTeamTimecards2 line.setTimecardActuals>>:" + actualsByRosterId.getOrDefault(line.getPersonRosterId(), new ArrayList<>()));
+                                //System.out.println("getTeamTimecards2 line.setTimecardActuals>>:" + actualsByRosterId.getOrDefault(line.getPersonRosterId(), new ArrayList<>()));
                             } else {
                                 String key = line.getPersonId() + "|" + line.getEffectiveDate().toString();
                                 line.setTimecardActuals(actualsByPersonIdAndDate.getOrDefault(key, new ArrayList<>()));
@@ -367,7 +367,7 @@ public class TeamService {
                         })
                         .collect(Collectors.groupingBy(TimecardLine::getPersonId));
 
-                System.out.println("getTeamTimecards2 linesByPersonId>>:" + linesByPersonId);
+                //System.out.println("getTeamTimecards2 linesByPersonId>>:" + linesByPersonId);
                 // Set timecard lines to members
                 for (TeamMembers member : members) {
                     member.setTimecardLines(linesByPersonId.getOrDefault(member.getPersonId(), new ArrayList<>()));
@@ -376,7 +376,7 @@ public class TeamService {
                 finalMembers.set(members);
 
 
-                System.out.println("getTeamTimecards2 members:" + members);
+                //System.out.println("getTeamTimecards2 members:" + members);
 
 
             } catch (InterruptedException e) {
@@ -387,7 +387,7 @@ public class TeamService {
 
         });
 
-        System.out.println("getTeamTimecards2 finalMembers.get():" + finalMembers.get());
+        //System.out.println("getTeamTimecards2 finalMembers.get():" + finalMembers.get());
         return CompletableFuture.completedFuture(finalMembers.get());
 
     }

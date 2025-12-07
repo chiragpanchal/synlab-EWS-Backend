@@ -64,7 +64,7 @@ public class TimesheetServiceApproval {
                         TimesheetPageRequestBody requestBody,
                         JdbcClient jdbcClient) {
 
-                System.out.println("getTimesheetApprovalData before get personList currenttime:" + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData before get personList currenttime:" + LocalDateTime.now());
 
                 List<TimesheetPerson> personList = new ArrayList<>();
 
@@ -80,11 +80,11 @@ public class TimesheetServiceApproval {
                                 .query(TimesheetPerson.class)
                                 .list();
 
-                System.out.println("getTimesheetApprovalData  personList.size():" + personList.size());
+                //System.out.println("getTimesheetApprovalData  personList.size():" + personList.size());
 
-                System.out.println("getTimesheetApprovalData after get personList currenttime:" + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData after get personList currenttime:" + LocalDateTime.now());
 
-                System.out.println("getTimesheetApprovalData personList.size():" + personList.size());
+                //System.out.println("getTimesheetApprovalData personList.size():" + personList.size());
 
                 if (personList.isEmpty()) {
                         return new ArrayList<>();
@@ -94,19 +94,19 @@ public class TimesheetServiceApproval {
                                 .map(timesheetPerson -> timesheetPerson.personId())
                                 .collect(Collectors.toList());
 
-                System.out.println("getTimesheetApprovalData personIds.size():" + personIds.size());
-                System.out.println("getTimesheetApprovalData personIds:" + personIds);
+                //System.out.println("getTimesheetApprovalData personIds.size():" + personIds.size());
+                //System.out.println("getTimesheetApprovalData personIds:" + personIds);
 
                 List<TimesheetDateSummary> allDateSummaries = new ArrayList<>();
                 List<TimesheetTableSummary> allTableSummaries = new ArrayList<>();
 
-                System.out.println("getTimesheetApprovalData before get allDateSummaries currenttime:"
-                                + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData before get allDateSummaries currenttime:"
+                //                + LocalDateTime.now());
 
                 // Timekeeper Profile
 
-                System.out.println("getTimesheetApprovalData before get allTableSummaries currenttime:"
-                                + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData before get allTableSummaries currenttime:"
+                //                + LocalDateTime.now());
                 // Bulk fetch all table summaries for all persons in one query
                 allTableSummaries = jdbcClient.sql(sqlApprovalTimesheetTableDataBulk)
                                 .param("userId", userId)
@@ -119,10 +119,10 @@ public class TimesheetServiceApproval {
                                 .query(TimesheetTableSummary.class)
                                 .list();
 
-                System.out.println("getTimesheetApprovalData after get allTableSummaries currenttime:"
-                                + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData after get allTableSummaries currenttime:"
+                //                + LocalDateTime.now());
 
-                System.out.println("getTimesheetApprovalData Line 169 currenttime:" + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData Line 169 currenttime:" + LocalDateTime.now());
                 // Create maps for efficient lookup
                 Map<Long, Map<LocalDate, TimesheetDateSummary>> dateSummaryMap = allDateSummaries.stream()
                                 .collect(Collectors.groupingBy(
@@ -130,14 +130,14 @@ public class TimesheetServiceApproval {
                                                 Collectors.toMap(TimesheetDateSummary::getEffectiveDate,
                                                                 Function.identity())));
 
-                System.out.println("getTimesheetApprovalData Line 177 currenttime:" + LocalDate.now());
+                //System.out.println("getTimesheetApprovalData Line 177 currenttime:" + LocalDate.now());
                 Map<String, List<TimesheetTableSummary>> tableSummaryMap = allTableSummaries.stream()
                                 .collect(Collectors.groupingBy(
                                                 ts -> ts.personId() + "_" + ts.effectiveDate()));
 
                 List<TimesheetPageResponseBody> pageResponseBody = new ArrayList<>();
 
-                System.out.println("getTimesheetApprovalData Line 185 currenttime:" + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData Line 185 currenttime:" + LocalDateTime.now());
                 for (TimesheetPerson person : personList) {
 
                         List<TimesheetDateSummary> dateSummaries = new ArrayList<>();
@@ -174,7 +174,7 @@ public class TimesheetServiceApproval {
                         pageResponseBody.add(responseBody);
                 }
 
-                System.out.println("getTimesheetApprovalData Line 222 currenttime:" + LocalDateTime.now());
+                //System.out.println("getTimesheetApprovalData Line 222 currenttime:" + LocalDateTime.now());
 
                 return pageResponseBody;
 
@@ -185,7 +185,7 @@ public class TimesheetServiceApproval {
                         TimesheetPageRequestBody requestBody,
                         JdbcClient jdbcClient) {
 
-                System.out.println("getTimesheetApprovalKpi requestBody:" + requestBody);
+                //System.out.println("getTimesheetApprovalKpi requestBody:" + requestBody);
                 List<TimesheetPayCodeKpi> payCodeKpi = new ArrayList<>();
                 List<TimesheetStatusKpi> statusKpi = new ArrayList<>();
 
@@ -196,7 +196,7 @@ public class TimesheetServiceApproval {
                                 .param("endDate", requestBody.endDate())
                                 .query(TimesheetPayCodeKpi.class)
                                 .list();
-                System.out.println("getTimesheetApprovalKpi payCodeKpi:" + payCodeKpi);
+                //System.out.println("getTimesheetApprovalKpi payCodeKpi:" + payCodeKpi);
 
                 TimesheetKpi timesheetKpi = new TimesheetKpi(
                                 payCodeKpi,
@@ -224,34 +224,34 @@ public class TimesheetServiceApproval {
                 inParamMap.put("p_comments", reqBody.comments());
 
                 SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-                System.out.println(inSource);
+                //System.out.println(inSource);
                 inParamMap.clear();
                 // simpleJdbcCall = new
                 // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
                 simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_BULK_TIMESHEET_ACTIONS_P");
                 Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
-                System.out.println("actionTimesheets simpleJdbcCallResult :" + simpleJdbcCallResult);
+                //System.out.println("actionTimesheets simpleJdbcCallResult :" + simpleJdbcCallResult);
 
                 AtomicReference<Object> sMessage = new AtomicReference<>();
 
                 simpleJdbcCallResult.forEach((s, o) -> {
-                        System.out.println(s);
-                        System.out.println(o);
+                        //System.out.println(s);
+                        //System.out.println(o);
 
                         if (s.equals("P_OUT")) {
                                 String strMessage = o.toString();
-                                System.out.println("strMessage:" + strMessage);
+                                //System.out.println("strMessage:" + strMessage);
                                 sMessage.set(o);
                         }
                 });
 
                 if (sMessage.get() != null) {
-                        System.out.println("sMessage.get():" + sMessage.get());
+                        //System.out.println("sMessage.get():" + sMessage.get());
                         String messageString = sMessage.get().toString();
 
                         String flag = messageString.substring(0, 1);
-                        System.out.println("flag:" + flag);
+                        //System.out.println("flag:" + flag);
                         if (flag.equals("E")) {
                                 errorMessage[0].set(messageString.length() > 1000 ? messageString.substring(0, 1000)
                                                 : messageString);
@@ -259,7 +259,7 @@ public class TimesheetServiceApproval {
                                 String[] parts = messageString.split("#");
                                 if (parts.length > 1) {
                                         recCounts[0] = recCounts[0] + Integer.parseInt(parts[1]);
-                                        System.out.println("recCounts:" + recCounts[0]);
+                                        //System.out.println("recCounts:" + recCounts[0]);
                                 }
                         }
                 }

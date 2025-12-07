@@ -6,6 +6,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import java.time.LocalDateTime;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.core.Authentication;
@@ -53,14 +54,16 @@ public class ScheduleBidPatternController {
             @RequestHeader Map<String, String> header,
             @RequestParam Long scheduleBidCycleId) {
         try {
-            logger.debug("GET /api/schedule-bid-patterns - scheduleBidCycleId: {}", scheduleBidCycleId);
+            logger.info("GET_SCHEDULE_BID_PATTERNS - Entry - Time: {}, ScheduleBidCycleId: {}", LocalDateTime.now(), scheduleBidCycleId);
 
             List<ScheduleBidPattern> patterns = this.scheduleBidPatternService
                     .getScheduleBidPatterns(scheduleBidCycleId, jdbcClient);
+            logger.info("GET_SCHEDULE_BID_PATTERNS - Exit - Time: {}, Response count: {}", LocalDateTime.now(), patterns.size());
             return new ResponseEntity<>(patterns, HttpStatus.OK);
 
         } catch (Exception exception) {
-            logger.error("Error fetching schedule bid patterns: {}", exception.getMessage(), exception);
+            logger.error("GET_SCHEDULE_BID_PATTERNS - Exception - Time: {}, ScheduleBidCycleId: {}, Error: {}",
+                    LocalDateTime.now(), scheduleBidCycleId, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -70,19 +73,22 @@ public class ScheduleBidPatternController {
             @RequestHeader Map<String, String> header,
             @PathVariable("id") Long scheduleBidPatternId) {
         try {
-            logger.debug("GET /api/schedule-bid-patterns/{}", scheduleBidPatternId);
+            logger.info("GET_SCHEDULE_BID_PATTERN_BY_ID - Entry - Time: {}, ScheduleBidPatternId: {}", LocalDateTime.now(), scheduleBidPatternId);
 
             ScheduleBidPattern pattern = this.scheduleBidPatternService
                     .getScheduleBidPatternById(scheduleBidPatternId, jdbcClient);
 
             if (pattern != null) {
+                logger.info("GET_SCHEDULE_BID_PATTERN_BY_ID - Exit - Time: {}, Response: {}", LocalDateTime.now(), pattern);
                 return new ResponseEntity<>(pattern, HttpStatus.OK);
             } else {
+                logger.info("GET_SCHEDULE_BID_PATTERN_BY_ID - Exit - Time: {}, ScheduleBidPatternId: {}, Status: NOT_FOUND", LocalDateTime.now(), scheduleBidPatternId);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
         } catch (Exception exception) {
-            logger.error("Error fetching schedule bid pattern by id: {}", exception.getMessage(), exception);
+            logger.error("GET_SCHEDULE_BID_PATTERN_BY_ID - Exception - Time: {}, ScheduleBidPatternId: {}, Error: {}",
+                    LocalDateTime.now(), scheduleBidPatternId, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -92,15 +98,17 @@ public class ScheduleBidPatternController {
             @RequestHeader Map<String, String> header,
             @RequestBody ScheduleBidPattern scheduleBidPattern) {
         try {
-            logger.debug("POST /api/schedule-bid-patterns - scheduleBidPattern: {}", scheduleBidPattern);
+            logger.info("SAVE_SCHEDULE_BID_PATTERN - Entry - Time: {}, Request: {}", LocalDateTime.now(), scheduleBidPattern);
 
             DMLResponseDto dmlResponseDto = this.scheduleBidPatternService.saveScheduleBidPattern(
                     getCurrentUserId(), scheduleBidPattern, jdbcClient);
 
+            logger.info("SAVE_SCHEDULE_BID_PATTERN - Exit - Time: {}, Response: {}", LocalDateTime.now(), dmlResponseDto);
             return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
 
         } catch (Exception exception) {
-            logger.error("Error saving schedule bid pattern: {}", exception.getMessage(), exception);
+            logger.error("SAVE_SCHEDULE_BID_PATTERN - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), scheduleBidPattern, exception.getMessage(), exception);
             return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
@@ -110,15 +118,18 @@ public class ScheduleBidPatternController {
             @RequestHeader Map<String, String> header,
             @PathVariable("id") Long scheduleBidPatternId) {
         try {
-            logger.debug("DELETE /api/schedule-bid-patterns/{}", scheduleBidPatternId);
+            logger.info("DELETE_SCHEDULE_BID_PATTERN - Entry - Time: {}, ScheduleBidPatternId: {}", LocalDateTime.now(), scheduleBidPatternId);
 
             DMLResponseDto dmlResponseDto = this.scheduleBidPatternService.deleteScheduleBidPattern(
                     scheduleBidPatternId, jdbcClient);
 
+            logger.info("DELETE_SCHEDULE_BID_PATTERN - Exit - Time: {}, Response: {}", LocalDateTime.now(), dmlResponseDto);
             return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
 
         } catch (Exception exception) {
-            logger.error("Error deleting schedule bid pattern: {}", exception.getMessage(), exception);
+            logger.error("DELETE_SCHEDULE_BID_PATTERN - Exception - Time: {}, ScheduleBidPatternId: {}, Error: {}",
+                    LocalDateTime.now(), scheduleBidPatternId, exception.getMessage(), exception);
+
             return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }

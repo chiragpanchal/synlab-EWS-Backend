@@ -6,6 +6,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import java.time.LocalDateTime;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.security.core.Authentication;
@@ -53,13 +54,15 @@ public class ScheduleBidCycleController {
             @RequestHeader Map<String, String> header,
             @RequestParam Long profileId) {
         try {
-            logger.debug("GET /api/schedule-bid-cycles - profileId: {}", profileId);
+            logger.info("GET_SCHEDULE_BID_CYCLES - Entry - Time: {}, ProfileId: {}", LocalDateTime.now(), profileId);
 
             List<ScheduleBidCycle> cycles = this.scheduleBidCycleService.getScheduleBidCycles(profileId, jdbcClient);
+            logger.info("GET_SCHEDULE_BID_CYCLES - Exit - Time: {}, Response count: {}", LocalDateTime.now(), cycles.size());
             return new ResponseEntity<>(cycles, HttpStatus.OK);
 
         } catch (Exception exception) {
-            logger.error("Error fetching schedule bid cycles: {}", exception.getMessage(), exception);
+            logger.error("GET_SCHEDULE_BID_CYCLES - Exception - Time: {}, ProfileId: {}, Error: {}",
+                    LocalDateTime.now(), profileId, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -69,18 +72,21 @@ public class ScheduleBidCycleController {
             @RequestHeader Map<String, String> header,
             @PathVariable("id") Long scheduleBidCycleId) {
         try {
-            logger.debug("GET /api/schedule-bid-cycles/{} ", scheduleBidCycleId);
+            logger.info("GET_SCHEDULE_BID_CYCLE_BY_ID - Entry - Time: {}, ScheduleBidCycleId: {}", LocalDateTime.now(), scheduleBidCycleId);
 
             ScheduleBidCycle cycle = this.scheduleBidCycleService.getScheduleBidCycleById(scheduleBidCycleId, jdbcClient);
 
             if (cycle != null) {
+                logger.info("GET_SCHEDULE_BID_CYCLE_BY_ID - Exit - Time: {}, Response: {}", LocalDateTime.now(), cycle);
                 return new ResponseEntity<>(cycle, HttpStatus.OK);
             } else {
+                logger.info("GET_SCHEDULE_BID_CYCLE_BY_ID - Exit - Time: {}, ScheduleBidCycleId: {}, Status: NOT_FOUND", LocalDateTime.now(), scheduleBidCycleId);
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
 
         } catch (Exception exception) {
-            logger.error("Error fetching schedule bid cycle by id: {}", exception.getMessage(), exception);
+            logger.error("GET_SCHEDULE_BID_CYCLE_BY_ID - Exception - Time: {}, ScheduleBidCycleId: {}, Error: {}",
+                    LocalDateTime.now(), scheduleBidCycleId, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
     }
@@ -90,15 +96,17 @@ public class ScheduleBidCycleController {
             @RequestHeader Map<String, String> header,
             @RequestBody ScheduleBidCycle scheduleBidCycle) {
         try {
-            logger.debug("POST /api/schedule-bid-cycles - scheduleBidCycle: {}", scheduleBidCycle);
+            logger.info("SAVE_SCHEDULE_BID_CYCLE - Entry - Time: {}, Request: {}", LocalDateTime.now(), scheduleBidCycle);
 
             DMLResponseDto dmlResponseDto = this.scheduleBidCycleService.saveScheduleBidCycle(
                     getCurrentUserId(), scheduleBidCycle, jdbcClient);
 
+            logger.info("SAVE_SCHEDULE_BID_CYCLE - Exit - Time: {}, Response: {}", LocalDateTime.now(), dmlResponseDto);
             return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
 
         } catch (Exception exception) {
-            logger.error("Error saving schedule bid cycle: {}", exception.getMessage(), exception);
+            logger.error("SAVE_SCHEDULE_BID_CYCLE - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), scheduleBidCycle, exception.getMessage(), exception);
             return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
@@ -108,15 +116,17 @@ public class ScheduleBidCycleController {
             @RequestHeader Map<String, String> header,
             @PathVariable("id") Long scheduleBidCycleId) {
         try {
-            logger.debug("DELETE /api/schedule-bid-cycles/{}", scheduleBidCycleId);
+            logger.info("DELETE_SCHEDULE_BID_CYCLE - Entry - Time: {}, ScheduleBidCycleId: {}", LocalDateTime.now(), scheduleBidCycleId);
 
             DMLResponseDto dmlResponseDto = this.scheduleBidCycleService.deleteScheduleBidCycle(
                     scheduleBidCycleId, jdbcClient);
 
+            logger.info("DELETE_SCHEDULE_BID_CYCLE - Exit - Time: {}, Response: {}", LocalDateTime.now(), dmlResponseDto);
             return new ResponseEntity<>(dmlResponseDto, HttpStatus.OK);
 
         } catch (Exception exception) {
-            logger.error("Error deleting schedule bid cycle: {}", exception.getMessage(), exception);
+            logger.error("DELETE_SCHEDULE_BID_CYCLE - Exception - Time: {}, ScheduleBidCycleId: {}, Error: {}",
+                    LocalDateTime.now(), scheduleBidCycleId, exception.getMessage(), exception);
             return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }

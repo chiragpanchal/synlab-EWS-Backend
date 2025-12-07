@@ -68,7 +68,7 @@ public class JwtService {
     public boolean validateJwtToken(String authToken) {
         try {
 
-            System.out.println("validateJwtToken key:" + key());
+            //System.out.println("validateJwtToken key:" + key());
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(authToken);
             return true;
 //            Jwts.parserBuilder()
@@ -77,15 +77,15 @@ public class JwtService {
 //                    .parseClaimsJws(authToken);
 //            return true;
         } catch (MalformedJwtException e) {
-            System.err.println("Invalid JWT token: " + e.getMessage());
+            //System.err.println("Invalid JWT token: " + e.getMessage());
         } catch (ExpiredJwtException e) {
-            System.err.println("JWT token is expired: " + e.getMessage());
+            //System.err.println("JWT token is expired: " + e.getMessage());
         } catch (UnsupportedJwtException e) {
-            System.err.println("JWT token is unsupported: " + e.getMessage());
+            //System.err.println("JWT token is unsupported: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            System.err.println("JWT claims string is empty: " + e.getMessage());
+            //System.err.println("JWT claims string is empty: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("JWT validation failed: " + e.getMessage());
+            //System.err.println("JWT validation failed: " + e.getMessage());
         }
         return false;
     }

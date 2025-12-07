@@ -15,12 +15,12 @@ public class demo {
         LocalDate startOfWeek = currentDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
 
         // Print the start of the week
-        System.out.println("Start of the week: " + startOfWeek);
+        // System.out.println("Start of the week: " + startOfWeek);
 
         LocalDate startOfPrevious5thWeek = startOfWeek.minus(5, ChronoUnit.WEEKS);
 
         // Print the start of the previous 5th week
-        System.out.println("Start of the previous 5th week: " + startOfPrevious5thWeek);
+        // System.out.println("Start of the previous 5th week: " + startOfPrevious5thWeek);
 
     }
 }

@@ -31,10 +31,10 @@ public class TimecardService {
 
         Map<String, Object> personDateMap = new HashMap<>();
 
-        System.out.println("-------SelfTiemcardImpl");
-        System.out.println("-------personId" + personId);
-        System.out.println("-------startDate" + startDate);
-        System.out.println("-------endDate" + endDate);
+        //System.out.println("-------SelfTiemcardImpl");
+        //System.out.println("-------personId" + personId);
+        //System.out.println("-------startDate" + startDate);
+        //System.out.println("-------endDate" + endDate);
 
         personDateMap.put("person_id", personId);
         personDateMap.put("start_date", startDate);
@@ -52,8 +52,8 @@ public class TimecardService {
             objectMap.put("person_roster_id", Objects.requireNonNullElse(personRosterId, 0L));
             objectMap.put("effective_date", line.getEffectiveDate());
 
-            System.out.println("person_roster_id:" + line.getPersonRosterId());
-            System.out.println("effective_date:" + line.getEffectiveDate());
+            //System.out.println("person_roster_id:" + line.getPersonRosterId());
+            //System.out.println("effective_date:" + line.getEffectiveDate());
 
             List<TimecardActuals> timecardActuals = jdbcClient.sql(TimecardActualsSql).params(objectMap)
                     .query(TimecardActuals.class).list();

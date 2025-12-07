@@ -52,7 +52,7 @@ public class MasterDataService {
         userProfileMap.put("userId", userId);
         userProfileMap.put("profileId", profileId);
 
-        System.out.println("objectMap:%s\n" + objectMap);
+        //System.out.println("objectMap:%s\n" + objectMap);
 
         // getting person list
         List<PersonDto> personDtoList = jdbcClient.sql(personMasterSql)
@@ -111,7 +111,7 @@ public class MasterDataService {
                 .query(WorkDurationDto.class)
                 .list();
         // System.out.printf("\nworkDurationDtoList completed");
-        System.out.println("\nworkDurationDtoList:\n" + workDurationDtoList);
+        //System.out.println("\nworkDurationDtoList:\n" + workDurationDtoList);
         // System.out.printf("workDurationDtoList
         // initial---------------------------------------%s\n", workDurationDtoList);
         // getting work duration details type list
@@ -152,7 +152,7 @@ public class MasterDataService {
                 new ArrayList<ValueSetDto>(emergencyTypeDtoList),
                 new ArrayList<DepartmentJobDto>(departmentJobDtoList),
                 new ArrayList<ValueSetDto>(deleteRosterReasonList));
-        System.out.println("\n---------------------------------------rosterMasters %s\n" + rosterMasters);
+        //System.out.println("\n---------------------------------------rosterMasters %s\n" + rosterMasters);
 
         return rosterMasters;
     }
@@ -205,7 +205,7 @@ public class MasterDataService {
                 .query(WorkDurationDto.class)
                 .list();
         // System.out.printf("\nworkDurationDtoList completed");
-        System.out.println("\nworkDurationDtoList:\n" + workDurationDtoList);
+        //System.out.println("\nworkDurationDtoList:\n" + workDurationDtoList);
 
         WorkStructureMasters workStructureMasters = new WorkStructureMasters();
         workStructureMasters.setDepartmentDtoList((ArrayList<DepartmentDto>) departmentDtoList);
@@ -214,13 +214,13 @@ public class MasterDataService {
         workStructureMasters.setDepartmentJobDtoList((ArrayList<DepartmentJobDto>) (departmentJobDtoList));
         workStructureMasters.setWorkDurationDtoList((ArrayList<WorkDurationDto>) (workDurationDtoList));
 
-        System.out.println("work-structure-masters > departmentDtoList" + departmentDtoList);
-        System.out.println("work-structure-masters > departmentJobDtoList" + departmentJobDtoList);
-        System.out.println("work-structure-masters > workDurationDtoList" + workDurationDtoList);
-        System.out.println("work-structure-masters > work-structure-masters" + workStructureMasters);
+        //System.out.println("work-structure-masters > departmentDtoList" + departmentDtoList);
+        //System.out.println("work-structure-masters > departmentJobDtoList" + departmentJobDtoList);
+        //System.out.println("work-structure-masters > workDurationDtoList" + workDurationDtoList);
+        //System.out.println("work-structure-masters > work-structure-masters" + workStructureMasters);
 
 
-        System.out.println("\n---------------------------------------workStructureMasters %s\n" + workStructureMasters);
+        //System.out.println("\n---------------------------------------workStructureMasters %s\n" + workStructureMasters);
 
         return workStructureMasters;
     }

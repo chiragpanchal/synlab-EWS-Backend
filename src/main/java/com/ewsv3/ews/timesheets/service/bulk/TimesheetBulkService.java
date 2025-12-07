@@ -87,12 +87,12 @@ public class TimesheetBulkService {
 
         BulkTimesheetMasterDto bulkTimesheetMasterDto = new BulkTimesheetMasterDto();
 
-        System.out.println("getBulkMasters personDtos.size() :" + personDtos.size());
-        System.out.println("getBulkMasters departmentDtos.size() :" + departmentDtos.size());
-        System.out.println("getBulkMasters jobDtos.size() :" + jobDtos.size());
-        System.out.println("getBulkMasters projectDtos.size() :" + projectDtos.size());
-        System.out.println("getBulkMasters expTypeDtos.size() :" + expTypeDtos.size());
-        System.out.println("getBulkMasters paycodeDtos.size() :" + paycodeDtos.size());
+        //System.out.println("getBulkMasters personDtos.size() :" + personDtos.size());
+        //System.out.println("getBulkMasters departmentDtos.size() :" + departmentDtos.size());
+        //System.out.println("getBulkMasters jobDtos.size() :" + jobDtos.size());
+        //System.out.println("getBulkMasters projectDtos.size() :" + projectDtos.size());
+        //System.out.println("getBulkMasters expTypeDtos.size() :" + expTypeDtos.size());
+        //System.out.println("getBulkMasters paycodeDtos.size() :" + paycodeDtos.size());
 
         bulkTimesheetMasterDto.setPersonDtos(personDtos);
         bulkTimesheetMasterDto.setDepartmentDtos(departmentDtos);
@@ -109,9 +109,9 @@ public class TimesheetBulkService {
     public List<BulkTimesheetDetails> getBulkTimesheets(Long userId, TimesheetPageRequestBody requestBody, int page,
                                                         int size, JdbcClient jdbcClient) {
 
-        System.out.println("getBulkTimesheets requestBody :" + requestBody);
-        System.out.println("getBulkTimesheets page :" + page);
-        System.out.println("getBulkTimesheets size :" + size);
+        //System.out.println("getBulkTimesheets requestBody :" + requestBody);
+        //System.out.println("getBulkTimesheets page :" + page);
+        //System.out.println("getBulkTimesheets size :" + size);
 
         List<BulkTimesheetDetails> detailsList = jdbcClient.sql(sqlBulkTimesheetDetails)
                 .param("profileId", requestBody.profileId())
@@ -123,7 +123,7 @@ public class TimesheetBulkService {
                 .query(BulkTimesheetDetails.class)
                 .list();
 
-        System.out.println("getBulkTimesheets detailsList.size():" + detailsList.size());
+        //System.out.println("getBulkTimesheets detailsList.size():" + detailsList.size());
 
         return detailsList;
 
@@ -134,7 +134,7 @@ public class TimesheetBulkService {
 
 
         for (TimesheetDetails details : requestBody) {
-            System.out.println("saveBulkTimesheets details:" + details);
+            //System.out.println("saveBulkTimesheets details:" + details);
         }
         DMLResponseDto dmlResponseDto = this.timesheetFormService.saveTimesheets(currentUserId, requestBody, jdbcClient);
 

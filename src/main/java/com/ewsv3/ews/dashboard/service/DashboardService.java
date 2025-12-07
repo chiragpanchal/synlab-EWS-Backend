@@ -41,7 +41,7 @@ public class DashboardService {
                                 .single();
                 pendingRequests.add(new PendingRequests("Timesheets", timesheetCounts));
 
-                System.out.println("getPendingRequests pendingRequests:" + pendingRequests);
+                //System.out.println("getPendingRequests pendingRequests:" + pendingRequests);
 
                 return pendingRequests;
 
@@ -55,15 +55,15 @@ public class DashboardService {
                 LocalDate currentDate = LocalDate.now();
                 LocalDate startOfWeek = currentDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY));
                 LocalDate startOfPrevious5thWeek = startOfWeek.minus(5, ChronoUnit.WEEKS);
-                System.out.println("Start of the week: " + startOfWeek);
-                System.out.println("Start of the previous 5th week: " + startOfPrevious5thWeek);
+                //System.out.println("Start of the week: " + startOfWeek);
+                //System.out.println("Start of the previous 5th week: " + startOfPrevious5thWeek);
 
                 objectMap.put("startDate", startOfPrevious5thWeek);
                 objectMap.put("endDate", currentDate);
 
                 List<TeamViolations> prevWeekViolationsList = jdbcClient.sql(ViolationCountsSql).params(objectMap)
                                 .query(TeamViolations.class).list();
-                System.out.println("getTeamViolations prevWeekViolationsList:" + prevWeekViolationsList);
+                //System.out.println("getTeamViolations prevWeekViolationsList:" + prevWeekViolationsList);
 
                 return prevWeekViolationsList;
 
@@ -78,7 +78,7 @@ public class DashboardService {
                 List<PendingTeamRequestsDto> pendingTeamRequestsDtos = jdbcClient.sql(PendingTeamRequestsSql)
                                 .params(personDateMap).query(PendingTeamRequestsDto.class).list();
 
-                System.out.println("getPendingTeamRequests pendingTeamRequestsDtos:" + pendingTeamRequestsDtos);
+                //System.out.println("getPendingTeamRequests pendingTeamRequestsDtos:" + pendingTeamRequestsDtos);
 
                 return pendingTeamRequestsDtos;
 
@@ -111,7 +111,7 @@ public class DashboardService {
                 List<AwaitingActionsSummaryDto> list = jdbcClient.sql(AwaitingActionsSummarySql).params(personDateMap)
                                 .query(AwaitingActionsSummaryDto.class).list();
 
-                System.out.println("getAwaitingActions list:" + list);
+                //System.out.println("getAwaitingActions list:" + list);
 
                 return list;
 

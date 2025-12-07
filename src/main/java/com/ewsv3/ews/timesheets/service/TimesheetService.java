@@ -27,7 +27,8 @@ public class TimesheetService {
                         TimesheetPageRequestBody requestBody,
                         JdbcClient jdbcClient) {
 
-                System.out.println("getTimesheetData before get personList currenttime:" + LocalDateTime.now());
+                // System.out.println("getTimesheetData before get personList currenttime:" +
+                // LocalDateTime.now());
 
                 List<TimesheetPerson> personList = new ArrayList<>();
                 if (requestBody.profileId() == -1) {
@@ -69,13 +70,16 @@ public class TimesheetService {
                                         .query(TimesheetPerson.class)
                                         .list();
 
-                        System.out.println("getTimesheetData  personList.size():" + personList.size());
+                        // System.out.println("getTimesheetData personList.size():" +
+                        // personList.size());
 
                 }
 
-                System.out.println("getTimesheetData after get personList currenttime:" + LocalDateTime.now());
+                // System.out.println("getTimesheetData after get personList currenttime:" +
+                // LocalDateTime.now());
 
-                System.out.println("getTimesheetData getTimesheetData  personList.size():" + personList.size());
+                // System.out.println("getTimesheetData getTimesheetData personList.size():" +
+                // personList.size());
 
                 if (personList.isEmpty()) {
                         return new ArrayList<>();
@@ -85,16 +89,18 @@ public class TimesheetService {
                                 .map(timesheetPerson -> timesheetPerson.personId())
                                 .collect(Collectors.toList());
 
-                System.out.println("personIds.size():" + personIds.size());
-                System.out.println("personIds:" + personIds);
+                // System.out.println("personIds.size():" + personIds.size());
+                // System.out.println("personIds:" + personIds);
 
                 List<TimesheetDateSummary> allDateSummaries = new ArrayList<>();
                 List<TimesheetTableSummary> allTableSummaries = new ArrayList<>();
 
-                System.out.println("getTimesheetData before get allDateSummaries currenttime:" + LocalDateTime.now());
+                // System.out.println("getTimesheetData before get allDateSummaries
+                // currenttime:" + LocalDateTime.now());
                 if (requestBody.profileId() == -1) {
                         for (TimesheetPerson person : personList) {
-                                System.out.println("getTimesheetData person.personId():" + person.personId());
+                                // System.out.println("getTimesheetData person.personId():" +
+                                // person.personId());
                                 allDateSummaries = jdbcClient.sql(sqlSelfTimesheetDateSummaryBulk)
                                                 .param("personId", person.personId())
                                                 .param("startDate", requestBody.startDate())
@@ -103,8 +109,8 @@ public class TimesheetService {
                                                 .param("payCodeFlag", payCodeName)
                                                 .query(TimesheetDateSummary.class)
                                                 .list();
-                                System.out.println(
-                                                "getTimesheetData allDateSummaries.size():" + allDateSummaries.size());
+                                // System.out.println(
+                                // "getTimesheetData allDateSummaries.size():" + allDateSummaries.size());
 
                                 allTableSummaries = jdbcClient.sql(sqlSelfTimesheetTableDataBulk)
                                                 .param("personId", person.personId())
@@ -114,9 +120,9 @@ public class TimesheetService {
                                                 .param("payCodeFlag", payCodeName)
                                                 .query(TimesheetTableSummary.class)
                                                 .list();
-                                System.out.println("getTimesheetData allTableSummaries.size():"
-                                                + allTableSummaries.size());
-                                System.out.println("===============================================");
+                                // System.out.println("getTimesheetData allTableSummaries.size():"
+                                // + allTableSummaries.size());
+                                // System.out.println("===============================================");
 
                         }
                         // self timesheets
@@ -155,16 +161,16 @@ public class TimesheetService {
                                         .param("startDate", requestBody.startDate())
                                         .param("endDate", requestBody.endDate())
                                         .param("personIds", personIds)
-
                                         // .param("offset", page)
                                         // .param("pageSize", size)
                                         .query(TimesheetDateSummary.class)
                                         .list();
 
-                        System.out.println("getTimesheetData after get allDateSummaries currenttime:"
-                                        + LocalDateTime.now());
-                        System.out.println("getTimesheetData before get allTableSummaries currenttime:"
-                                        + LocalDateTime.now());
+                        // System.out.println("getTimesheetData after get allDateSummaries currenttime:"
+                        // + LocalDateTime.now());
+                        // System.out.println("getTimesheetData before get allTableSummaries
+                        // currenttime:"
+                        // + LocalDateTime.now());
                         // Bulk fetch all table summaries for all persons in one query
                         allTableSummaries = jdbcClient.sql(sqlTimesheetTableDataBulk)
                                         .param("userId", userId)
@@ -180,11 +186,13 @@ public class TimesheetService {
                                         .query(TimesheetTableSummary.class)
                                         .list();
 
-                        System.out.println("getTimesheetData after get allTableSummaries currenttime:"
-                                        + LocalDateTime.now());
+                        // System.out.println("getTimesheetData after get allTableSummaries
+                        // currenttime:"
+                        // + LocalDateTime.now());
                 }
 
-                System.out.println("getTimesheetData Line 169 currenttime:" + LocalDateTime.now());
+                // System.out.println("getTimesheetData Line 169 currenttime:" +
+                // LocalDateTime.now());
                 // Create maps for efficient lookup
                 Map<Long, Map<LocalDate, TimesheetDateSummary>> dateSummaryMap = allDateSummaries.stream()
                                 .collect(Collectors.groupingBy(
@@ -192,14 +200,16 @@ public class TimesheetService {
                                                 Collectors.toMap(TimesheetDateSummary::getEffectiveDate,
                                                                 Function.identity())));
 
-                System.out.println("getTimesheetData Line 177 currenttime:" + LocalDate.now());
+                // System.out.println("getTimesheetData Line 177 currenttime:" +
+                // LocalDate.now());
                 Map<String, List<TimesheetTableSummary>> tableSummaryMap = allTableSummaries.stream()
                                 .collect(Collectors.groupingBy(
                                                 ts -> ts.personId() + "_" + ts.effectiveDate()));
 
                 List<TimesheetPageResponseBody> pageResponseBody = new ArrayList<>();
 
-                System.out.println("getTimesheetData Line 185 currenttime:" + LocalDateTime.now());
+                // System.out.println("getTimesheetData Line 185 currenttime:" +
+                // LocalDateTime.now());
                 for (TimesheetPerson person : personList) {
                         // System.out.println("getTimesheetData 2 person.personId():" +
                         // person.personId());
@@ -238,7 +248,8 @@ public class TimesheetService {
                         pageResponseBody.add(responseBody);
                 }
 
-                System.out.println("getTimesheetData Line 222 currenttime:" + LocalDateTime.now());
+                // System.out.println("getTimesheetData Line 222 currenttime:" +
+                // LocalDateTime.now());
 
                 return pageResponseBody;
 
@@ -251,7 +262,7 @@ public class TimesheetService {
                         TimesheetPageRequestBody requestBody,
                         JdbcClient jdbcClient) {
 
-                System.out.println("getTimesheetKpi requestBody:" + requestBody);
+                // System.out.println("getTimesheetKpi requestBody:" + requestBody);
                 List<TimesheetPayCodeKpi> payCodeKpi = new ArrayList<>();
                 List<TimesheetStatusKpi> statusKpi = new ArrayList<>();
 
@@ -264,7 +275,7 @@ public class TimesheetService {
                                         .param("endDate", requestBody.endDate())
                                         .query(TimesheetPayCodeKpi.class)
                                         .list();
-                        System.out.println("getTimesheetKpi payCodeKpi:" + payCodeKpi);
+                        // System.out.println("getTimesheetKpi payCodeKpi:" + payCodeKpi);
 
                         statusKpi = jdbcClient.sql(sqlSelfTimesheetStatusCounts)
                                         .param("userId", userId)
@@ -283,7 +294,7 @@ public class TimesheetService {
                                         .param("endDate", requestBody.endDate())
                                         .query(TimesheetPayCodeKpi.class)
                                         .list();
-                        System.out.println("getTimesheetKpi payCodeKpi:" + payCodeKpi);
+                        // System.out.println("getTimesheetKpi payCodeKpi:" + payCodeKpi);
 
                         statusKpi = jdbcClient.sql(sqlLineManagerTimesheetStatusCounts)
                                         .param("userId", userId)
@@ -304,7 +315,7 @@ public class TimesheetService {
                                         .param("endDate", requestBody.endDate())
                                         .query(TimesheetPayCodeKpi.class)
                                         .list();
-                        System.out.println("getTimesheetKpi payCodeKpi:" + payCodeKpi);
+                        // System.out.println("getTimesheetKpi payCodeKpi:" + payCodeKpi);
 
                         statusKpi = jdbcClient.sql(sqlTimesheetStatusCounts)
                                         .param("userId", userId)
@@ -318,7 +329,7 @@ public class TimesheetService {
 
                 }
 
-                System.out.println("getTimesheetKpi statusKpi:" + statusKpi);
+                // System.out.println("getTimesheetKpi statusKpi:" + statusKpi);
 
                 TimesheetKpi timesheetKpi = new TimesheetKpi(
                                 payCodeKpi,

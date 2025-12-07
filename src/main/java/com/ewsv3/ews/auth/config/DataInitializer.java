@@ -34,7 +34,7 @@ public class DataInitializer implements CommandLineRunner {
             // endDate is null for active users
             
             userRepository.save(testUser);
-            System.out.println("Test user created: username='testuser', password='password123'");
+            // System.out.println("Test user created: username='testuser', password='password123'");
             
             // Create user with ID 1059 and BCrypt password
             User user1059 = new User();
@@ -48,7 +48,7 @@ public class DataInitializer implements CommandLineRunner {
             user1059.setStartDate(new Date());
             
             userRepository.save(user1059);
-            System.out.println("User 1059 created with BCrypt password");
+            // System.out.println("User 1059 created with BCrypt password");
         }
     }
 }

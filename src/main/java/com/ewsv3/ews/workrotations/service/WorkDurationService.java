@@ -59,24 +59,24 @@ public class WorkDurationService {
     public List<WorkDuration> getWorkDurations(Long userId, WorkDurationRequestBody requestBody) {
 
         try {
-            System.out.println("getWorkDurations > requestBody: " + requestBody);
+            //System.out.println("getWorkDurations > requestBody: " + requestBody);
             String searchText = requestBody.searchText() != null ? requestBody.searchText() : "";
             String activeOnly = requestBody.activeOnly() != null ? requestBody.activeOnly() : "N";
 
-            System.out.println("getWorkDurations service > searchText: " + searchText);
-            System.out.println("getWorkDurations service > activeOnly: " + activeOnly);
+            //System.out.println("getWorkDurations service > searchText: " + searchText);
+            //System.out.println("getWorkDurations service > activeOnly: " + activeOnly);
             // Long workDurationId = (requestBody.workDurationId() != null &&
             // requestBody.workDurationId() == 0) ? null
             // : requestBody.workDurationId();
 
-            System.out.println("getWorkDurations service > workDurationId: " + requestBody.workDurationId());
+            //System.out.println("getWorkDurations service > workDurationId: " + requestBody.workDurationId());
 
             Map<String, Object> params = Map.of(
                     "workDurationId", requestBody.workDurationId(),
                     "searchText", "%" + searchText + "%",
                     "activeOnly", activeOnly);
 
-            System.out.println("getWorkDurations service > params: " + params);
+            //System.out.println("getWorkDurations service > params: " + params);
 
             List<WorkDuration> list = jdbcClient
                     .sql(workrotationsUtils.GetWorkDurationSql)
@@ -86,8 +86,8 @@ public class WorkDurationService {
 
             return list;
         } catch (Exception e) {
-            System.out.println("Error getWorkDurations service : " + e.getMessage());
-            System.out.println("Error getWorkDurations service : " + e);
+            //System.out.println("Error getWorkDurations service : " + e.getMessage());
+            //System.out.println("Error getWorkDurations service : " + e);
             return null;
         }
 
@@ -95,7 +95,7 @@ public class WorkDurationService {
 
     public List<WorkRotation> getWorkRotations(Long userId, WorkRotationRequestBody requestBody) {
 
-        System.out.println("getWorkRotations service > requestBody: " + requestBody);
+        //System.out.println("getWorkRotations service > requestBody: " + requestBody);
         List<WorkRotation> list = jdbcClient
                 .sql(workrotationsUtils.GetWorkRotationSql)
                 // .param("workRotationId", requestBody.workRotationId())
@@ -109,7 +109,7 @@ public class WorkDurationService {
 
     public List<WorkRotationLine> getWorkRotationLines(Long userId, Long workRotationId) {
 
-        System.out.println("getWorkRotationLines service > workRotationId: " + workRotationId);
+        //System.out.println("getWorkRotationLines service > workRotationId: " + workRotationId);
 
         // Map<String, Object> params = Map.of("workRotationId", workRotationId);
 
@@ -130,7 +130,7 @@ public class WorkDurationService {
 
         if (workDuration.workDurationId() == null || workDuration.workDurationId() == 0) { // inserting
             // Logic to insert a new WorkDuration
-            System.out.println("Saving new WorkDuration: " + workDuration);
+            //System.out.println("Saving new WorkDuration: " + workDuration);
 
             // Retrieve the generated workDurationId from the sequence
             Long generatedId = this.jdbcClient
@@ -175,11 +175,11 @@ public class WorkDurationService {
 
             // Set the generated ID back to the workDuration object (if possible)
             workDuration = getWorkDurations(userId, new WorkDurationRequestBody(generatedId, null, null)).get(0);
-            System.out.println("Inserted WorkDuration,  insCounts: " + insCounts);
+            //System.out.println("Inserted WorkDuration,  insCounts: " + insCounts);
 
-            System.out.println("Inserted WorkDuration with ID: " + workDuration.workDurationId());
+            //System.out.println("Inserted WorkDuration with ID: " + workDuration.workDurationId());
         } else { // updating
-            System.out.println("Updating WorkDuration: " + workDuration);
+            //System.out.println("Updating WorkDuration: " + workDuration);
 
             Integer updCounts = this.jdbcClient
                     .sql(workrotationsUtils.updateWorkDurationSql)
@@ -214,10 +214,10 @@ public class WorkDurationService {
                     .param("last_update_date", new java.sql.Timestamp(System.currentTimeMillis()))
                     .update();
 
-            System.out.println("Updated WorkDuration, updCounts: " + updCounts);
+            //System.out.println("Updated WorkDuration, updCounts: " + updCounts);
 
             // Logic to update an existing WorkDuration
-            System.out.println("Updating WorkDuration with ID: " + workDuration.workDurationId());
+            //System.out.println("Updating WorkDuration with ID: " + workDuration.workDurationId());
         }
         return workDuration; // Return the saved WorkDuration object
     }
@@ -227,14 +227,14 @@ public class WorkDurationService {
             throw new IllegalArgumentException("WorkDuration or workDurationId cannot be null");
         }
 
-        System.out.println("Deleting WorkDuration with ID: " + workDuration.workDurationId());
+        //System.out.println("Deleting WorkDuration with ID: " + workDuration.workDurationId());
 
         Integer delCounts = this.jdbcClient
                 .sql(workrotationsUtils.deleteWorkDurationSql)
                 .param("work_duration_id", workDuration.workDurationId())
                 .update();
 
-        System.out.println("Deleted WorkDuration, delCounts: " + delCounts);
+        //System.out.println("Deleted WorkDuration, delCounts: " + delCounts);
 
         return delCounts; // Return the deleted WorkDuration object
     }
@@ -252,12 +252,12 @@ public class WorkDurationService {
         // This now correctly handles the case where 'iterations' is already null.
         Integer iterationForDb = (iterations != null && iterations.equals(0)) ? null : iterations;
 
-        System.out.println("Saving new WorkRotation: iteration: " + iterationForDb);
+        //System.out.println("Saving new WorkRotation: iteration: " + iterationForDb);
 
-        System.out.println("Saving new WorkRotation: iterationForDb: " + iterationForDb);
+        //System.out.println("Saving new WorkRotation: iterationForDb: " + iterationForDb);
         if (workRotation.workRotationId() == null || workRotation.workRotationId() == 0) { // inserting
             // Logic to insert a new WorkRotation
-            System.out.println("Saving new WorkRotation: " + workRotation);
+            //System.out.println("Saving new WorkRotation: " + workRotation);
 
             // Retrieve the generated workRotationId from the sequence
             Long generatedId = this.jdbcClient
@@ -285,11 +285,11 @@ public class WorkDurationService {
                     .filter(wr -> wr.workRotationId().equals(generatedId))
                     .findFirst()
                     .orElse(workRotation);
-            System.out.println("Inserted WorkRotation, insCounts: " + insCounts);
+            //System.out.println("Inserted WorkRotation, insCounts: " + insCounts);
 
-            System.out.println("Inserted WorkRotation with ID: " + workRotation.workRotationId());
+            //System.out.println("Inserted WorkRotation with ID: " + workRotation.workRotationId());
         } else { // updating
-            System.out.println("Updating WorkRotation: " + workRotation);
+            //System.out.println("Updating WorkRotation: " + workRotation);
 
             Integer updCounts = this.jdbcClient
                     .sql(workrotationsUtils.updateWorkRotationSql)
@@ -304,7 +304,7 @@ public class WorkDurationService {
                     .param("last_update_date", new java.sql.Timestamp(System.currentTimeMillis()))
                     .update();
 
-            System.out.println("Updated WorkDuration, updCounts: " + updCounts);
+            //System.out.println("Updated WorkDuration, updCounts: " + updCounts);
 
         }
 
@@ -316,14 +316,14 @@ public class WorkDurationService {
             throw new IllegalArgumentException("WorkRotation or workRotationId cannot be null");
         }
 
-        System.out.println("Deleting WorkRotation with ID: " + workRotation.workRotationId());
+        //System.out.println("Deleting WorkRotation with ID: " + workRotation.workRotationId());
 
         Integer delCounts = this.jdbcClient
                 .sql(workrotationsUtils.deleteWorkRotationSql)
                 .param("work_rotation_id", workRotation.workRotationId())
                 .update();
 
-        System.out.println("Deleted WorkRotation, delCounts: " + delCounts);
+        //System.out.println("Deleted WorkRotation, delCounts: " + delCounts);
 
         return delCounts; // Return the deleted WorkRotation object
     }
@@ -335,7 +335,7 @@ public class WorkDurationService {
 
         if (workRotationLine.workRotationLineId() == null || workRotationLine.workRotationLineId() ==0 ) { // inserting
             // Logic to insert a new WorkRotationLine
-            System.out.println("Saving new WorkRotationLine: " + workRotationLine);
+            //System.out.println("Saving new WorkRotationLine: " + workRotationLine);
 
             // Retrieve the generated workRotationLineId from the sequence
             Long generatedId = this.jdbcClient
@@ -367,11 +367,11 @@ public class WorkDurationService {
                     .filter(wrl -> wrl.workRotationLineId().equals(generatedId))
                     .findFirst()
                     .orElse(workRotationLine);
-            System.out.println("Inserted WorkRotationLine, insCounts: " + insCounts);
+            //System.out.println("Inserted WorkRotationLine, insCounts: " + insCounts);
 
-            System.out.println("Inserted WorkRotationLine with ID: " + workRotationLine.workRotationLineId());
+            //System.out.println("Inserted WorkRotationLine with ID: " + workRotationLine.workRotationLineId());
         } else { // updating
-            System.out.println("Updating WorkRotationLine: " + workRotationLine);
+            //System.out.println("Updating WorkRotationLine: " + workRotationLine);
 
             Integer updCounts = this.jdbcClient
                     .sql(workrotationsUtils.updateWorkRotationLineSql)
@@ -389,9 +389,9 @@ public class WorkDurationService {
                     .param("last_updated_by", userId)
                     .param("last_update_date", new java.sql.Timestamp(System.currentTimeMillis()))
                     .update();
-            System.out.println("Updated WorkRotationLine, updCounts: " + updCounts);
+            //System.out.println("Updated WorkRotationLine, updCounts: " + updCounts);
             // Logic to update an existing WorkRotationLine
-            System.out.println("Updating WorkRotationLine with ID: " + workRotationLine.workRotationLineId());
+            //System.out.println("Updating WorkRotationLine with ID: " + workRotationLine.workRotationLineId());
         }
         return workRotationLine; // Return the saved WorkRotationLine object
     }
@@ -401,14 +401,14 @@ public class WorkDurationService {
             throw new IllegalArgumentException("WorkRotationLine or workRotationLineId cannot be null");
         }
 
-        System.out.println("Deleting WorkRotationLine with ID: " + workRotationLine.workRotationLineId());
+        //System.out.println("Deleting WorkRotationLine with ID: " + workRotationLine.workRotationLineId());
 
         Integer delCounts = this.jdbcClient
                 .sql(workrotationsUtils.deleteWorkRotationLineSql)
                 .param("work_rotation_line_id", workRotationLine.workRotationLineId())
                 .update();
 
-        System.out.println("Deleted WorkRotationLine, delCounts: " + delCounts);
+        //System.out.println("Deleted WorkRotationLine, delCounts: " + delCounts);
 
 
         return delCounts; // Return the deleted WorkRotationLine object

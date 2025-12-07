@@ -5,6 +5,8 @@ import com.ewsv3.ews.auth.service.JwtService;
 import com.ewsv3.ews.auth.service.RefreshTokenService;
 import com.ewsv3.ews.auth.service.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,12 +15,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Autowired
     AuthenticationManager authenticationManager;
@@ -66,6 +71,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        logger.info("AUTHENTICATE_USER - Entry - Time: {}, Username: {}", LocalDateTime.now(), loginRequest.getUsername());
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
@@ -76,18 +82,24 @@ public class AuthController {
         UserPrincipal userDetails = (UserPrincipal) authentication.getPrincipal();
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUserId());
 
-        System.out.println("authenticateUser refreshToken.getExpiryDate():"+refreshToken.getExpiryDate());
+        // System.out.println("authenticateUser refreshToken.getExpiryDate():"+refreshToken.getExpiryDate());
+        logger.info("AUTHENTICATE_USER - RefreshToken - ExpiryDate: {}", refreshToken.getExpiryDate());
 
-        return ResponseEntity.ok(new JwtResponse(jwt, refreshToken.getToken(),
+        JwtResponse response = new JwtResponse(jwt, refreshToken.getToken(),
                 userDetails.getUserId(),
                 userDetails.getUsername(),
                 userDetails.getUserType(),
                 userDetails.getEnterpriseId(),
-                userDetails.getEmployeeId()));
+                userDetails.getEmployeeId());
+        logger.info("AUTHENTICATE_USER - Exit - Time: {}, Username: {}, UserId: {}", LocalDateTime.now(), loginRequest.getUsername(), userDetails.getUserId());
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refreshtoken")
     public ResponseEntity<?> refreshtoken(@RequestBody TokenRefreshRequest request) {
+        logger.info("REFRESH_TOKEN - Entry - Time: {}", LocalDateTime.now());
+
         String requestRefreshToken = request.getRefreshToken();
 
         return refreshTokenService.findByToken(requestRefreshToken)
@@ -95,13 +107,19 @@ public class AuthController {
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     String token = jwtService.generateTokenFromUsername(user.getUserName());
+                    logger.info("REFRESH_TOKEN - Exit - Time: {}, Username: {}", LocalDateTime.now(), user.getUserName());
                     return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
                 })
-                .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+                .orElseThrow(() -> {
+                    logger.error("REFRESH_TOKEN - Exception - Time: {}, Error: Refresh token is not in database", LocalDateTime.now());
+                    return new RuntimeException("Refresh token is not in database!");
+                });
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logoutUser(HttpServletRequest request) {
+        logger.info("LOGOUT_USER - Entry - Time: {}", LocalDateTime.now());
+
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String jwt = authHeader.substring(7);
@@ -114,6 +132,7 @@ public class AuthController {
         // Optionally, you can invalidate the refresh token on the server side as well.
         // For example, by getting it from the request and deleting it from the database.
 
+        logger.info("LOGOUT_USER - Exit - Time: {}", LocalDateTime.now());
         return ResponseEntity.ok(new MessageResponse("You've been signed out!"));
     }
 

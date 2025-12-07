@@ -97,38 +97,38 @@ public class SelfRosterService {
         inParamMap.put("p_item_key", reqDto.getItemKey());
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-        System.out.println(inSource);
+        //System.out.println(inSource);
         // simpleJdbcCall = new
         // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_SAVE_SELF_ROSTER_P");
         Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
-        System.out.println("saveSelfRoster simpleJdbcCallResult:" + simpleJdbcCallResult);
+        //System.out.println("saveSelfRoster simpleJdbcCallResult:" + simpleJdbcCallResult);
 
         AtomicReference<Object> sMessage = new AtomicReference<>();
 
         simpleJdbcCallResult.forEach((s, o) -> {
-            System.out.println("s:" + s);
-            System.out.println("o:" + o);
+            //System.out.println("s:" + s);
+            //System.out.println("o:" + o);
 
             if (s.equals("P_OUT")) {
                 String strMessage = o.toString();
-                System.out.println("strMessage:" + strMessage);
+                //System.out.println("strMessage:" + strMessage);
                 sMessage.set(o);
             }
         });
 
-        System.out.println("sMessage.get():" + sMessage.get());
+        //System.out.println("sMessage.get():" + sMessage.get());
         String messageString = sMessage.get().toString();
 
         String flag = messageString.substring(0, 1);
-        System.out.println("flag:" + flag);
+        //System.out.println("flag:" + flag);
         if (flag.equals("E")) {
             errorMessage = messageString.substring(2);
             return new DMLResponseDto("E", "Error in saving self roster");
         } else {
             recCounts = recCounts + Integer.parseInt(messageString.substring(2));
-            System.out.println("recCounts:" + recCounts);
+            //System.out.println("recCounts:" + recCounts);
         }
 
         inParamMap.clear();
@@ -176,34 +176,34 @@ public class SelfRosterService {
                 inParamMap.put("p_start_date", selfRosterLine.startDate());
 
                 inSource = new MapSqlParameterSource(inParamMap);
-                System.out.println(inSource);
+                //System.out.println(inSource);
                 simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_SAVE_SELF_ROSTER_LINE_P");
                 simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
                 AtomicReference<Object> sMessageline = new AtomicReference<>();
 
                 simpleJdbcCallResult.forEach((s, o) -> {
-                    System.out.println(s);
-                    System.out.println(o);
+                    //System.out.println(s);
+                    //System.out.println(o);
 
                     if (s.equals("P_OUT")) {
                         String strMessage = o.toString();
-                        System.out.println("strMessage:" + strMessage);
+                        //System.out.println("strMessage:" + strMessage);
                         sMessageline.set(o);
                     }
                 });
 
-                System.out.println("sMessageline.get():" + sMessageline.get());
+                //System.out.println("sMessageline.get():" + sMessageline.get());
                 messageString = sMessageline.get().toString();
 
                 flag = messageString.substring(0, 1);
-                System.out.println("flag:" + flag);
+                //System.out.println("flag:" + flag);
                 if (flag.equals("E")) {
                     errorMessage = messageString.substring(2);
                     return new DMLResponseDto("E", "Error in saving self roster lines");
                 } else {
                     recCounts = recCounts + Integer.parseInt(messageString.substring(2));
-                    System.out.println("recCounts:" + recCounts);
+                    //System.out.println("recCounts:" + recCounts);
                 }
 
                 inParamMap.clear();

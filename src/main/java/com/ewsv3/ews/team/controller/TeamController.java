@@ -4,6 +4,8 @@ import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.team.dto.*;
 import com.ewsv3.ews.team.service.LeaveService;
 import com.ewsv3.ews.team.service.TeamService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -12,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +23,8 @@ import java.util.concurrent.CompletableFuture;
 @RestController
 @RequestMapping("/api/team")
 public class TeamController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TeamController.class);
 
     private final JdbcClient jdbcClient;
     private final TeamService teamService;
@@ -48,13 +53,14 @@ public class TeamController {
             @RequestParam(defaultValue = "") String filterFlag,
             @RequestBody ProfileDatesRequestBody requestBody) {
 
-        System.out.println("getTeamTimecardsSimple > page:" + page);
-        System.out.println("getTeamTimecardsSimple > size:" + size);
-        System.out.println("getTeamTimecardsSimple > text:" + text);
-        System.out.println("getTeamTimecardsSimple > filterFlag:" + filterFlag);
+        logger.info("getTeamTimecardsSimple - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+        //System.out.println("getTeamTimecardsSimple > page:" + page);
+        //System.out.println("getTeamTimecardsSimple > size:" + size);
+        //System.out.println("getTeamTimecardsSimple > text:" + text);
+        //System.out.println("getTeamTimecardsSimple > filterFlag:" + filterFlag);
 
         try {
-            System.out.println("getTeamTimecardsSimple > requestBody:" + requestBody);
+            //System.out.println("getTeamTimecardsSimple > requestBody:" + requestBody);
 
             List<TeamTimecardSimple> teamTimecardsSimple = this.teamService.getTeamTimecardsSimpleV2(
                     getCurrentUserId(),
@@ -67,11 +73,13 @@ public class TeamController {
                     filterFlag,
                     this.jdbcClient);
 
-            System.out.println("getTeamTimecardsSimple > teamTimecardsSimple:" + teamTimecardsSimple);
+            //System.out.println("getTeamTimecardsSimple > teamTimecardsSimple:" + teamTimecardsSimple);
+            logger.info("getTeamTimecardsSimple - Exit - Time: {}, Response Count: {}", LocalDateTime.now(), teamTimecardsSimple.size());
 
             return new ResponseEntity<>(teamTimecardsSimple, HttpStatus.OK);
 
         } catch (Exception exception) {
+            logger.error("getTeamTimecardsSimple - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -81,8 +89,10 @@ public class TeamController {
     public ResponseEntity<TeamMembersResponse> getTeamTimecards(@RequestHeader Map<String, String> headers,
             @RequestBody ProfileDatesRequestBody requestBody) {
 
+        logger.info("getTeamTimecards - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+
         try {
-            System.out.println("getTeamTimecards > requestBody:" + requestBody);
+            //System.out.println("getTeamTimecards > requestBody:" + requestBody);
 
             CompletableFuture<List<TeamMembers>> teamTimecards = this.teamService.getTeamTimecards2(
                     getCurrentUserId(),
@@ -91,7 +101,7 @@ public class TeamController {
                     LocalDate.ofInstant(requestBody.endDate().toInstant(), ZoneId.systemDefault()),
                     this.jdbcClient);
 
-            System.out.println("getTeamTimecards > teamTimecards:" + teamTimecards.get());
+            //System.out.println("getTeamTimecards > teamTimecards:" + teamTimecards.get());
 
             // TeamTimecardKpi teamTimecardKpi = this.teamService.getTeamTimecardKpi(
             // userInfo.userId(),
@@ -103,9 +113,13 @@ public class TeamController {
             // this.jdbcClient);
             TeamTimecardKpi teamTimecardKpi = null;
 
-            return new ResponseEntity<>(new TeamMembersResponse(teamTimecards.get(), teamTimecardKpi), HttpStatus.OK);
+            TeamMembersResponse response = new TeamMembersResponse(teamTimecards.get(), teamTimecardKpi);
+            logger.info("getTeamTimecards - Exit - Time: {}, Response: {}", LocalDateTime.now(), response);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (Exception exception) {
+            logger.error("getTeamTimecards - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -114,6 +128,8 @@ public class TeamController {
     @PostMapping("timecards-pgn")
     public ResponseEntity<TeamMembersResponse> getTeamTimecardsPagination(@RequestHeader Map<String, String> headers,
             @RequestBody ProfileDatesRequestPgnBody requestBody) {
+
+        logger.info("getTeamTimecardsPagination - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
 
         try {
 
@@ -149,9 +165,13 @@ public class TeamController {
             // this.jdbcClient);
             TeamTimecardKpi teamTimecardKpi = null;
 
-            return new ResponseEntity<>(new TeamMembersResponse(timecards5.get(), teamTimecardKpi), HttpStatus.OK);
+            TeamMembersResponse response = new TeamMembersResponse(timecards5.get(), teamTimecardKpi);
+            logger.info("getTeamTimecardsPagination - Exit - Time: {}, Response: {}", LocalDateTime.now(), response);
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (Exception exception) {
+            logger.error("getTeamTimecardsPagination - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -161,9 +181,11 @@ public class TeamController {
     public ResponseEntity<List<TeamTimecardObject>> getTeamTimecardsNew(@RequestHeader Map<String, String> headers,
             @RequestBody ProfileDatesRequestBody requestBody) {
 
+        logger.info("getTeamTimecardsNew - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+
         try {
 
-            System.out.println("getTeamTimecardsNew > requestBody:" + requestBody);
+            //System.out.println("getTeamTimecardsNew > requestBody:" + requestBody);
 
             List<TeamTimecardObject> teamTimecardObjects = this.teamService.getTeamTimecards3(
                     getCurrentUserId(),
@@ -175,9 +197,12 @@ public class TeamController {
             // System.out.println("getTeamTimecardsNew > teamTimecardObjects:" +
             // teamTimecardObjects);
 
+            logger.info("getTeamTimecardsNew - Exit - Time: {}, Response Count: {}", LocalDateTime.now(), teamTimecardObjects.size());
+
             return new ResponseEntity<>(teamTimecardObjects, HttpStatus.OK);
 
         } catch (Exception exception) {
+            logger.error("getTeamTimecardsNew - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -188,14 +213,18 @@ public class TeamController {
             @RequestHeader Map<String, String> headers,
             @RequestBody ProfileDatesRequestBody requestBody) {
 
+        logger.info("getPersonLeaves - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+
         try {
-            System.out.println("person-leaves requestBody:" + requestBody);
+            //System.out.println("person-leaves requestBody:" + requestBody);
             List<PersonLeaveDto> personLeaves = this.leaveService.getPersonLeaves(getCurrentUserId(), requestBody,
                     jdbcClient);
+            logger.info("getPersonLeaves - Exit - Time: {}, Response Count: {}", LocalDateTime.now(), personLeaves.size());
             return new ResponseEntity<>(personLeaves, HttpStatus.OK);
 
         } catch (Exception exception) {
-            System.out.println("person-leaves ERROR:" + exception.getMessage());
+            //System.out.println("person-leaves ERROR:" + exception.getMessage());
+            logger.error("getPersonLeaves - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 

@@ -111,15 +111,15 @@ public class RequestService {
         LocalDate sDate = LocalDate.parse(reqBody.dateStart(), dateFormatter);
         LocalDate eDate = LocalDate.parse(reqBody.dateEnd(), dateFormatter);
 
-        System.out.println("createRequest sDate:" + sDate);
-        System.out.println("createRequest eDate:" + eDate);
-        System.out.println("createRequest userId:" + userId);
+        //System.out.println("createRequest sDate:" + sDate);
+        //System.out.println("createRequest eDate:" + eDate);
+        //System.out.println("createRequest userId:" + userId);
 
         // Sanitize time strings to remove any non-standard whitespace
         String sanitizedTimeStart = reqBody.timeStart().replaceAll("\\s+", " ").trim();
         String sanitizedTimeEnd = reqBody.timeEnd().replaceAll("\\s+", " ").trim();
-        System.out.println("Sanitized timeStart: '" + sanitizedTimeStart + "'");
-        System.out.println("Sanitized timeEnd: '" + sanitizedTimeEnd + "'");
+        //System.out.println("Sanitized timeStart: '" + sanitizedTimeStart + "'");
+        //System.out.println("Sanitized timeEnd: '" + sanitizedTimeEnd + "'");
 
         // Try both 12-hour and 24-hour patterns for time parsing
         LocalTime sTime = null;
@@ -135,7 +135,7 @@ public class RequestService {
                 throw new RuntimeException("Could not parse timeStart: '" + sanitizedTimeStart + "'", ex2);
             }
         }
-        System.out.println("createRequest sTime:" + sTime);
+        //System.out.println("createRequest sTime:" + sTime);
         try {
             eTime = LocalTime.parse(sanitizedTimeEnd, formatter12);
         } catch (Exception ex1) {
@@ -145,14 +145,14 @@ public class RequestService {
                 throw new RuntimeException("Could not parse timeEnd: '" + sanitizedTimeEnd + "'", ex2);
             }
         }
-        System.out.println("createRequest eTime:" + eTime);
+        //System.out.println("createRequest eTime:" + eTime);
 
         // Combine LocalDate and LocalTime to create LocalDateTime
         LocalDateTime startTime = sDate.atTime(sTime);
         LocalDateTime endTime = sDate.atTime(eTime);
 
-        System.out.println("createRequest startTime" + startTime);
-        System.out.println("createRequest endTime" + endTime);
+        //System.out.println("createRequest startTime" + startTime);
+        //System.out.println("createRequest endTime" + endTime);
 
         // Use direct CallableStatement for more control
         try {
@@ -215,10 +215,10 @@ public class RequestService {
                 String approvalUserId = cs.getString(31);
                 String message = cs.getString(32);
 
-                System.out.println("personRequestId: " + personRequestId);
-                System.out.println("itemKey: " + itemKey);
-                System.out.println("approvalUserId: " + approvalUserId);
-                System.out.println("message: " + message);
+                //System.out.println("personRequestId: " + personRequestId);
+                //System.out.println("itemKey: " + itemKey);
+                //System.out.println("approvalUserId: " + approvalUserId);
+                //System.out.println("message: " + message);
 
                 if ("SUCCESS".equals(message)) {
                     return String.valueOf(itemKey);
@@ -229,7 +229,7 @@ public class RequestService {
 
         } catch (Exception e) {
 
-            System.out.println("Error calling stored procedure: " + e.getMessage());
+            //System.out.println("Error calling stored procedure: " + e.getMessage());
             throw new RuntimeException("Failed to create request:" + e.getMessage(), e);
         }
     }
@@ -281,32 +281,32 @@ public class RequestService {
         inParamMap.put("p_comments", reqBody.comments());
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-        System.out.println(inSource);
+        //System.out.println(inSource);
         inParamMap.clear();
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_BULK_REQUEST_ACTIONS_P");
         Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
-        System.out.println("actionRequests simpleJdbcCallResult :" + simpleJdbcCallResult);
+        //System.out.println("actionRequests simpleJdbcCallResult :" + simpleJdbcCallResult);
 
         AtomicReference<Object> sMessage = new AtomicReference<>();
 
         simpleJdbcCallResult.forEach((s, o) -> {
-            System.out.println(s);
-            System.out.println(o);
+            //System.out.println(s);
+            //System.out.println(o);
 
             if (s.equals("P_OUT")) {
                 String strMessage = o.toString();
-                System.out.println("actionRequests strMessage:" + strMessage);
+                //System.out.println("actionRequests strMessage:" + strMessage);
                 sMessage.set(o);
             }
         });
 
         if (sMessage.get() != null) {
-            System.out.println("actionRequests sMessage.get():" + sMessage.get());
+            //System.out.println("actionRequests sMessage.get():" + sMessage.get());
             String messageString = sMessage.get().toString();
 
             String flag = messageString.substring(0, 1);
-            System.out.println("flag:" + flag);
+            //System.out.println("flag:" + flag);
             if (flag.equals("E")) {
                 errorMessage[0].set(messageString.length() > 1000 ? messageString.substring(0, 1000)
                         : messageString);
@@ -314,7 +314,7 @@ public class RequestService {
                 String[] parts = messageString.split("#");
                 if (parts.length > 1) {
                     recCounts[0] = recCounts[0] + Integer.parseInt(parts[1]);
-                    System.out.println("actionRequests recCounts:" + recCounts[0]);
+                    //System.out.println("actionRequests recCounts:" + recCounts[0]);
                 }
             }
         }

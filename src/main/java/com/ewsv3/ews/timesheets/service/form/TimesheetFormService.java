@@ -148,7 +148,7 @@ public class TimesheetFormService {
             inParamMap.put("p_person_roster_id", details.personRosterId());
 
             SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-            System.out.println(inSource);
+            //System.out.println(inSource);
             inParamMap.clear();
             // simpleJdbcCall = new
             // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
@@ -158,28 +158,28 @@ public class TimesheetFormService {
             AtomicReference<Object> sMessage = new AtomicReference<>();
 
             simpleJdbcCallResult.forEach((s, o) -> {
-                System.out.println(s);
-                System.out.println(o);
+                //System.out.println(s);
+                //System.out.println(o);
 
                 if (s.equals("P_OUT")) {
                     String strMessage = o.toString();
-                    System.out.println("strMessage:" + strMessage);
+                    //System.out.println("strMessage:" + strMessage);
                     sMessage.set(o);
                 }
             });
 
-            System.out.println("sMessage.get():" + sMessage.get());
+            //System.out.println("sMessage.get():" + sMessage.get());
             String messageString = sMessage.get().toString();
 
             String flag = messageString.substring(0, 1);
-            System.out.println("flag:" + flag);
+            //System.out.println("flag:" + flag);
             if (flag.equals("E")) {
                 errorMessage = messageString.substring(2);
                 break;
             } else {
 //                recCounts = recCounts + Integer.parseInt(messageString.substring(2));
                 recCounts = recCounts + Integer.parseInt(messageString.split("#")[1]);
-                System.out.println("recCounts:" + recCounts);
+                //System.out.println("recCounts:" + recCounts);
             }
 
         }
@@ -210,7 +210,7 @@ public class TimesheetFormService {
 
 
             SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-            System.out.println(inSource);
+            //System.out.println(inSource);
             inParamMap.clear();
             // simpleJdbcCall = new
             // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
@@ -220,27 +220,27 @@ public class TimesheetFormService {
             AtomicReference<Object> sMessage = new AtomicReference<>();
 
             simpleJdbcCallResult.forEach((s, o) -> {
-                System.out.println(s);
-                System.out.println(o);
+                //System.out.println(s);
+                //System.out.println(o);
 
                 if (s.equals("P_OUT")) {
                     String strMessage = o.toString();
-                    System.out.println("strMessage:" + strMessage);
+                    //System.out.println("strMessage:" + strMessage);
                     sMessage.set(o);
                 }
             });
 
-            System.out.println("sMessage.get():" + sMessage.get());
+            //System.out.println("sMessage.get():" + sMessage.get());
             String messageString = sMessage.get().toString();
 
             String flag = messageString.substring(0, 1);
-            System.out.println("flag:" + flag);
+            //System.out.println("flag:" + flag);
             if (flag.equals("E")) {
                 errorMessage = messageString.substring(2);
                 break;
             } else {
                 recCounts = recCounts + Integer.parseInt(messageString.split("#")[1]);
-                System.out.println("recCounts:" + recCounts);
+                //System.out.println("recCounts:" + recCounts);
             }
         }
 

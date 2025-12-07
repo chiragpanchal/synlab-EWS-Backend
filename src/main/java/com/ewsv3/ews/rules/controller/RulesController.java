@@ -6,6 +6,8 @@ import com.ewsv3.ews.rules.dto.DemandTemplate;
 import com.ewsv3.ews.rules.dto.DemandTemplateLine;
 import com.ewsv3.ews.rules.dto.DemandTemplateSaveReqBody;
 import com.ewsv3.ews.rules.service.DemandTemplateService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -13,12 +15,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("api/rules/")
 public class RulesController {
+    private static final Logger logger = LoggerFactory.getLogger(RulesController.class);
 
     private final JdbcClient jdbcClient;
     private final DemandTemplateService demandTemplateService;
@@ -41,13 +45,17 @@ public class RulesController {
 
     @PostMapping("demand-template")
     public ResponseEntity<List<DemandTemplate>> getDemandTempaltes(@RequestHeader Map<String, String> header, @RequestBody DemandTemplate template) {
+        logger.info("GET_DEMAND_TEMPLATES - Entry - Time: {}, Request: {}", LocalDateTime.now(), template);
         try {
 
             List<DemandTemplate> demandTemplates = this.demandTemplateService.getDemandTemplates(getCurrentUserId(), jdbcClient, template);
+            logger.info("GET_DEMAND_TEMPLATES - Exit - Time: {}, Response count: {}", LocalDateTime.now(), demandTemplates.size());
             return new ResponseEntity<>(demandTemplates, HttpStatus.OK);
 
         } catch (Exception exception) {
-            System.out.println(exception.getMessage());
+            //System.out.println(exception.getMessage());
+            logger.error("GET_DEMAND_TEMPLATES - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), template, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -55,13 +63,17 @@ public class RulesController {
 
     @PostMapping("demand-template-lines")
     public ResponseEntity<List<DemandTemplateLine>> getDemandTempalteLines(@RequestHeader Map<String, String> header, @RequestBody DemandTemplate reqBody) {
+        logger.info("GET_DEMAND_TEMPLATE_LINES - Entry - Time: {}, DemandTemplateId: {}", LocalDateTime.now(), reqBody.demandTemplateId());
         try {
 
             List<DemandTemplateLine> demandTemplateLines = this.demandTemplateService.getDemandTemplatesLines(reqBody.demandTemplateId(), jdbcClient);
+            logger.info("GET_DEMAND_TEMPLATE_LINES - Exit - Time: {}, Response count: {}", LocalDateTime.now(), demandTemplateLines.size());
             return new ResponseEntity<>(demandTemplateLines, HttpStatus.OK);
 
         } catch (Exception exception) {
-            System.out.println(exception.getMessage());
+            //System.out.println(exception.getMessage());
+            logger.error("GET_DEMAND_TEMPLATE_LINES - Exception - Time: {}, DemandTemplateId: {}, Error: {}",
+                    LocalDateTime.now(), reqBody.demandTemplateId(), exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -70,13 +82,17 @@ public class RulesController {
 
     @PostMapping("demand-template-save")
     public ResponseEntity<DMLResponseDto> saveDemandTemplate(@RequestHeader Map<String, String> header, @RequestBody DemandTemplateSaveReqBody reqBody) {
+        logger.info("SAVE_DEMAND_TEMPLATE - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
 
-        System.out.println("saveDemandTemplate reqBody:" + reqBody);
+        //System.out.println("saveDemandTemplate reqBody:" + reqBody);
         try {
             DMLResponseDto responseDto = demandTemplateService.saveDemandTempalte(reqBody, getCurrentUserId(), jdbcClient);
+            logger.info("SAVE_DEMAND_TEMPLATE - Exit - Time: {}, Response: {}", LocalDateTime.now(), responseDto);
             return new ResponseEntity<>(responseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            System.out.println(exception.getMessage());
+            //System.out.println(exception.getMessage());
+            logger.error("SAVE_DEMAND_TEMPLATE - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), reqBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -86,13 +102,17 @@ public class RulesController {
 
     @PostMapping("demand-template-line-delete")
     public ResponseEntity<DMLResponseDto> deleteDemandTemplateLine(@RequestHeader Map<String, String> header, @RequestBody DemandTemplateLine reqBody) {
+        logger.info("DELETE_DEMAND_TEMPLATE_LINE - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
 
-        System.out.println("deleteDemandTemplateLine reqBody:" + reqBody);
+        //System.out.println("deleteDemandTemplateLine reqBody:" + reqBody);
         try {
             DMLResponseDto responseDto = demandTemplateService.deleteDemandTemplateLine(getCurrentUserId(), reqBody, jdbcClient);
+            logger.info("DELETE_DEMAND_TEMPLATE_LINE - Exit - Time: {}, Response: {}", LocalDateTime.now(), responseDto);
             return new ResponseEntity<>(responseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            System.out.println(exception.getMessage());
+            //System.out.println(exception.getMessage());
+            logger.error("DELETE_DEMAND_TEMPLATE_LINE - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), reqBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -102,13 +122,17 @@ public class RulesController {
 
     @PostMapping("demand-template-delete")
     public ResponseEntity<DMLResponseDto> deleteDemandTemplate(@RequestHeader Map<String, String> header, @RequestBody DemandTemplate reqBody) {
+        logger.info("DELETE_DEMAND_TEMPLATE - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
 
-        System.out.println("deleteDemandTemplateLine reqBody:" + reqBody);
+        //System.out.println("deleteDemandTemplateLine reqBody:" + reqBody);
         try {
             DMLResponseDto responseDto = demandTemplateService.deleteDemandTemplate(getCurrentUserId(), reqBody, jdbcClient);
+            logger.info("DELETE_DEMAND_TEMPLATE - Exit - Time: {}, Response: {}", LocalDateTime.now(), responseDto);
             return new ResponseEntity<>(responseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            System.out.println(exception.getMessage());
+            //System.out.println(exception.getMessage());
+            logger.error("DELETE_DEMAND_TEMPLATE - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), reqBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

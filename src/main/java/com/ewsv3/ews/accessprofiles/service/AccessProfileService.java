@@ -38,7 +38,7 @@ public class AccessProfileService {
 
     public List<AccessProfileResp> getSearchedProfiles(Long userId, AccessProfileReq req, JdbcClient jdbcClient) {
 
-        System.out.printf("getSearchedProfiles req:" + req);
+        // System.out.printf("getSearchedProfiles req:" + req);
 
         Map<String, Object> objectMap = new HashMap<>();
         objectMap.put("strPerson", req.strPerson());
@@ -49,7 +49,7 @@ public class AccessProfileService {
                 .query(AccessProfileResp.class)
                 .list();
 
-        System.out.printf("getSearchedProfiles accessProfileRespList.size():" + (long) accessProfileRespList.size());
+        // System.out.printf("getSearchedProfiles accessProfileRespList.size():" + (long) accessProfileRespList.size());
 
         return accessProfileRespList;
 
@@ -58,7 +58,7 @@ public class AccessProfileService {
 
     public AccessProfileResponse getAccessProfile(Long userId, AssessProfileId req, JdbcClient jdbcClient) {
 
-        System.out.println("getAccessProfile req:" + req);
+        // System.out.println("getAccessProfile req:" + req);
 
         AccessProfiles accessProfiles = jdbcClient.sql(sqlGetProfileFromProfileId)
                 .param("profileId", req.profileId())
@@ -106,7 +106,7 @@ public class AccessProfileService {
         }
 
 
-        System.out.println("service saveProfile existingProfile:" + existingProfile);
+        // System.out.println("service saveProfile existingProfile:" + existingProfile);
 
 
         try {
@@ -133,7 +133,7 @@ public class AccessProfileService {
                         .param("startDate", profile.startDate())
                         .update();
 
-                System.out.println("saveProfile existingProfile inserted:" + inserted);
+                // System.out.println("saveProfile existingProfile inserted:" + inserted);
 
             } else {
                 generatedAccessProfileId = profile.profileId();
@@ -143,14 +143,14 @@ public class AccessProfileService {
                         || !Objects.equals(existingProfile.getAccessProfiles().endDate(), profile.endDate())) {
 
 
-                    System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().profileName():" + existingProfile.getAccessProfiles().profileName());
-                    System.out.println("saveProfile existingProfile profile.profileName():" + profile.profileName());
+                    // System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().profileName():" + existingProfile.getAccessProfiles().profileName());
+                    // System.out.println("saveProfile existingProfile profile.profileName():" + profile.profileName());
 
-                    System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().startDate():" + existingProfile.getAccessProfiles().startDate());
-                    System.out.println("saveProfile existingProfile profile.startDate():" + profile.startDate());
+                    // System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().startDate():" + existingProfile.getAccessProfiles().startDate());
+                    // System.out.println("saveProfile existingProfile profile.startDate():" + profile.startDate());
 
-                    System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().endDate():" + existingProfile.getAccessProfiles().endDate());
-                    System.out.println("saveProfile existingProfile profile.endDate():" + profile.endDate());
+                    // System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().endDate():" + existingProfile.getAccessProfiles().endDate());
+                    // System.out.println("saveProfile existingProfile profile.endDate():" + profile.endDate());
 
                     int updated = jdbcClient.sql(sqlUpdateAccessProfile)
                             .param("profileId", generatedAccessProfileId)
@@ -161,7 +161,7 @@ public class AccessProfileService {
                             .param("startDate", profile.startDate())
                             .update();
 
-                    System.out.println("saveProfile existingProfile updated:" + updated);
+                    // System.out.println("saveProfile existingProfile updated:" + updated);
                 }
             }
         } catch (Exception exception) {
@@ -175,7 +175,7 @@ public class AccessProfileService {
             long generatedAccessProfileLineId = 0L;
 
             for (AccessProfileLines profileLine : profileLines) {
-                System.out.println("saveProfile profileLine:" + profileLine);
+                // System.out.println("saveProfile profileLine:" + profileLine);
 
 //            if (profileLine.personId() == 0) {
                 // NON PERSON lines
@@ -224,9 +224,9 @@ public class AccessProfileService {
                             .orElse(null);
 
                     assert matchingLine != null;
-                    System.out.println("saveProfile accessProfileLine matchingLine.employeeTypeId():" + matchingLine.employeeTypeId());
-                    System.out.println("saveProfile accessProfileLine profileLine.employeeTypeId():" + profileLine.employeeTypeId());
-                    System.out.println("saveProfile accessProfileLine generatedAccessProfileLineId:" + generatedAccessProfileLineId);
+                    // System.out.println("saveProfile accessProfileLine matchingLine.employeeTypeId():" + matchingLine.employeeTypeId());
+                    // System.out.println("saveProfile accessProfileLine profileLine.employeeTypeId():" + profileLine.employeeTypeId());
+                    // System.out.println("saveProfile accessProfileLine generatedAccessProfileLineId:" + generatedAccessProfileLineId);
 
 
                     if (!Objects.equals(matchingLine.personId(), profileLine.personId())
@@ -266,7 +266,7 @@ public class AccessProfileService {
                                 .param("accessProfileLineId", generatedAccessProfileLineId)
                                 .update();
 
-                        System.out.println("saveProfile accessProfileLine updated:" + updated);
+                        // System.out.println("saveProfile accessProfileLine updated:" + updated);
                     }
                 }
 
@@ -321,7 +321,7 @@ public class AccessProfileService {
                                 .param("userType", profileAssoc.userType())
                                 .update();
 
-                        System.out.println("saveProfile UserProfileAssoc updated:" + updated);
+                        // System.out.println("saveProfile UserProfileAssoc updated:" + updated);
                     }
 
 
@@ -335,7 +335,7 @@ public class AccessProfileService {
 //        calling procedure to populate propfile data
 
         AccessProfileResponse accessProfile = getAccessProfile(userId, new AssessProfileId(generatedAccessProfileId), jdbcClient);
-        System.out.println("saveProfile procedure started ================");
+        // System.out.println("saveProfile procedure started ================");
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_INIT_ACCESS_PROFILES_P");
         Map<String, Object> inProcParamMap = new HashMap<>();
 
@@ -347,14 +347,14 @@ public class AccessProfileService {
             inProcParamMap.put("p_effective_date", new Date());
 
             SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
-            System.out.println("saveProfile inSource" + inSource);
+            // System.out.println("saveProfile inSource" + inSource);
             Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
-            System.out.println("saveProfile simpleJdbcCallResult: " + simpleJdbcCallResult);
+            // System.out.println("saveProfile simpleJdbcCallResult: " + simpleJdbcCallResult);
             inProcParamMap.clear();
         }
 
 
-        System.out.println("saveProfile procedure completed ================");
+        // System.out.println("saveProfile procedure completed ================");
 
 
     }

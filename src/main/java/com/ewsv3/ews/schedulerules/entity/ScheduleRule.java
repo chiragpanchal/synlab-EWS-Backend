@@ -67,13 +67,13 @@ public class ScheduleRule {
         LocalDateTime now = LocalDateTime.now();
         this.createdOn = now;
         this.lastUpdateDate = now;
-        System.out.println("@PrePersist - createdBy: " + this.createdBy + ", lastUpdatedBy: " + this.lastUpdatedBy);
+        // System.out.println("@PrePersist - createdBy: " + this.createdBy + ", lastUpdatedBy: " + this.lastUpdatedBy);
     }
-    
+
     @PreUpdate
     public void preUpdate() {
         this.lastUpdateDate = LocalDateTime.now();
-        System.out.println("@PreUpdate - createdBy: " + this.createdBy + ", lastUpdatedBy: " + this.lastUpdatedBy);
+        // System.out.println("@PreUpdate - createdBy: " + this.createdBy + ", lastUpdatedBy: " + this.lastUpdatedBy);
     }
 
     public ScheduleRule() {

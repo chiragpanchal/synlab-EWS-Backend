@@ -16,8 +16,8 @@ public class TimesheetReportService {
     public List<TimesheetReportRespDto> getTimesheetReport(Long userId, int page,
                                                            int size,TimesheetReportReqDto reqDto, JdbcClient jdbcClient) {
 
-        System.out.println("timesheet-report getTimesheetReport userId:" + userId);
-        System.out.println("timesheet-report getTimesheetReport reqDto:" + reqDto);
+        //System.out.println("timesheet-report getTimesheetReport userId:" + userId);
+        //System.out.println("timesheet-report getTimesheetReport reqDto:" + reqDto);
 
         String pendingWithParam = "%" + (reqDto.pendingWith() == null ? "" : reqDto.pendingWith()) + "%";
         String employeeTextParam = "%" + (reqDto.employeeText() == null ? "" : reqDto.employeeText()) + "%";
@@ -37,7 +37,7 @@ public class TimesheetReportService {
                 .param("pageSize", size)
                 .query(TimesheetReportRespDto.class)
                 .list();
-        System.out.println("timesheet-report getTimesheetReport list.size():" + list.size());
+        //System.out.println("timesheet-report getTimesheetReport list.size():" + list.size());
         return list;
     }
 

@@ -16,10 +16,9 @@ import static com.ewsv3.ews.rules.service.DemandTemplateUtils.*;
 @Service
 public class DemandTemplateService {
 
-
     public List<DemandTemplate> getDemandTemplates(Long userId, JdbcClient jdbcClient, DemandTemplate template) {
 
-        System.out.println("getDemandTemplates template:" + template);
+        // System.out.println("getDemandTemplates template:" + template);
 
         List<DemandTemplate> demandTemplates = jdbcClient.sql(DemandTemplateHSql)
                 .param("userId", userId)
@@ -29,7 +28,6 @@ public class DemandTemplateService {
                 .list();
 
         return demandTemplates;
-
 
     }
 
@@ -51,12 +49,12 @@ public class DemandTemplateService {
 
     public DMLResponseDto saveDemandTempalte(DemandTemplateSaveReqBody reqBody, Long userId, JdbcClient jdbcClient) {
 
-        System.out.println("saveDemandTemplate: reqBody:" + reqBody);
-        System.out.println("saveDemandTemplate: reqBody.getDemandTemplate:" + reqBody.getDemandTemplate());
+        // System.out.println("saveDemandTemplate: reqBody:" + reqBody);
+        // System.out.println("saveDemandTemplate: reqBody.getDemandTemplate:" + reqBody.getDemandTemplate());
         Long generatedDemandTemplateId;
 
-//        DemandTemplateSaveReqBody templateSaveReqBody= new DemandTemplateSaveReqBody();
-
+        // DemandTemplateSaveReqBody templateSaveReqBody= new
+        // DemandTemplateSaveReqBody();
 
         if (reqBody.getDemandTemplate().demandTemplateId() == 0) {
 
@@ -74,7 +72,6 @@ public class DemandTemplateService {
                     .param("templateName", reqBody.getDemandTemplate().templateName())
                     .update();
 
-
         } else {
             generatedDemandTemplateId = reqBody.getDemandTemplate().demandTemplateId();
             jdbcClient.sql(updateDemandTemplateHeader)
@@ -87,16 +84,17 @@ public class DemandTemplateService {
 
         }
 
-//        DemandTemplate demandTemplate = getDemandTemplates(userId, jdbcClient, reqBody.getDemandTemplate()).getFirst();
+        // DemandTemplate demandTemplate = getDemandTemplates(userId, jdbcClient,
+        // reqBody.getDemandTemplate()).getFirst();
 
-//        templateSaveReqBody.setDemandTemplate(demandTemplate);
+        // templateSaveReqBody.setDemandTemplate(demandTemplate);
 
-//        System.out.println("saveDemandTempalte: saved demandTemplate:"+demandTemplate);
-
+        // System.out.println("saveDemandTempalte: saved
+        // demandTemplate:"+demandTemplate);
 
         for (DemandTemplateLine demandTemplateLine : reqBody.getDemandTemplateLineList()) {
 
-            System.out.println("saveDemandTemplate: demandTemplateLine:" + demandTemplateLine);
+            // System.out.println("saveDemandTemplate: demandTemplateLine:" + demandTemplateLine);
 
             if (demandTemplateLine.demandTemplateLineId() == 0) {
 
@@ -111,9 +109,9 @@ public class DemandTemplateService {
                         .param("departmentId", demandTemplateLine.departmentId())
                         .param("jobTitleId", demandTemplateLine.jobTitleId())
                         .param("locationId", demandTemplateLine.locationId())
-                        .param("workDurationId",demandTemplateLine.workDurationId())
-//                        .param("timeStart", demandTemplateLine.timeStart())
-//                        .param("timeEnd", demandTemplateLine.timeEnd())
+                        .param("workDurationId", demandTemplateLine.workDurationId())
+                        // .param("timeStart", demandTemplateLine.timeStart())
+                        // .param("timeEnd", demandTemplateLine.timeEnd())
                         .param("sun", demandTemplateLine.sun())
                         .param("mon", demandTemplateLine.mon())
                         .param("tue", demandTemplateLine.tue())
@@ -125,7 +123,6 @@ public class DemandTemplateService {
                         .param("lastUpdatedBy", userId)
                         .update();
 
-
             } else {
 
                 jdbcClient.sql(updateDemandTemplateLine)
@@ -133,9 +130,9 @@ public class DemandTemplateService {
                         .param("departmentId", demandTemplateLine.departmentId())
                         .param("jobTitleId", demandTemplateLine.jobTitleId())
                         .param("locationId", demandTemplateLine.locationId())
-                        .param("workDurationId",demandTemplateLine.workDurationId())
-//                        .param("timeStart", demandTemplateLine.timeStart())
-//                        .param("timeEnd", demandTemplateLine.timeEnd())
+                        .param("workDurationId", demandTemplateLine.workDurationId())
+                        // .param("timeStart", demandTemplateLine.timeStart())
+                        // .param("timeEnd", demandTemplateLine.timeEnd())
                         .param("sun", demandTemplateLine.sun())
                         .param("mon", demandTemplateLine.mon())
                         .param("tue", demandTemplateLine.tue())
@@ -148,15 +145,14 @@ public class DemandTemplateService {
 
             }
 
-
         }
 
         return new DMLResponseDto("S", "Demand Template saved successfully");
 
-
     }
 
-    public DMLResponseDto deleteDemandTemplateLine(Long userId, @RequestBody DemandTemplateLine reqBody, JdbcClient jdbcClient) {
+    public DMLResponseDto deleteDemandTemplateLine(Long userId, @RequestBody DemandTemplateLine reqBody,
+            JdbcClient jdbcClient) {
 
         int deleted = jdbcClient.sql(deleteDemandTemplateLine)
                 .param("demandTemplateLineId", reqBody.demandTemplateLineId())
@@ -170,11 +166,11 @@ public class DemandTemplateService {
 
     }
 
-    public DMLResponseDto deleteDemandTemplate(Long userId, @RequestBody DemandTemplate reqBody, JdbcClient jdbcClient) {
-
+    public DMLResponseDto deleteDemandTemplate(Long userId, @RequestBody DemandTemplate reqBody,
+            JdbcClient jdbcClient) {
 
         for (DemandTemplateLine line : getDemandTemplatesLines(reqBody.demandTemplateId(), jdbcClient)) {
-            System.out.println("deleting demand line :" + line);
+            // System.out.println("deleting demand line :" + line);
             deleteDemandTemplateLine(userId, line, jdbcClient);
         }
 
