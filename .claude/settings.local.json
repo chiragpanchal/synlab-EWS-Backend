@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(powershell -Command:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(git clean:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
