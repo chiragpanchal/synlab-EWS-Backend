@@ -1,0 +1,31 @@
+package com.ewsv3.ews.setup.service;
+
+public class PersonPreferredJobSql {
+    static String TeamSql = """
+            SELECT
+                tkv.person_id,
+                tkv.person_user_id,
+                tkv.employee_number,
+                tkv.person_name,
+                tkv.email_address,
+                tkv.department_name,
+                tkv.position_name,
+                tkv.job_title,
+                tkv.location_name,
+                tkv.shift_type,
+                tkv.band
+            FROM
+                sc_timekeeper_person_v tkv
+            WHERE
+                    tkv.timekeeper_user_id = :userId
+                AND tkv.profile_id = :profileId
+                AND nvl(tkv.hire_date, :startDate) <= :startDate
+                AND nvl(tkv.termination_date, :endDate) >= :endDate
+                ORDER BY
+                    tkv.person_name,
+                    tkv.employee_number
+                OFFSET nvl(
+                    :pageNo - 1,
+                    1
+                ) * :pageSize ROWS FETCH NEXT :pageSize ROWS ONLY""";
+}
