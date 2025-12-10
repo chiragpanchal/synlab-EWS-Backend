@@ -6,7 +6,9 @@
       "Bash(dir:*)",
       "Bash(findstr:*)",
       "Bash(git clean:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(find:*)",
+      "Bash(redis-cli:*)"
     ],
     "deny": [],
     "ask": []

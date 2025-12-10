@@ -1,5 +1,12 @@
 package com.ewsv3.ews.rosters.service.utils;
 
+// sc_get_schedule_rule_error_f (
+//                                 p_profile_id =>:profileId,
+//                                 p_person_id  => person_id,
+//                                 p_start_date => :startDate,
+//                                 p_end_date   => :endDate
+//                             ) error_string
+
 public class RosterSql {
     public static String RosterTeamSql = """
             SELECT
@@ -9,12 +16,7 @@ public class RosterSql {
                             person_Name,
                             job_title,
                             department_name,
-                            sc_get_schedule_rule_error_f (
-                                                            p_profile_id =>:profileId,
-                                                            p_person_id  => person_id,
-                                                            p_start_date => :startDate,
-                                                            p_end_date   => :endDate
-                                                        ) error_string
+                            ' ' error_string
                           FROM
                             (
                                 SELECT
@@ -97,7 +99,8 @@ public class RosterSql {
                 spr.effective_date,
                 spr.time_start""";
 
-    // Optimized batch query to fetch all roster children for multiple persons at once
+    // Optimized batch query to fetch all roster children for multiple persons at
+    // once
     public static String RosterMemberChildBatchSql = """
             SELECT
                 per.person_id,
@@ -232,7 +235,6 @@ public class RosterSql {
                 ) >= trunc(:startDate)
                 OFFSET 1 ROWS FETCH NEXT 1000 ROWS ONLY""";
 
-
     public static String getSinglePersonRosterDataSql = """
             SELECT
                 spr.person_roster_id,
@@ -322,7 +324,7 @@ public class RosterSql {
                 spr.effective_date,
                 spr.time_start""";
 
-    public static String InsertPersonRorationAssoc= """
+    public static String InsertPersonRorationAssoc = """
             insert into sc_person_rotation_assoc (
                 person_id,
                 work_rotation_id,
@@ -341,7 +343,7 @@ public class RosterSql {
                 :lastUpdatedBy
             )""";
 
-    public static String sqlPersonRotationPlans= """
+    public static String sqlPersonRotationPlans = """
             select
                 per.full_name,
                 listagg(wh.work_rotation_name,
@@ -364,7 +366,7 @@ public class RosterSql {
             group by
                 per.full_name""";
 
-    public static String sqlDemandAllocationSummary= """
+    public static String sqlDemandAllocationSummary = """
             select
                 t.profile_id,
                 t.demand_template_line_id,
@@ -380,7 +382,7 @@ public class RosterSql {
                 demand_template_line_id,
                 effective_date""";
 
-    public static String sqlDemandAllocationLines= """
+    public static String sqlDemandAllocationLines = """
             select
                 per.employee_number,
                 per.full_name,
@@ -408,8 +410,7 @@ public class RosterSql {
                     0
                 )""";
 
-
-    public static String sqlDemandLinesValidate= """
+    public static String sqlDemandLinesValidate = """
             select
                 dl.department_id,
                 dl.job_title_id,
@@ -473,7 +474,7 @@ public class RosterSql {
             order by
                 demand_template_line_id""";
 
-    public static String sqlScheduledValidate= """
+    public static String sqlScheduledValidate = """
             select
                 spr.department_id,
                 spr.job_title_id,

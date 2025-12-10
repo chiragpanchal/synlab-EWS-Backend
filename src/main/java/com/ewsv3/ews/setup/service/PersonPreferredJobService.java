@@ -1,6 +1,8 @@
 package com.ewsv3.ews.setup.service;
 
 import com.ewsv3.ews.setup.entity.PersonPreferredJob;
+import com.ewsv3.ews.setup.entity.PrefCurrency;
+import com.ewsv3.ews.setup.entity.PrefJobs;
 import com.ewsv3.ews.setup.repos.PersonPreferredJobRepository;
 import com.ewsv3.ews.team.dto.TeamTimecardSimple;
 
@@ -11,6 +13,7 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.ewsv3.ews.setup.service.PersonPreferredJobSql;
+import com.ewsv3.ews.setup.service.PersonPreferredJobSql.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -67,7 +70,7 @@ public class PersonPreferredJobService {
                 "profileId", profileId,
                 "startDate", startDate,
                 "endDate", endDate,
-                "offset", page,
+                "page", page,
                 "pageSize", size,
                 "text", "%" + text + "%");
 
@@ -80,5 +83,26 @@ public class PersonPreferredJobService {
                 .list();
 
         return timecardSimples;
+    }
+
+    public List<PrefJobs> getPrefJobList(Long profileId, JdbcClient jdbcClient) {
+
+        List<PrefJobs> jobList = jdbcClient.sql(PersonPreferredJobSql.jobSql)
+                .param("profileId", profileId)
+                .query(PrefJobs.class)
+                .list();
+
+        return jobList;
+
+    }
+
+    public List<PrefCurrency> getPrefCurrencyList(JdbcClient jdbcClient) {
+
+        List<PrefCurrency> currencyList = jdbcClient.sql(PersonPreferredJobSql.currencySql)
+                .query(PrefCurrency.class)
+                .list();
+
+        return currencyList;
+
     }
 }

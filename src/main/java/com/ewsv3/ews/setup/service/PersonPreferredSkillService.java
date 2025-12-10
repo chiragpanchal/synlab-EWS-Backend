@@ -1,6 +1,7 @@
 package com.ewsv3.ews.setup.service;
 
 import com.ewsv3.ews.setup.entity.PersonPreferredSkill;
+import com.ewsv3.ews.setup.entity.PrefJobs;
 import com.ewsv3.ews.setup.repos.PersonPreferredSkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,4 +51,5 @@ public class PersonPreferredSkillService {
     public boolean existsById(Long id) {
         return personPreferredSkillRepository.existsById(id);
     }
+
 }
