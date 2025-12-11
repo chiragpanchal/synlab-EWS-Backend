@@ -3,6 +3,7 @@ package com.ewsv3.ews.setup.service;
 import com.ewsv3.ews.setup.entity.PersonPreferredJob;
 import com.ewsv3.ews.setup.entity.PrefCurrency;
 import com.ewsv3.ews.setup.entity.PrefJobs;
+import com.ewsv3.ews.setup.entity.PrefSkills;
 import com.ewsv3.ews.setup.repos.PersonPreferredJobRepository;
 import com.ewsv3.ews.team.dto.TeamTimecardSimple;
 
@@ -103,6 +104,15 @@ public class PersonPreferredJobService {
                 .list();
 
         return currencyList;
+
+    }
+
+    public List<PrefSkills> getSkillsList(JdbcClient jdbcClient) {
+        List<PrefSkills> skillsList = jdbcClient.sql(PersonPreferredJobSql.skillsSql)
+                .query(PrefSkills.class)
+                .list();
+
+        return skillsList;
 
     }
 }

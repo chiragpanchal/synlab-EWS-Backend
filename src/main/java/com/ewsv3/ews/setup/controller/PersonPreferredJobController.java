@@ -4,6 +4,7 @@ import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.setup.entity.PersonPreferredJob;
 import com.ewsv3.ews.setup.entity.PrefCurrency;
 import com.ewsv3.ews.setup.entity.PrefJobs;
+import com.ewsv3.ews.setup.entity.PrefSkills;
 import com.ewsv3.ews.setup.service.PersonPreferredJobService;
 import com.ewsv3.ews.team.dto.ProfileDatesRequestBody;
 import com.ewsv3.ews.team.dto.TeamTimecardSimple;
@@ -27,8 +28,6 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/setup/person-preferred-jobs")
@@ -169,14 +168,24 @@ public class PersonPreferredJobController {
             @RequestBody PersonPreferredJob personPreferredJob) {
         logger.info("UPDATE_PERSON_PREFERRED_JOB - Entry - Time: {}, ID: {}", LocalDateTime.now(), id);
         try {
-            if (!personPreferredJobService.existsById(id)) {
+            // Fetch existing record to preserve creation audit fields
+            PersonPreferredJob existingJob = personPreferredJobService.findById(id).orElse(null);
+            if (existingJob == null) {
                 logger.info("UPDATE_PERSON_PREFERRED_JOB - Exit - Time: {}, Found: false", LocalDateTime.now());
                 return ResponseEntity.notFound().build();
             }
+
             Long currentUserId = getCurrentUserId();
             java.util.Date currentDate = new java.util.Date();
 
+            // Set ID and update audit fields
             personPreferredJob.setPersonPreferredJobId(id);
+
+            // Preserve original creation audit fields
+            personPreferredJob.setCreatedBy(existingJob.getCreatedBy());
+            personPreferredJob.setCreatedOn(existingJob.getCreatedOn());
+
+            // Update modification audit fields
             personPreferredJob.setLastUpdatedBy(currentUserId);
             personPreferredJob.setLastUpdateDate(currentDate);
 
@@ -242,4 +251,22 @@ public class PersonPreferredJobController {
         }
 
     }
+
+    @GetMapping("skills-list")
+    public ResponseEntity<List<PrefSkills>> getSkillsList(@RequestHeader Map<String, String> headers) {
+
+        try {
+            logger.info("getSkillsList - Entry - Time: {}", LocalDateTime.now());
+            List<PrefSkills> skillsList = this.personPreferredJobService.getSkillsList(jdbcClient);
+            logger.info("getSkillsList - Exit - Time: {}, Response Count: {}", LocalDateTime.now(),
+                    skillsList.size());
+            return ResponseEntity.ok(skillsList);
+
+        } catch (Exception exception) {
+            logger.error("getSkillsList - Exception - Time: {}, Error: {}", LocalDateTime.now(),
+                    exception.getMessage(), exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

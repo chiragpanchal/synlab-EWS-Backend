@@ -1,5 +1,6 @@
 package com.ewsv3.ews.setup.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.Date;
 
@@ -17,8 +18,12 @@ public class PersonPreferredSkill {
     @Column(name = "SKILL_ID", nullable = false)
     private Long skillId;
 
+    @Column(name = "PERSON_PREFERRED_JOB_ID", nullable = false)
+    private Long personPreferredJobId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "PERSON_PREFERRED_JOB_ID", nullable = false)
+    @JoinColumn(name = "PERSON_PREFERRED_JOB_ID", nullable = false, insertable = false, updatable = false)
+    @JsonIgnore
     private PersonPreferredJob personPreferredJob;
 
     @Column(name = "RATING", nullable = false)
@@ -52,11 +57,13 @@ public class PersonPreferredSkill {
     public PersonPreferredSkill() {}
 
     // Constructor with all fields
-    public PersonPreferredSkill(Long personPreferredSkillId, Long skillId, PersonPreferredJob personPreferredJob,
-                               Long rating, String comments, Long createdBy, Date createdOn,
-                               Long lastUpdatedBy, Date lastUpdateDate, Long personId, Date endDate) {
+    public PersonPreferredSkill(Long personPreferredSkillId, Long skillId, Long personPreferredJobId,
+                               PersonPreferredJob personPreferredJob, Long rating, String comments,
+                               Long createdBy, Date createdOn, Long lastUpdatedBy, Date lastUpdateDate,
+                               Long personId, Date endDate) {
         this.personPreferredSkillId = personPreferredSkillId;
         this.skillId = skillId;
+        this.personPreferredJobId = personPreferredJobId;
         this.personPreferredJob = personPreferredJob;
         this.rating = rating;
         this.comments = comments;
@@ -83,6 +90,14 @@ public class PersonPreferredSkill {
 
     public void setSkillId(Long skillId) {
         this.skillId = skillId;
+    }
+
+    public Long getPersonPreferredJobId() {
+        return personPreferredJobId;
+    }
+
+    public void setPersonPreferredJobId(Long personPreferredJobId) {
+        this.personPreferredJobId = personPreferredJobId;
     }
 
     public PersonPreferredJob getPersonPreferredJob() {

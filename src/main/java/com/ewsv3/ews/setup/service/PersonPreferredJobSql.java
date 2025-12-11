@@ -37,4 +37,23 @@ public class PersonPreferredJobSql {
     public static String currencySql = """
             select CURRENCY_ID, CURRENCY_CODE ||' ('|| CURRENCY_NAME ||')' currency from sc_currencies
                                             """;
+
+    public static String skillsSql = """
+            SELECT
+               skill_id,
+               skill,
+               comments,
+               created_By,
+               created_On,
+               last_Updated_By,
+               last_Update_Date,
+               date_From,
+               date_To
+             FROM
+               sc_skills
+            WHERE
+               nvl(date_to, SYSDATE) >= SYSDATE
+            ORDER BY
+               skill
+                       """;
 }
