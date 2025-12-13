@@ -2,12 +2,13 @@ package com.ewsv3.ews.timesheets.service.form;
 
 public class TimesheetFormUtils {
 
-    public static String sqlPayCodeList= """
+    public static String sqlPayCodeList = """
             select
                 pay_code_id,
                 pay_code,
                 pay_code_name,
-                allw_hour_code
+                allw_hour_code,
+                consider_in_total
             from
                 sc_pay_codes spc
             where
@@ -21,7 +22,7 @@ public class TimesheetFormUtils {
                 ),
                 pay_code_id""";
 
-    public static String sqlDepartmentList= """
+    public static String sqlDepartmentList = """
             select
                 sd.department_id,
                 sd.department_name
@@ -32,7 +33,7 @@ public class TimesheetFormUtils {
                     sd.department_id = pc.cost_center_id
                 and pc.person_id = :personId""";
 
-    public static String sqlJobList= """
+    public static String sqlJobList = """
             select
                 sj.job_title_id,
                 sj.job_title,
@@ -48,7 +49,7 @@ public class TimesheetFormUtils {
                 and pj.person_id = :personId
                 and sc.currency_id=pj.currency_id""";
 
-    public static String sqlProjectTaskList= """
+    public static String sqlProjectTaskList = """
             select
                 pt.task_id,
                 pt.task_name,
@@ -78,7 +79,7 @@ public class TimesheetFormUtils {
                 and sp.project_id = pra.project_id
                 order by sp.project_name,pt.task_name""";
 
-    public static String sqlExpenditureList= """
+    public static String sqlExpenditureList = """
             select
                 exp_type_id,
                 exp_type,
@@ -99,7 +100,7 @@ public class TimesheetFormUtils {
                 project_id,
                 exp_type_id""";
 
-    public static String sqlTimesheetDetails= """
+    public static String sqlTimesheetDetails = """
             select
                 tts.tts_timesheet_id,
                 tts.person_Id,
@@ -132,7 +133,7 @@ public class TimesheetFormUtils {
                 tts.effective_date,
                 tts.time_start""";
 
-    public static String sqlTsTimecardData= """
+    public static String sqlTsTimecardData = """
             select
                 person_id,
                 effective_date,
@@ -245,7 +246,7 @@ public class TimesheetFormUtils {
                 person_id,
                 effective_date""";
 
-    public static String sqlTimesheetAudit= """
+    public static String sqlTimesheetAudit = """
             select
                 log.effective_date,
                 log.audit_date,

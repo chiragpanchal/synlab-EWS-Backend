@@ -60,34 +60,33 @@ public class TimecardUtils {
             ORDER BY
                 st.effective_date, st.sch_time_start, st.in_time""";
 
-    static String TimecardActualsSql =
-            """
-                        SELECT
-                        st.timecard_id,
-                        st.person_roster_id,
-                        st.effective_date,
-                        st.in_time,
-                        st.out_time,
-                        st.act_hrs,
-                        st.time_type,
-                        st.absence_attendances_id,
-                        st.holiday_id
-                    FROM
-                        sc_timecards      st
-                    WHERE
-                            st.person_id = :person_id
-                        AND nvl(st.person_roster_id,0)=nvl(:person_roster_id,nvl(st.person_roster_id,0))
-                        AND effective_date = :effective_date
-                        AND ( st.in_time IS NOT NULL
-                              OR st.time_type IS NOT NULL )
-                        AND nvl(
-                            st.primary_row,
-                            'N'
-                        ) = 'N'
-                    ORDER BY
-                        st.effective_date,
-                        st.in_time,
-                        nvl(st.act_hrs,99)""";
+    static String TimecardActualsSql = """
+                SELECT
+                st.timecard_id,
+                st.person_roster_id,
+                st.effective_date,
+                st.in_time,
+                st.out_time,
+                st.act_hrs,
+                st.time_type,
+                st.absence_attendances_id,
+                st.holiday_id
+            FROM
+                sc_timecards      st
+            WHERE
+                    st.person_id = :person_id
+                AND nvl(st.person_roster_id,0)=nvl(:person_roster_id,nvl(st.person_roster_id,0))
+                AND effective_date = :effective_date
+                AND ( st.in_time IS NOT NULL
+                      OR st.time_type IS NOT NULL )
+                AND nvl(
+                    st.primary_row,
+                    'N'
+                ) = 'N'
+            ORDER BY
+                st.effective_date,
+                st.in_time,
+                nvl(st.act_hrs,99)""";
 
     static String TimecardSummarySql = """
             SELECT
@@ -103,7 +102,8 @@ public class TimecardUtils {
                         st.effective_date,
                         SUM(st.sch_hrs)          sch_hrs,
                         SUM(st.act_hrs)          act_hrs,
-                        COUNT(st.violation_code) violation_count,
+                        --COUNT(st.violation_code) violation_count,
+                        decode(st.primary_row,'Y',COUNT(st.violation_code),0)violation_count,
                         (
                             SELECT
                                 SUM(abt.absence_hrs)
@@ -135,9 +135,8 @@ public class TimecardUtils {
                         AND sw.work_duration_code (+) NOT IN ('OFF','HOL')
                     GROUP BY
                         st.person_id,
-                        st.effective_date
+                        st.effective_date,
+                        st.primary_row
                 )""";
-
-
 
 }
