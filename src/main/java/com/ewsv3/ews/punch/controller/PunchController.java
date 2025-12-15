@@ -25,9 +25,13 @@ import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.commons.dto.UserIdReqDto;
 import com.ewsv3.ews.commons.dto.UserProfileResponse;
 import com.ewsv3.ews.commons.service.CommonService;
+import com.ewsv3.ews.punch.dto.ClockAttributes;
 import com.ewsv3.ews.punch.dto.Punch;
 import com.ewsv3.ews.punch.dto.PunchResponse;
+import com.ewsv3.ews.punch.dto.TimeType;
 import com.ewsv3.ews.punch.service.PunchService;
+import com.ewsv3.ews.timesheets.dto.form.TsDepartmentDto;
+import com.ewsv3.ews.timesheets.dto.form.TsJobDto;
 
 @RestController
 @RequestMapping("/api/punch")
@@ -95,6 +99,37 @@ public class PunchController {
             return new ResponseEntity<>(punchData, HttpStatus.OK);
         } catch (Exception exception) {
             logger.error("getPunchData - Exception - Time: {}, personId: {}, Error: {}", LocalDateTime.now(),
+                    userFromUserId.personId(), exception.getMessage(), exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @GetMapping("/appributes")
+    public ResponseEntity<ClockAttributes> getClockAttributes(@RequestHeader Map<String, String> headers) {
+        UserProfileResponse userFromUserId = this.commonService
+                .getUserFromUserId(new UserIdReqDto(getCurrentUserId()), jdbcClient);
+        logger.info("getClockAttributes - Entry - Time: {}, personId: {}",
+                LocalDateTime.now(), userFromUserId.personId());
+        try {
+
+            List<TsDepartmentDto> departments = punchService.getDepartments(getCurrentUserId(),
+                    userFromUserId.personId(),
+                    jdbcClient);
+            List<TsJobDto> jobs = punchService.getJobs(getCurrentUserId(), userFromUserId.personId(), jdbcClient);
+            List<TimeType> timeTypes = punchService.getTimeTypes(jdbcClient);
+
+            ClockAttributes clockAttributes = new ClockAttributes(departments, jobs, timeTypes);
+
+            logger.info(
+                    "getClockAttributes - Exit - Time: {}, personId: {}, dept Count: {},jobs Count: {},timetype Count: {}",
+                    LocalDateTime.now(),
+                    userFromUserId.personId(), clockAttributes.departmentList(),
+                    clockAttributes.jobList().size(),
+                    clockAttributes.timeTypeList().size());
+            return new ResponseEntity<>(clockAttributes, HttpStatus.OK);
+        } catch (Exception exception) {
+            logger.error("getClockAttributes - Exception - Time: {}, personId: {}, Error: {}", LocalDateTime.now(),
                     userFromUserId.personId(), exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

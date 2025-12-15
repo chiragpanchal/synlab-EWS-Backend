@@ -10,6 +10,11 @@ import org.springframework.stereotype.Service;
 
 import com.ewsv3.ews.punch.dto.Punch;
 import com.ewsv3.ews.punch.dto.PunchResponse;
+import com.ewsv3.ews.punch.dto.TimeType;
+import com.ewsv3.ews.timesheets.dto.form.TimesheetFormReqDto;
+import com.ewsv3.ews.timesheets.dto.form.TsDepartmentDto;
+import com.ewsv3.ews.timesheets.dto.form.TsJobDto;
+import com.ewsv3.ews.timesheets.service.form.TimesheetFormUtils;
 
 @Service
 public class PunchService {
@@ -44,5 +49,31 @@ public class PunchService {
                 .list();
 
         return punchList;
+    }
+
+    public List<TimeType> getTimeTypes(JdbcClient jdbcClient) {
+        List<TimeType> timeTypelist = jdbcClient.sql(PunchUtils.timeTypeSql)
+                .query(TimeType.class)
+                .list();
+
+        return timeTypelist;
+    }
+
+    public List<TsDepartmentDto> getDepartments(Long userId, Long personId, JdbcClient jdbcClient) {
+        List<TsDepartmentDto> tsDepartmentDtoList = jdbcClient.sql(TimesheetFormUtils.sqlDepartmentList)
+                .param("personId", personId)
+                .query(TsDepartmentDto.class)
+                .list();
+
+        return tsDepartmentDtoList;
+    }
+
+    public List<TsJobDto> getJobs(Long userId, Long personId, JdbcClient jdbcClient) {
+        List<TsJobDto> tsJobDtoList = jdbcClient.sql(TimesheetFormUtils.sqlJobList)
+                .param("personId", personId)
+                .query(TsJobDto.class)
+                .list();
+
+        return tsJobDtoList;
     }
 }
