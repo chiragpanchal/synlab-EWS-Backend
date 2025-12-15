@@ -5,7 +5,7 @@ public class PunchUtils {
     public static String timeTypeSql = """
             SELECT
                 vl.value_set_value_id time_type_id,
-                vl.value_meaning time_type_value
+                vl.value_description time_type_value
             FROM
                 sc_value_set_values vl,
                 sc_value_sets       vs

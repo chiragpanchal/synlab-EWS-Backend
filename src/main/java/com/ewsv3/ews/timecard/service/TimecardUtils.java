@@ -67,6 +67,7 @@ public class TimecardUtils {
                 st.effective_date,
                 st.in_time,
                 st.out_time,
+                --decode(st.act_hrs,0,null,st.out_time) out_time,
                 st.act_hrs,
                 st.time_type,
                 st.absence_attendances_id,
