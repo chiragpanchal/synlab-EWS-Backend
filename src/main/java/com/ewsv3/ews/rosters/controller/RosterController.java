@@ -58,29 +58,35 @@ public class RosterController {
             @RequestBody RosterMasterRequestBody requestBody) {
         logger.info("GET_ROSTER_MASTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
 
-        //System.out.println("requestBody:" + requestBody);
+        // System.out.println("requestBody:" + requestBody);
         // UserResponseDto userResponseDto = new UserResponseDto(1, "a", 1, "f", "e01",
         // "jobTitle", "dept", 101);
 
         try {
             // UserResponseDto userInfo = getUserInfo(header);
-            //System.out.println("getRosterMasters > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("getRosterMasters > getCurrentUserId():" +
+            // getCurrentUserId());
 
             RosterMasters rosterMasters = this.masterDataService.getRosterMasters(getCurrentUserId(),
                     requestBody.profileId(), requestBody.startDate(), requestBody.endDate(), jdbcClient);
 
-            //System.out.println("\ngetRosterMasters >> rosterMasters.workDurationDtoList():\n"
-            //        + rosterMasters.workDurationDtoList());
-            //System.out
-            //        .println("\ngetRosterMasters >> rosterMasters.onCallDtoList():\n" + rosterMasters.onCallDtoList());
-            //System.out
-            //        .println("\ngetRosterMasters >> rosterMasters:\n" + rosterMasters.workDurationDtoList().toString());
+            // System.out.println("\ngetRosterMasters >>
+            // rosterMasters.workDurationDtoList():\n"
+            // + rosterMasters.workDurationDtoList());
+            // System.out
+            // .println("\ngetRosterMasters >> rosterMasters.onCallDtoList():\n" +
+            // rosterMasters.onCallDtoList());
+            // System.out
+            // .println("\ngetRosterMasters >> rosterMasters:\n" +
+            // rosterMasters.workDurationDtoList().toString());
 
-            logger.info("GET_ROSTER_MASTERS - Exit - Time: {}, Response: RosterMasters with {} work durations and {} on-call entries",
-                    LocalDateTime.now(), rosterMasters.workDurationDtoList().size(), rosterMasters.onCallDtoList().size());
+            logger.info(
+                    "GET_ROSTER_MASTERS - Exit - Time: {}, Response: RosterMasters with {} work durations and {} on-call entries",
+                    LocalDateTime.now(), rosterMasters.workDurationDtoList().size(),
+                    rosterMasters.onCallDtoList().size());
             return new ResponseEntity<>(rosterMasters, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("GET_ROSTER_MASTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -96,14 +102,14 @@ public class RosterController {
         logger.info("GET_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
             // UserResponseDto userInfo = getUserInfo(header);
-            //System.out.println("getRosters > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("getRosters > requestBody:" + requestBody);
+            // System.out.println("getRosters > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("getRosters > requestBody:" + requestBody);
             List<PersonRosters> personRosters = this.rosterService.getPersonRosters(getCurrentUserId(),
                     requestBody.profileId(), requestBody.startDate(), requestBody.endDate(), jdbcClient);
             logger.info("GET_ROSTERS - Exit - Time: {}, Response count: {}", LocalDateTime.now(), personRosters.size());
             return new ResponseEntity<>(personRosters, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("GET_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -119,14 +125,16 @@ public class RosterController {
         logger.info("GET_ROSTERS_PROCEDURE - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
             // UserResponseDto userInfo = getUserInfo(header);
-            //System.out.println("getRostersProcedure > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("getRostersProcedure > requestBody:" + requestBody);
+            // System.out.println("getRostersProcedure > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("getRostersProcedure > requestBody:" + requestBody);
             List<PersonRosterPivotResponse> personRosters = this.rosterService
                     .getPersonRostersProcedure(getCurrentUserId(), requestBody, namedParameterJdbcTemplate, jdbcClient);
-            logger.info("GET_ROSTERS_PROCEDURE - Exit - Time: {}, Response count: {}", LocalDateTime.now(), personRosters.size());
+            logger.info("GET_ROSTERS_PROCEDURE - Exit - Time: {}, Response count: {}", LocalDateTime.now(),
+                    personRosters.size());
             return new ResponseEntity<>(personRosters, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("GET_ROSTERS_PROCEDURE - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -142,14 +150,16 @@ public class RosterController {
         logger.info("GET_ROSTERS_SMALL - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
             // UserResponseDto userInfo = getUserInfo(header);
-            //System.out.println("getRostersSmall > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("getRostersSmall > requestBody:" + requestBody);
+            // System.out.println("getRostersSmall > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("getRostersSmall > requestBody:" + requestBody);
             List<PersonRostersSmall> personRosters = this.rosterService.getPersonRostersSmall(getCurrentUserId(),
                     requestBody.profileId(), requestBody.startDate(), requestBody.endDate(), jdbcClient);
-            logger.info("GET_ROSTERS_SMALL - Exit - Time: {}, Response count: {}", LocalDateTime.now(), personRosters.size());
+            logger.info("GET_ROSTERS_SMALL - Exit - Time: {}, Response count: {}", LocalDateTime.now(),
+                    personRosters.size());
             return new ResponseEntity<>(personRosters, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("GET_ROSTERS_SMALL - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -170,15 +180,17 @@ public class RosterController {
             @RequestParam(defaultValue = "") String text,
             @RequestParam(defaultValue = "") String filterFlag,
             @RequestBody ProfileDatesRequestBody requestBody) {
-        logger.info("GET_ROSTERS_SQL - Entry - Time: {}, ProfileId: {}, PersonId: {}, Page: {}, Size: {}, Text: {}, FilterFlag: {}",
+        logger.info(
+                "GET_ROSTERS_SQL - Entry - Time: {}, ProfileId: {}, PersonId: {}, Page: {}, Size: {}, Text: {}, FilterFlag: {}",
                 LocalDateTime.now(), requestBody.profileId(), requestBody.personId(), page, size, text, filterFlag);
         try {
-            //System.out.printf("getRostersSQL header: %s", header);
+            // System.out.printf("getRostersSQL header: %s", header);
             // UserResponseDto userInfo = getUserInfo(header);
-            //System.out.println("getRostersSQL > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("getRostersSQL > requestBody:" + requestBody);
-            //System.out.println("getRostersSQL > text:" + text);
-            //System.out.println("getRostersSQL > filterFlag:" + filterFlag);
+            // System.out.println("getRostersSQL > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("getRostersSQL > requestBody:" + requestBody);
+            // System.out.println("getRostersSQL > text:" + text);
+            // System.out.println("getRostersSQL > filterFlag:" + filterFlag);
 
             // PersonRosterSqlResp personRosterSqlResp =
             // this.rosterService.getPersonRosterSql(userInfo.userId(), requestBody,
@@ -198,7 +210,7 @@ public class RosterController {
             logger.info("GET_ROSTERS_SQL - Exit - Time: {}, Response: {}", LocalDateTime.now(), personRosterSqlResp);
             return new ResponseEntity<>(personRosterSqlResp, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("GET_ROSTERS_SQL - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -213,13 +225,14 @@ public class RosterController {
             @RequestBody SpotRequestBody requestBody) {
         logger.info("CREATE_SPOT_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
 
-        //System.out.println("spotone requestBody:" + requestBody);
+        // System.out.println("spotone requestBody:" + requestBody);
         // RosterCreateResponseDto responseDto = new RosterCreateResponseDto();
         try {
             // UserResponseDto userInfo = getUserInfo(header);
-            //System.out.println("createSpotRosters > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("createSpotRosters > getCurrentUserId():" +
+            // getCurrentUserId());
             RosterDMLResponseDto spotRoster = this.rosterService.createSpotRoster(getCurrentUserId(), requestBody);
-            //System.out.println("createSpotRosters spotRoster:" + spotRoster);
+            // System.out.println("createSpotRosters spotRoster:" + spotRoster);
             logger.info("CREATE_SPOT_ROSTERS - Exit - Time: {}, Response: {}", LocalDateTime.now(), spotRoster);
             return new ResponseEntity<>(spotRoster, HttpStatus.OK);
         } catch (Exception exception) {
@@ -236,8 +249,9 @@ public class RosterController {
             @RequestBody PersonRosterReqBody requestBody) {
         logger.info("GET_PERSON_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
-            //System.out.println("getPersonRosters > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("person-rosters > requestBody:" + requestBody);
+            // System.out.println("getPersonRosters > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("person-rosters > requestBody:" + requestBody);
 
             List<PersonRosters> personRosters = this.rosterService.getSinglePersonRosters(
                     getCurrentUserId(),
@@ -246,10 +260,11 @@ public class RosterController {
                     requestBody.startDate(),
                     requestBody.endDate(),
                     jdbcClient);
-            logger.info("GET_PERSON_ROSTERS - Exit - Time: {}, Response count: {}", LocalDateTime.now(), personRosters.size());
+            logger.info("GET_PERSON_ROSTERS - Exit - Time: {}, Response count: {}", LocalDateTime.now(),
+                    personRosters.size());
             return new ResponseEntity<>(personRosters, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("GET_PERSON_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -264,8 +279,9 @@ public class RosterController {
             @RequestBody RosterDeleteReasonReqBody requestBody) {
         logger.info("DELETE_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
-            //System.out.println("deleteRosters > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("person-rosters > requestBody:" + requestBody);
+            // System.out.println("deleteRosters > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("person-rosters > requestBody:" + requestBody);
 
             RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.deletePersonRoster(
                     getCurrentUserId(),
@@ -274,7 +290,7 @@ public class RosterController {
             logger.info("DELETE_ROSTERS - Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterDMLResponseDto);
             return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("DELETE_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -289,8 +305,9 @@ public class RosterController {
             @RequestBody RosterCopyReqBody requestBody) {
         logger.info("COPY_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
-            //System.out.println("copyPersonRoster > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("copy-rosters> requestBody:" + requestBody);
+            // System.out.println("copyPersonRoster > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("copy-rosters> requestBody:" + requestBody);
 
             RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.copyPersonRoster(
                     getCurrentUserId(),
@@ -299,7 +316,7 @@ public class RosterController {
             logger.info("COPY_ROSTERS - Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterDMLResponseDto);
             return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("COPY_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -314,8 +331,8 @@ public class RosterController {
             @RequestBody List<PersonRotationAssocReqBody> requestBody) {
         logger.info("ROTA_ROSTER - Entry - Time: {}, Request count: {}", LocalDateTime.now(), requestBody.size());
         try {
-            //System.out.println("rotaRoster > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("rota > requestBody:" + requestBody);
+            // System.out.println("rotaRoster > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("rota > requestBody:" + requestBody);
 
             RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.createPersonRota(
                     getCurrentUserId(),
@@ -324,7 +341,7 @@ public class RosterController {
             logger.info("ROTA_ROSTER - Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterDMLResponseDto);
             return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("ROTA_ROSTER - Exception - Time: {}, Request count: {}, Error: {}",
                     LocalDateTime.now(), requestBody.size(), exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -339,8 +356,9 @@ public class RosterController {
             @RequestBody RosterActionsReqBody requestBody) {
         logger.info("ROSTER_ACTIONS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
-            //System.out.println("rosterActions > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("rosterActions > requestBody:" + requestBody);
+            // System.out.println("rosterActions > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("rosterActions > requestBody:" + requestBody);
 
             RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.rosterActions(
                     getCurrentUserId(),
@@ -349,7 +367,7 @@ public class RosterController {
             logger.info("ROSTER_ACTIONS - Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterDMLResponseDto);
             return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("ROSTER_ACTIONS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -364,17 +382,18 @@ public class RosterController {
             @RequestBody DemandAllocationReqBody requestBody) {
         logger.info("DEMAND_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
-            //System.out.println("resterDemands > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("resterDemands > requestBody:" + requestBody);
+            // System.out.println("resterDemands > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("resterDemands > requestBody:" + requestBody);
 
-            DemandAllocationRespBody allocations = this.rosterService.getDemandAllocations(
+            DemandAllocationRespBody allocations = this.rosterService.getDemandAllocationsNew(
                     getCurrentUserId(),
                     requestBody,
                     jdbcClient);
             logger.info("DEMAND_ROSTERS - Exit - Time: {}, Response: {}", LocalDateTime.now(), allocations);
             return new ResponseEntity<>(allocations, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("DEMAND_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -389,8 +408,9 @@ public class RosterController {
             @RequestBody ValidateRosterReqBody reqBody) {
         logger.info("VALIDATE_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
         try {
-            //System.out.println("getValidateRosterResponse > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("getValidateRosterResponse > reqBody:" + reqBody);
+            // System.out.println("getValidateRosterResponse > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("getValidateRosterResponse > reqBody:" + reqBody);
 
             ValidateRosterResponse rosterResponse = this.rosterService.getValidateRosterResponse(
                     getCurrentUserId(),
@@ -399,7 +419,7 @@ public class RosterController {
             logger.info("VALIDATE_ROSTERS - Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterResponse);
             return new ResponseEntity<>(rosterResponse, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("VALIDATE_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), reqBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -413,8 +433,8 @@ public class RosterController {
             @RequestBody DragDropReqBody requestBody) {
         logger.info("DRAG_DROP_ROSTER - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
-            //System.out.println("drag-drop > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("drag-drop > requestBody:" + requestBody);
+            // System.out.println("drag-drop > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("drag-drop > requestBody:" + requestBody);
 
             RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.dragDropPersonRoster(
                     getCurrentUserId(),
@@ -423,7 +443,7 @@ public class RosterController {
             logger.info("DRAG_DROP_ROSTER - Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterDMLResponseDto);
             return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("DRAG_DROP_ROSTER - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -438,8 +458,8 @@ public class RosterController {
             @RequestBody QuickCopyReqBody requestBody) {
         logger.info("QUICK_COPY_ROSTER - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
         try {
-            //System.out.println("quick-copy > getCurrentUserId():" + getCurrentUserId());
-            //System.out.println("quick-copy > requestBody:" + requestBody);
+            // System.out.println("quick-copy > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("quick-copy > requestBody:" + requestBody);
 
             RosterDMLResponseDto rosterDMLResponseDto = this.rosterService.quickCopyPersonRoster(
                     getCurrentUserId(),
@@ -448,7 +468,7 @@ public class RosterController {
             logger.info("QUICK_COPY_ROSTER - Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterDMLResponseDto);
             return new ResponseEntity<>(rosterDMLResponseDto, HttpStatus.OK);
         } catch (Exception exception) {
-            //System.out.println(exception.getMessage());
+            // System.out.println(exception.getMessage());
             logger.error("QUICK_COPY_ROSTER - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);

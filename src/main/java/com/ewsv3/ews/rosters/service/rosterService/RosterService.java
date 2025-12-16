@@ -1,6 +1,7 @@
 package com.ewsv3.ews.rosters.service.rosterService;
 
 import com.ewsv3.ews.masters.service.ServiceUtils;
+import com.ewsv3.ews.rosters.controller.RosterController;
 import com.ewsv3.ews.rosters.dto.rosters.*;
 import com.ewsv3.ews.rosters.dto.rosters.payload.*;
 import com.ewsv3.ews.rosters.dto.rosters.payload.pivot.PersonRosterSqlResp;
@@ -9,6 +10,9 @@ import com.ewsv3.ews.rosters.dto.rosters.validate.ScheduleLineResponse;
 import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterReqBody;
 import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterResponse;
 import jakarta.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -18,11 +22,11 @@ import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.ewsv3.ews.rosters.service.utils.RosterSql.*;
@@ -38,6 +42,8 @@ public class RosterService {
 
     private SimpleJdbcCall simpleJdbcCall;
     private final JdbcTemplate jdbcTemplate;
+
+    private static final Logger logger = LoggerFactory.getLogger(RosterController.class);
 
     public RosterService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -138,7 +144,7 @@ public class RosterService {
             LocalDate endDate, int page, int size, String text, String filterFlag, JdbcClient jdbcClient,
             NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 
-        //System.out.println("getPersonRosterSql userId:" + userId);
+        // System.out.println("getPersonRosterSql userId:" + userId);
         Map<String, Object> objectMap = null;
         String searchText = Objects.equals(text, "") ? "%" : "%" + text.trim() + "%";
         try {
@@ -153,11 +159,11 @@ public class RosterService {
                     "text", searchText,
                     "pFilterFlag", filterFlag == null ? "Y" : filterFlag);
         } catch (Exception e) {
-            //System.out.println("Exception in creating objectMap:" + e);
+            // System.out.println("Exception in creating objectMap:" + e);
             throw new RuntimeException(e);
         }
 
-        //System.out.println("getPersonRosterSql objectMap:" + objectMap);
+        // System.out.println("getPersonRosterSql objectMap:" + objectMap);
 
         // Step 1: Get the roster team members (with pagination)
         List<RosterLines> rosterLines = jdbcClient.sql(RosterTeamSql).params(objectMap).query(RosterLines.class).list();
@@ -171,7 +177,8 @@ public class RosterService {
         }
 
         // Step 2: Get all roster children in one batch query (PERFORMANCE OPTIMIZATION)
-        //System.out.println("Fetching all roster children in batch - Performance Optimization");
+        // System.out.println("Fetching all roster children in batch - Performance
+        // Optimization");
         long batchQueryStart = System.currentTimeMillis();
 
         Map<String, Object> batchQueryMap = Map.of(
@@ -197,7 +204,8 @@ public class RosterService {
 
         // Step 4: Process each roster line and assign its children
         for (RosterLines rosterLine : rosterLines) {
-            //System.out.println("Processing rosterLine.getPersonId(): " + rosterLine.getPersonId());
+            // System.out.println("Processing rosterLine.getPersonId(): " +
+            // rosterLine.getPersonId());
 
             // Get children for this person from the batch result
             List<RosterLinesChild> children = childrenByPersonId.getOrDefault(rosterLine.getPersonId(),
@@ -312,8 +320,8 @@ public class RosterService {
             PersonRosterPivotReq personRosterPivotReq, NamedParameterJdbcTemplate namedParameterJdbcTemplate,
             JdbcClient jdbcClient) {
 
-        //System.out.println("inside getPersonRostersProcedure");
-        //System.out.println("personRosterPivotReq:%s\n" + personRosterPivotReq);
+        // System.out.println("inside getPersonRostersProcedure");
+        // System.out.println("personRosterPivotReq:%s\n" + personRosterPivotReq);
 
         // JdbcTemplate template = namedParameterJdbcTemplate.getJdbcTemplate();
         // SimpleJdbcCall simpleJdbcCall = new
@@ -365,7 +373,7 @@ public class RosterService {
         // ServiceUtils serviceUtils = new ServiceUtils();
 
         // SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        //System.out.println("Inside getPersonRosters ========================> ");
+        // System.out.println("Inside getPersonRosters ========================> ");
         Map<String, Object> objectMap = new HashMap<>();
 
         objectMap.put("userId", userId);
@@ -383,7 +391,7 @@ public class RosterService {
                 .query(PersonRostersSmall.class)
                 .list();
 
-        //System.out.println("Completed getPersonRosters ========================> ");
+        // System.out.println("Completed getPersonRosters ========================> ");
 
         return personRostersList;
 
@@ -391,7 +399,7 @@ public class RosterService {
 
     public RosterDMLResponseDto createSpotRoster(long userId, SpotRequestBody requestBody) {
 
-        //System.out.println("createSpotRoster :requestBody:" + requestBody);
+        // System.out.println("createSpotRoster :requestBody:" + requestBody);
         List<PersonDtoSelected> personDtoSelected = requestBody.personDtoSelected();
 
         RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
@@ -428,8 +436,9 @@ public class RosterService {
                     inParamMap.put("p_person_roster_id", requestBody.personRosterId());
 
                     SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-                    //System.out.println("createSpotRoster requestBody.personRosterId()" + requestBody.personRosterId());
-                    //System.out.println("createSpotRoster inSource" + inSource);
+                    // System.out.println("createSpotRoster requestBody.personRosterId()" +
+                    // requestBody.personRosterId());
+                    // System.out.println("createSpotRoster inSource" + inSource);
                     // simpleJdbcCall = new
                     // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
                     simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_SPOT_ROSTER_P");
@@ -438,27 +447,27 @@ public class RosterService {
                     AtomicReference<Object> sMessage = new AtomicReference<>();
 
                     simpleJdbcCallResult.forEach((s, o) -> {
-                        //System.out.println(s);
-                        //System.out.println(o);
+                        // System.out.println(s);
+                        // System.out.println(o);
 
                         if (s.equals("P_OUT")) {
                             String strMessage = o.toString();
-                            //System.out.println("strMessage:" + strMessage);
+                            // System.out.println("strMessage:" + strMessage);
                             sMessage.set(o);
                         }
                     });
 
-                    //System.out.println("sMessage.get():" + sMessage.get());
+                    // System.out.println("sMessage.get():" + sMessage.get());
                     String messageString = sMessage.get().toString();
 
                     String flag = messageString.substring(0, 1);
-                    //System.out.println("flag:" + flag);
+                    // System.out.println("flag:" + flag);
                     if (flag.equals("E")) {
                         errorMessage = messageString.substring(2);
                         break;
                     } else {
                         recCounts = recCounts + Integer.parseInt(messageString.substring(2));
-                        //System.out.println("recCounts:" + recCounts);
+                        // System.out.println("recCounts:" + recCounts);
                     }
 
                 }
@@ -476,12 +485,12 @@ public class RosterService {
                 responseDto.setStatusMessage("S");
                 responseDto.setDetailMessage(String.valueOf(recCounts) + " schedule(s) created successfully!");
             }
-            //System.out.println("responseDto:" + responseDto);
+            // System.out.println("responseDto:" + responseDto);
 
             return responseDto;
 
         } catch (Exception exception) {
-            //System.out.println("error:" + exception.getMessage());
+            // System.out.println("error:" + exception.getMessage());
             responseDto.setStatusMessage("E");
             responseDto.setDetailMessage(exception.getMessage());
         }
@@ -499,15 +508,16 @@ public class RosterService {
         objectMap.put("startDate", startDate);
         objectMap.put("endDate", endDate);
 
-        //System.out.println("getSinglePersonRosters objectMap:" + objectMap);
+        // System.out.println("getSinglePersonRosters objectMap:" + objectMap);
 
         List<PersonRosters> personRostersList = jdbcClient.sql(getSinglePersonRosterDataSql).params(objectMap)
                 .query(PersonRosters.class).list();
 
-        //System.out.println("RESULTS personRostersList: ");
+        // System.out.println("RESULTS personRostersList: ");
 
         for (PersonRosters personRosters : personRostersList) {
-            //System.out.println("personRosters.personRosterId()" + personRosters.personRosterId());
+            // System.out.println("personRosters.personRosterId()" +
+            // personRosters.personRosterId());
         }
 
         // jdbcClient.sql(ServiceUtils.getPersonRosterDataSqlSmall)
@@ -529,13 +539,14 @@ public class RosterService {
         AtomicReference<String> errorMessage = new AtomicReference<>("");
         AtomicInteger deleteCounts = new AtomicInteger();
 
-        //System.out.println("deletePersonRoster: reqBody:" + reqBody);
+        // System.out.println("deletePersonRoster: reqBody:" + reqBody);
 
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
 
-        //System.out.println("deletePersonRoster: reqBody.personIds:" + reqBody.personIds());
+        // System.out.println("deletePersonRoster: reqBody.personIds:" +
+        // reqBody.personIds());
 
         inParamMap.put("p_user_id", userId);
         inParamMap.put("p_person_ids", reqBody.personIds());
@@ -551,33 +562,33 @@ public class RosterService {
         inParamMap.put("p_group_key", reqBody.groupKey());
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-        //System.out.println(inSource);
+        // System.out.println(inSource);
         Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
         AtomicReference<Object> sMessage = new AtomicReference<>();
 
         simpleJdbcCallResult.forEach((s, o) -> {
-            //System.out.println(s);
-            //System.out.println(o);
+            // System.out.println(s);
+            // System.out.println(o);
 
             if (s.equals("P_OUT")) {
                 String strMessage = o.toString();
-                //System.out.println("strMessage:" + strMessage);
+                // System.out.println("strMessage:" + strMessage);
                 sMessage.set(o);
             }
         });
 
-        //System.out.println("sMessage.get():" + sMessage.get());
+        // System.out.println("sMessage.get():" + sMessage.get());
         String messageString = sMessage.get().toString();
 
         String flag = messageString.substring(0, 1);
-        //System.out.println("flag:" + flag);
+        // System.out.println("flag:" + flag);
         if (flag.equals("E")) {
             errorMessage.set(messageString.substring(2));
         } else {
             // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
             deleteCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
-            //System.out.println("deleteCounts:" + deleteCounts);
+            // System.out.println("deleteCounts:" + deleteCounts);
         }
 
         if (!errorMessage.get().isEmpty()) {
@@ -600,7 +611,7 @@ public class RosterService {
         AtomicReference<String> errorMessage = new AtomicReference<>("");
         AtomicInteger transCounts = new AtomicInteger();
 
-        //System.out.println("copyPersonRoster: reqBody:" + reqBody);
+        // System.out.println("copyPersonRoster: reqBody:" + reqBody);
 
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_COPY_ROSTERS_P");
 
@@ -615,33 +626,33 @@ public class RosterService {
         inParamMap.put("p_group_key", reqBody.groupKey());
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-        //System.out.println(inSource);
+        // System.out.println(inSource);
         Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
         AtomicReference<Object> sMessage = new AtomicReference<>();
 
         simpleJdbcCallResult.forEach((s, o) -> {
-            //System.out.println(s);
-            //System.out.println(o);
+            // System.out.println(s);
+            // System.out.println(o);
 
             if (s.equals("P_OUT")) {
                 String strMessage = o.toString();
-                //System.out.println("strMessage:" + strMessage);
+                // System.out.println("strMessage:" + strMessage);
                 sMessage.set(o);
             }
         });
 
-        //System.out.println("sMessage.get():" + sMessage.get());
+        // System.out.println("sMessage.get():" + sMessage.get());
         String messageString = sMessage.get().toString();
 
         String flag = messageString.substring(0, 1);
-        //System.out.println("flag:" + flag);
+        // System.out.println("flag:" + flag);
         if (flag.equals("E")) {
             errorMessage.set(messageString.substring(2));
         } else {
             // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
             transCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
-            //System.out.println("transCounts:" + transCounts);
+            // System.out.println("transCounts:" + transCounts);
         }
 
         if (!errorMessage.get().isEmpty()) {
@@ -663,7 +674,7 @@ public class RosterService {
 
         RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
 
-        //System.out.println("createRota: reqBody:" + reqBody);
+        // System.out.println("createRota: reqBody:" + reqBody);
         AtomicInteger recCounts = new AtomicInteger(0);
 
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_GENERATE_ROTA_SHIFTS_P");
@@ -679,7 +690,7 @@ public class RosterService {
         reqBody.forEach(reqBodyItem -> {
 
             try {
-                //System.out.println("createRota: reqBodyItem:" + reqBodyItem);
+                // System.out.println("createRota: reqBodyItem:" + reqBodyItem);
 
                 Map<String, Object> inParamMap = new HashMap<>();
 
@@ -695,16 +706,16 @@ public class RosterService {
                 inParamMap.put("p_persons", reqBodyItem.persons() == null ? "" : reqBodyItem.persons());
 
                 SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-                //System.out.println(inSource);
+                // System.out.println(inSource);
                 Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
                 simpleJdbcCallResult.forEach((s, o) -> {
-                    //System.out.println(s);
-                    //System.out.println(o);
+                    // System.out.println(s);
+                    // System.out.println(o);
 
                     if (s.equals("P_OUT")) {
                         String strMessage = o.toString();
-                        //System.out.println("strMessage:" + strMessage);
+                        // System.out.println("strMessage:" + strMessage);
                         if (strMessage.startsWith("E")) {
                             responseDto.setStatusMessage("E");
                             responseDto.setDetailMessage(strMessage.substring(2));
@@ -719,7 +730,7 @@ public class RosterService {
                 recCounts.incrementAndGet();
 
             } catch (Exception e) {
-                //System.out.println("Exception in createRota: " + e.getMessage());
+                // System.out.println("Exception in createRota: " + e.getMessage());
             }
 
         });
@@ -789,16 +800,16 @@ public class RosterService {
                 inProcParamMap.put("p_work_rotation_id", assocReqBody.workRotationId());
 
                 SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
-                //System.out.println(inSource);
+                // System.out.println(inSource);
                 Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
                 simpleJdbcCallResult.forEach((s, o) -> {
-                    //System.out.println(s);
-                    //System.out.println(o);
+                    // System.out.println(s);
+                    // System.out.println(o);
 
                     if (s.equals("P_OUT")) {
                         String strMessage = o.toString();
-                        //System.out.println("strMessage:" + strMessage);
+                        // System.out.println("strMessage:" + strMessage);
                         if (strMessage.startsWith("E")) {
                             responseDto.setStatusMessage("E");
                             responseDto.setDetailMessage(strMessage.substring(2));
@@ -810,7 +821,7 @@ public class RosterService {
 
             } catch (Exception e) {
                 errCounts = errCounts + 1;
-                //System.out.println("createPersonRota exception , error:" + e.getMessage());
+                // System.out.println("createPersonRota exception , error:" + e.getMessage());
                 responseDto.setStatusMessage("E");
                 responseDto.setDetailMessage(e.getMessage());
                 return responseDto;
@@ -866,9 +877,10 @@ public class RosterService {
             inProcParamMap.put("p_comments", reqBody.comments());
 
             SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
-            //System.out.println("rosterActions inSource" + inSource);
+            // System.out.println("rosterActions inSource" + inSource);
             Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
-            //System.out.println("rosterActions simpleJdbcCallResult: " + simpleJdbcCallResult);
+            // System.out.println("rosterActions simpleJdbcCallResult: " +
+            // simpleJdbcCallResult);
 
             String actionMessage = switch (reqBody.action()) {
                 case "INIT" -> "Selected schedules are submitted for approval";
@@ -886,7 +898,7 @@ public class RosterService {
 
         } catch (Exception e) {
             errCounts = errCounts + 1;
-            //System.out.println("rosterActions exception , error:" + e.getMessage());
+            // System.out.println("rosterActions exception , error:" + e.getMessage());
             responseDto.setStatusMessage("E");
             responseDto.setDetailMessage(e.getMessage());
             return responseDto;
@@ -913,11 +925,13 @@ public class RosterService {
         inProcParamMap.put("p_demand_template_id", reqBody.demandTemplateId());
 
         SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
-        //System.out.println("getDemandAllocations inSource" + inSource);
+        // System.out.println("getDemandAllocations inSource" + inSource);
         Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
-        //System.out.println("getDemandAllocations simpleJdbcCallResult: " + simpleJdbcCallResult);
+        // System.out.println("getDemandAllocations simpleJdbcCallResult: " +
+        // simpleJdbcCallResult);
 
-        //System.out.println("getDemandAllocations procedure completed ================");
+        // System.out.println("getDemandAllocations procedure completed
+        // ================");
 
         DemandAllocationRespBody respBody = new DemandAllocationRespBody();
 
@@ -928,7 +942,7 @@ public class RosterService {
 
         for (DemandAllocationSummary summary : summaryList) {
 
-            //System.out.println("getDemandAllocations summary:" + summary);
+            // System.out.println("getDemandAllocations summary:" + summary);
 
             List<DemandAllocationLines> lines = jdbcClient.sql(sqlDemandAllocationLines)
                     .param("userId", userId)
@@ -936,7 +950,61 @@ public class RosterService {
                     .param("effectiveDate", summary.getEffectiveDate())
                     .query(DemandAllocationLines.class)
                     .list();
-            //System.out.println("getDemandAllocations lines:" + lines);
+            // System.out.println("getDemandAllocations lines:" + lines);
+
+            summary.setDemandAllocationLines(lines);
+
+        }
+
+        respBody.setAllocationSummaryList(summaryList);
+        return respBody;
+
+    }
+
+    public DemandAllocationRespBody getDemandAllocationsNew(Long userId, DemandAllocationReqBody reqBody,
+            JdbcClient jdbcClient) {
+        logger.info("getDemandAllocationsNew - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sp_generate_staff_schedule");
+        Map<String, Object> inProcParamMap = new HashMap<>();
+
+        inProcParamMap.put("p_demand_template_id", reqBody.demandTemplateId());
+        inProcParamMap.put("p_user_id", userId);
+        inProcParamMap.put("p_start_date", reqBody.startDate());
+        inProcParamMap.put("p_end_date", reqBody.endDate());
+
+        SqlParameterSource inSource = new MapSqlParameterSource(inProcParamMap);
+        // System.out.println("getDemandAllocations inSource" + inSource);
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+        // Extract OUT parameters
+        Number suggestionId = (Number) simpleJdbcCallResult.get("p_suggestion_id");
+        String status = (String) simpleJdbcCallResult.get("p_status");
+        String message = (String) simpleJdbcCallResult.get("p_message");
+
+        logger.info(
+                "getDemandAllocationsNew - PROCEDURE CALL FINISH - Time: {}, suggestionId: {} , status:{}, message:{} ",
+                LocalDateTime.now(), suggestionId, status, message);
+
+        DemandAllocationRespBody respBody = new DemandAllocationRespBody();
+
+        List<DemandAllocationSummary> summaryList = jdbcClient.sql(sqlDemandAllocationSummaryNEW)
+                .param("demandTemplateId", reqBody.demandTemplateId())
+                .param("suggestionId", suggestionId)
+                .query(DemandAllocationSummary.class)
+                .list();
+
+        for (DemandAllocationSummary summary : summaryList) {
+
+            // System.out.println("getDemandAllocations summary:" + summary);
+
+            List<DemandAllocationLines> lines = jdbcClient.sql(sqlDemandAllocationLinesNEW)
+                    .param("demandTemplateId", reqBody.demandTemplateId())
+                    .param("demandTemplateLineId", summary.getDemandTemplateLineId())
+                    .param("suggestionId", suggestionId)
+                    .param("effectiveDate", summary.getEffectiveDate())
+                    .query(DemandAllocationLines.class)
+                    .list();
+            // System.out.println("getDemandAllocations lines:" + lines);
 
             summary.setDemandAllocationLines(lines);
 
@@ -959,7 +1027,8 @@ public class RosterService {
                 .query(DemandLineResponse.class)
                 .list();
 
-        //System.out.println("getValidateRosterResponse  demandLineResponses:" + demandLineResponses);
+        // System.out.println("getValidateRosterResponse demandLineResponses:" +
+        // demandLineResponses);
 
         objectMap.clear();
 
@@ -973,7 +1042,8 @@ public class RosterService {
                 .query(ScheduleLineResponse.class)
                 .list();
 
-        //System.out.println("getValidateRosterResponse  scheduleLineResponses:" + scheduleLineResponses);
+        // System.out.println("getValidateRosterResponse scheduleLineResponses:" +
+        // scheduleLineResponses);
 
         ValidateRosterResponse response = new ValidateRosterResponse(demandLineResponses, scheduleLineResponses);
         objectMap.clear();
@@ -988,7 +1058,7 @@ public class RosterService {
         AtomicReference<String> errorMessage = new AtomicReference<>("");
         AtomicInteger transCounts = new AtomicInteger();
 
-        //System.out.println("dragDropPersonRoster: reqBody:" + reqBody);
+        // System.out.println("dragDropPersonRoster: reqBody:" + reqBody);
 
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DRAG_DROP_ROSTERS_P");
 
@@ -999,33 +1069,33 @@ public class RosterService {
         inParamMap.put("p_effective_date", reqBody.effectiveDate());
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-        //System.out.println(inSource);
+        // System.out.println(inSource);
         Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
         AtomicReference<Object> sMessage = new AtomicReference<>();
 
         simpleJdbcCallResult.forEach((s, o) -> {
-            //System.out.println(s);
-            //System.out.println(o);
+            // System.out.println(s);
+            // System.out.println(o);
 
             if (s.equals("P_OUT")) {
                 String strMessage = o.toString();
-                //System.out.println("strMessage:" + strMessage);
+                // System.out.println("strMessage:" + strMessage);
                 sMessage.set(o);
             }
         });
 
-        //System.out.println("sMessage.get():" + sMessage.get());
+        // System.out.println("sMessage.get():" + sMessage.get());
         String messageString = sMessage.get().toString();
 
         String flag = messageString.substring(0, 1);
-        //System.out.println("flag:" + flag);
+        // System.out.println("flag:" + flag);
         if (flag.equals("E")) {
             errorMessage.set(messageString.substring(2));
         } else {
             // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
             transCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
-            //System.out.println("transCounts:" + transCounts);
+            // System.out.println("transCounts:" + transCounts);
         }
 
         if (!errorMessage.get().isEmpty()) {
@@ -1053,7 +1123,7 @@ public class RosterService {
         AtomicReference<String> errorMessage = new AtomicReference<>("");
         AtomicInteger transCounts = new AtomicInteger();
 
-        //System.out.println("quickCopyPersonRoster: reqBody:" + reqBody);
+        // System.out.println("quickCopyPersonRoster: reqBody:" + reqBody);
 
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_QUICK_COPY_ROSTERS_P");
         Map<String, Object> inParamMap = new HashMap<>();
@@ -1068,33 +1138,33 @@ public class RosterService {
             inParamMap.put("p_effective_date", personDate.effectiveDate());
 
             SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
-            //System.out.println(inSource);
+            // System.out.println(inSource);
             Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
             AtomicReference<Object> sMessage = new AtomicReference<>();
 
             simpleJdbcCallResult.forEach((s, o) -> {
-                //System.out.println(s);
-                //System.out.println(o);
+                // System.out.println(s);
+                // System.out.println(o);
 
                 if (s.equals("P_OUT")) {
                     String strMessage = o.toString();
-                    //System.out.println("strMessage:" + strMessage);
+                    // System.out.println("strMessage:" + strMessage);
                     sMessage.set(o);
                 }
             });
 
-            //System.out.println("sMessage.get():" + sMessage.get());
+            // System.out.println("sMessage.get():" + sMessage.get());
             String messageString = sMessage.get().toString();
 
             String flag = messageString.substring(0, 1);
-            //System.out.println("flag:" + flag);
+            // System.out.println("flag:" + flag);
             if (flag.equals("E")) {
                 errorMessage.set(messageString.substring(2));
             } else {
                 // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
                 transCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
-                //System.out.println("transCounts:" + transCounts);
+                // System.out.println("transCounts:" + transCounts);
             }
 
             if (!errorMessage.get().isEmpty()) {

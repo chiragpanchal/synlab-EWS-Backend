@@ -410,6 +410,82 @@ public class RosterSql {
                     0
                 )""";
 
+    public static String sqlDemandAllocationSummaryNEW = """
+            SELECT
+               h.profile_id,
+               l.demand_template_line_id,
+               sl.effective_date,
+               sl.fte_required  req_fte,
+               COUNT(person_id) alloc_fte,
+               l.work_duration_id
+             FROM
+               sc_demand_template_h         h,
+               sc_demand_template_l         l,
+               sc_schedule_suggestion_lines sl
+            WHERE
+                   h.demand_template_id = :demandTemplateId
+                  AND l.demand_template_id       = h.demand_template_id
+                  AND sl.demand_template_line_id = l.demand_template_line_id
+                  AND suggestion_id              = :suggestionId
+                  AND selected_flag              = 'Y'
+            GROUP BY
+               h.profile_id,
+               l.demand_template_line_id,
+               sl.effective_date,
+               sl.fte_required,
+               l.work_duration_id
+            ORDER BY
+               h.profile_id,
+               l.demand_template_line_id,
+               sl.effective_date""";
+
+    public static String sqlDemandAllocationLinesNEW = """
+                        SELECT
+                per.employee_number,
+                per.full_name,
+                per.person_id,
+                l.demand_template_line_id,
+                sl.effective_date,
+                pj.per_hr_sal          rate,
+                selected_flag          alloc_flag,
+                ( schedule_time_start
+                  || ' - '
+                  || schedule_time_end ) alloc_time,
+                shift_hours            sch_hrs
+              FROM
+                sc_demand_template_h         h,
+                sc_demand_template_l         l,
+                sc_schedule_suggestion_lines sl,
+                sc_person_v                  per,
+                sc_person_preferred_jobs     pj
+             WHERE
+                    h.demand_template_id = :demandTemplateId
+                   AND l.demand_template_id       = h.demand_template_id
+                   AND sl.demand_template_line_id = l.demand_template_line_id
+                   AND l.demand_template_line_id = :demandTemplateLineId
+                   AND per.person_id              = sl.person_id
+                   AND sl.suggestion_id           = :suggestionId
+                   AND sl.effective_date = :effectiveDate
+            --       AND sl.selected_flag              = 'Y'
+                   AND pj.person_id (+)           = sl.person_id
+                   AND pj.job_title_id (+)        = sl.job_title_id
+             ORDER BY
+                l.demand_template_line_id,
+                decode(
+                    sl.selected_flag,
+                    'Y',
+                    1,
+                    'N',
+                    2,
+                    3
+                ),
+                per.full_name,
+                sl.effective_date,
+                nvl(
+                    pj.per_hr_sal,
+                    0
+                )""";
+
     public static String sqlDemandLinesValidate = """
             select
                 dl.department_id,
