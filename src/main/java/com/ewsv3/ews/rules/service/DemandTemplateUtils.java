@@ -142,6 +142,7 @@ public class DemandTemplateUtils {
                 fri = :fri,
                 sat = :sat,
                 last_updated_by = :lastUpdatedBy
+                last_update_date = sysdate
             where
                 demand_template_line_id = :demandTemplateLineId""";
 
@@ -150,4 +151,58 @@ public class DemandTemplateUtils {
             where
                 demand_template_line_id = :demandTemplateLineId""";
 
+    public static String DemandTemplateSkillsSql = """
+            SELECT
+               demand_template_skill_id,
+               demand_template_line_id,
+               skill_id,
+               rating,
+               must_have,
+               created_by,
+               created_on,
+               last_updated_by,
+               last_update_date
+             FROM
+               sc_demand_template_skills ds
+            WHERE
+               ds.demand_template_line_id = :demandTemplateLineId
+            ORDER BY
+               demand_template_skill_id
+                                   """;
+
+    public static String CreateDemandTemplateSkillsSql = """
+            INSERT INTO sc_demand_template_skills (
+                demand_template_line_id,
+                skill_id,
+                rating,
+                must_have,
+                created_by,
+                last_updated_by
+            ) VALUES (
+                :demandTemplateLineId,
+                :skillId,
+                :rating,
+                :mustHave,
+                :createdBy,
+                :lastUpdatedBy
+            )
+                                    """;
+
+    public static String UpdateDemandTemplateSkillsSql = """
+            UPDATE sc_demand_template_skills
+               SET
+                skill_id = :skillId,
+                rating = :rating,
+                must_have = :mustHave,
+                last_updated_by = :lastUpdatedBy,
+                last_update_date = sysdate
+             WHERE
+                demand_template_skill_id = :demandTemplateSkillId
+                        """;
+
+    public static String DeleteDemandTemplateSkillsSql = """
+            DELETE sc_demand_template_skills
+             WHERE
+                demand_template_skill_id = :demandTemplateSkillId
+            """;
 }

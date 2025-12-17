@@ -4,7 +4,10 @@ import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.rules.dto.DemandTemplate;
 import com.ewsv3.ews.rules.dto.DemandTemplateLine;
 import com.ewsv3.ews.rules.dto.DemandTemplateSaveReqBody;
+import com.ewsv3.ews.rules.dto.DemandTemplateSkills;
+
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.core.simple.JdbcClient.MappedQuerySpec;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -50,7 +53,8 @@ public class DemandTemplateService {
     public DMLResponseDto saveDemandTempalte(DemandTemplateSaveReqBody reqBody, Long userId, JdbcClient jdbcClient) {
 
         // System.out.println("saveDemandTemplate: reqBody:" + reqBody);
-        // System.out.println("saveDemandTemplate: reqBody.getDemandTemplate:" + reqBody.getDemandTemplate());
+        // System.out.println("saveDemandTemplate: reqBody.getDemandTemplate:" +
+        // reqBody.getDemandTemplate());
         Long generatedDemandTemplateId;
 
         // DemandTemplateSaveReqBody templateSaveReqBody= new
@@ -94,7 +98,8 @@ public class DemandTemplateService {
 
         for (DemandTemplateLine demandTemplateLine : reqBody.getDemandTemplateLineList()) {
 
-            // System.out.println("saveDemandTemplate: demandTemplateLine:" + demandTemplateLine);
+            // System.out.println("saveDemandTemplate: demandTemplateLine:" +
+            // demandTemplateLine);
 
             if (demandTemplateLine.demandTemplateLineId() == 0) {
 
@@ -183,6 +188,61 @@ public class DemandTemplateService {
         } else {
             return new DMLResponseDto("S", "No demand template deleted.");
         }
+
+    }
+
+    public List<DemandTemplateSkills> getDemandTemplateSkills(Long userId, Long DemandTemplateLineId,
+            JdbcClient jdbcClient) {
+
+        List<DemandTemplateSkills> list = jdbcClient.sql(DemandTemplateSkillsSql)
+                .param("demandTemplateLineId", DemandTemplateLineId)
+                .query(DemandTemplateSkills.class)
+                .list();
+
+        return list;
+    }
+
+    public int saveDemandTemplateSkills(Long userId, DemandTemplateSkills templateSkills,
+            JdbcClient jdbcClient) {
+
+        int counts = 0;
+
+        if (templateSkills.demandTemplateSkillId() == null || templateSkills.demandTemplateSkillId() == 0) {
+            counts = jdbcClient.sql(CreateDemandTemplateSkillsSql)
+                    .param("demandTemplateLineId", templateSkills.demandTemplateLineId())
+                    .param("skillId", templateSkills.skillId())
+                    .param("rating", templateSkills.rating())
+                    .param("mustHave", templateSkills.mustHave())
+                    .param("createdBy", userId)
+                    .param("lastUpdatedBy", userId)
+                    .update();
+
+        } else {
+            counts = jdbcClient.sql(UpdateDemandTemplateSkillsSql)
+                    .param("skillId", templateSkills.skillId())
+                    .param("rating", templateSkills.rating())
+                    .param("mustHave", templateSkills.mustHave())
+                    .param("lastUpdatedBy", userId)
+                    .param("demandTemplateSkillId", templateSkills.demandTemplateSkillId())
+                    .update();
+        }
+
+        return counts;
+
+    }
+
+    public int deleteDemandTemplateSkills(Long userId, Long demandTemplateSkillId,
+            JdbcClient jdbcClient) {
+
+        if (demandTemplateSkillId == null || demandTemplateSkillId == 0) {
+            return 0;
+        }
+
+        int deletedCounts = jdbcClient.sql(DeleteDemandTemplateSkillsSql)
+                .param("demandTemplateSkillId", demandTemplateSkillId)
+                .update();
+
+        return deletedCounts;
 
     }
 
