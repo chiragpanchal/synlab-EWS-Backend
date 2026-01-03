@@ -28,21 +28,21 @@ public class OpenShiftUtils {
 
     public static String GetOpenShiftsByOpenShiftId= """
             SELECT
-                open_shift_id,
-                start_date,
-                end_date,
-                demand_template_id,
-                created_by,
-                created_on,
-                usr.full_name last_updated_by,
-                last_update_date,
-                profile_id,
-                recalled
+                h.open_shift_id,
+                h.start_date,
+                h.end_date,
+                h.demand_template_id,
+                h.created_by,
+                h.created_on,
+                h.last_updated_by,
+                h.last_update_date,
+                h.profile_id,
+                h.recalled
               FROM
                 sc_open_shifts_h h,
                 sc_person_v      usr
              WHERE
-                    h.openShiftId = :openShiftId
+                    h.open_shift_id = :openShiftId
                    AND usr.user_id = h.last_updated_by
              ORDER BY
                 start_date DESC""";
@@ -65,7 +65,7 @@ public class OpenShiftUtils {
                 l.sat,
                 l.created_by,
                 l.created_on,
-                usr.full_name last_updated_by,
+                l.last_updated_by,
                 l.last_update_date
               FROM
                 sc_open_shifts_l l,
@@ -176,7 +176,7 @@ public class OpenShiftUtils {
     public static String CreateOpenShiftDetail= """
             INSERT INTO sc_open_shifts_d (
                 open_shift_id,
-                demand_template_line_id,
+                open_shift_line_id,
                 department_id,
                 job_title_id,
                 location_id,
@@ -189,7 +189,7 @@ public class OpenShiftUtils {
                 last_update_date
             ) VALUES (
                 :openShiftId,
-                :demandTemplateLineId,
+                :openShiftLineId,
                 :departmentId,
                 :jobTitleId,
                 :locationId,

@@ -15,6 +15,10 @@ public class OpenShiftDetailSkills {
         this.open_shifts_skill_id = open_shifts_skill_id;
     }
 
+
+    public OpenShiftDetailSkills() {
+    }
+
     public OpenShiftDetailSkills(Long open_shifts_skill_id, Long open_shift_line_id, Long skill_id, Long created_by, LocalDateTime created_on, Long last_updated_by, LocalDateTime last_update_date) {
         this.open_shifts_skill_id = open_shifts_skill_id;
         this.open_shift_line_id = open_shift_line_id;

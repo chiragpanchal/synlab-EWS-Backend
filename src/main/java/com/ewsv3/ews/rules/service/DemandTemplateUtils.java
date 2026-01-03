@@ -142,7 +142,6 @@ public class DemandTemplateUtils {
                 fri = :fri,
                 sat = :sat,
                 last_updated_by = :lastUpdatedBy
-                last_update_date = sysdate
             where
                 demand_template_line_id = :demandTemplateLineId""";
 

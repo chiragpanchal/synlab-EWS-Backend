@@ -80,4 +80,8 @@ public class OpenShiftsHeader {
     public void setOpenShiftLines(List<OpenShiftLines> openShiftLines) {
         this.openShiftLines = openShiftLines;
     }
+
+    public void setOpenShiftId(Long openShiftId) {
+        this.openShiftId = openShiftId;
+    }
 }

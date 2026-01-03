@@ -427,6 +427,31 @@ public class RosterController {
         }
     }
 
+    @PostMapping("/validate-rosters-details")
+    @CrossOrigin
+    public ResponseEntity<ValidateRosterResponse> getValidateRosterDetailsResponse(@RequestHeader Map<String, String> header,
+                                                                            @RequestBody ValidateRosterReqBody reqBody) {
+        logger.info("VALIDATE_ROSTERS DETAILS- Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
+        try {
+            // System.out.println("getValidateRosterResponse > getCurrentUserId():" +
+            // getCurrentUserId());
+            // System.out.println("getValidateRosterResponse > reqBody:" + reqBody);
+
+            ValidateRosterResponse rosterResponse = this.rosterService.getValidateRosterResponse(
+                    getCurrentUserId(),
+                    reqBody,
+                    jdbcClient);
+            logger.info("VALIDATE_ROSTERS DETAILS- Exit - Time: {}, Response: {}", LocalDateTime.now(), rosterResponse);
+            return new ResponseEntity<>(rosterResponse, HttpStatus.OK);
+        } catch (Exception exception) {
+            // System.out.println(exception.getMessage());
+            logger.error("VALIDATE_ROSTERS DETAILS- Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), reqBody, exception.getMessage(), exception);
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/drag-drop")
     @CrossOrigin
     public ResponseEntity<RosterDMLResponseDto> dragDrapPersonRoster(@RequestHeader Map<String, String> header,

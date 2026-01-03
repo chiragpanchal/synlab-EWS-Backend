@@ -99,6 +99,14 @@ public class OpenShiftLines {
         return lastUpdateDate;
     }
 
+    public void setOpenShiftLineId(Long openShiftLineId) {
+        this.openShiftLineId = openShiftLineId;
+    }
+
+    public void setOpenShiftId(Long openShiftId) {
+        this.openShiftId = openShiftId;
+    }
+
     public List<OpenShiftDetailSkills> getOpenShiftDetailSkills() {
         return openShiftDetailSkills;
     }

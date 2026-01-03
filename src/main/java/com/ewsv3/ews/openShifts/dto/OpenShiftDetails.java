@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class OpenShiftDetails {
-    Long openShiftLineId;
+    Long openShiftDetailId;
     Long openShiftId;
-    Long demandTemplateLineId;
+    Long openShiftLineId;
     Long departmentId;
     Long jobTitleId;
     Long locationId;
@@ -23,10 +23,10 @@ public class OpenShiftDetails {
     public OpenShiftDetails() {
     }
 
-    public OpenShiftDetails(Long openShiftLineId, Long openShiftId, Long demandTemplateLineId, Long departmentId, Long jobTitleId, Long locationId, Long workDurationId, LocalDate effectiveDate, Long fteRequested, Long createdBy, LocalDateTime createdOn, Long lastUpdatedBy, LocalDateTime lastUpdateDate, List<OpenShiftDetailSkills> openShiftDetailSkills) {
-        this.openShiftLineId = openShiftLineId;
+    public OpenShiftDetails(Long openShiftDetailId, Long openShiftId, Long openShiftLineId, Long departmentId, Long jobTitleId, Long locationId, Long workDurationId, LocalDate effectiveDate, Long fteRequested, Long createdBy, LocalDateTime createdOn, Long lastUpdatedBy, LocalDateTime lastUpdateDate, List<OpenShiftDetailSkills> openShiftDetailSkills) {
+        this.openShiftDetailId = openShiftDetailId;
         this.openShiftId = openShiftId;
-        this.demandTemplateLineId = demandTemplateLineId;
+        this.openShiftLineId = openShiftLineId;
         this.departmentId = departmentId;
         this.jobTitleId = jobTitleId;
         this.locationId = locationId;
@@ -40,12 +40,12 @@ public class OpenShiftDetails {
         this.openShiftDetailSkills = openShiftDetailSkills;
     }
 
-    public Long getOpenShiftLineId() {
-        return openShiftLineId;
+    public Long getOpenShiftDetailId() {
+        return openShiftDetailId;
     }
 
-    public void setOpenShiftLineId(Long openShiftLineId) {
-        this.openShiftLineId = openShiftLineId;
+    public void setOpenShiftDetailId(Long openShiftDetailId) {
+        this.openShiftDetailId = openShiftDetailId;
     }
 
     public Long getOpenShiftId() {
@@ -56,12 +56,12 @@ public class OpenShiftDetails {
         this.openShiftId = openShiftId;
     }
 
-    public Long getDemandTemplateLineId() {
-        return demandTemplateLineId;
+    public Long getOpenShiftLineId() {
+        return openShiftLineId;
     }
 
-    public void setDemandTemplateLineId(Long demandTemplateLineId) {
-        this.demandTemplateLineId = demandTemplateLineId;
+    public void setOpenShiftLineId(Long openShiftLineId) {
+        this.openShiftLineId = openShiftLineId;
     }
 
     public Long getDepartmentId() {

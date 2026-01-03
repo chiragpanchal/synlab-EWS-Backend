@@ -5,12 +5,16 @@ import com.ewsv3.ews.openShifts.dto.OpenShiftDetailSkills;
 import com.ewsv3.ews.openShifts.dto.OpenShiftDetails;
 import com.ewsv3.ews.openShifts.dto.OpenShiftLines;
 import com.ewsv3.ews.openShifts.dto.OpenShiftsHeader;
+import com.ewsv3.ews.rosters.controller.RosterController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 import java.util.Objects;
 
 import static com.ewsv3.ews.openShifts.service.OpenShiftUtils.*;
@@ -18,6 +22,26 @@ import static com.ewsv3.ews.openShifts.service.OpenShiftUtils.*;
 @Service
 public class OpenShiftService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RosterController.class);
+
+    public OpenShiftsHeader getOpenShifts(Long openShiftId, JdbcClient jdbcClient) {
+        logger.info("getOpenShifts - Entry - Time: {}, openShiftId: {}", LocalDateTime.now(), openShiftId);
+        OpenShiftsHeader shiftsHeader = jdbcClient.sql(GetOpenShiftsByOpenShiftId)
+                .param("openShiftId", openShiftId)
+                .query(OpenShiftsHeader.class)
+                .single();
+
+        List<OpenShiftLines> shiftLinesList = jdbcClient.sql(GetOpenShiftLines)
+                .param("openShiftId", openShiftId)
+                .query(OpenShiftLines.class)
+                .list();
+
+        shiftsHeader.setOpenShiftLines(shiftLinesList);
+
+        return shiftsHeader;
+
+
+    }
 
     public DMLResponseDto createOpenShifts(Long userId, OpenShiftsHeader reqBody, JdbcClient jdbcClient) {
 
@@ -68,6 +92,11 @@ public class OpenShiftService {
         } else {
             return new DMLResponseDto("E", "No open-shifts are generated");
         }
+
+        logger.info("createOpenShifts - Entry - Time: {}, generatedOpenShiftId: {}", LocalDateTime.now(), generatedOpenShiftId);
+        OpenShiftsHeader shiftsHeader = getOpenShifts(generatedOpenShiftId, jdbcClient);
+
+        populateOpenShiftDetails(userId, shiftsHeader, generatedOpenShiftId, jdbcClient);
 
         return new
 
@@ -155,55 +184,57 @@ public class OpenShiftService {
             return new DMLResponseDto("E", "No open-shifts are updated");
         }
 
-        populateOpenShiftDetails(userId, reqBody, jdbcClient);
+        OpenShiftsHeader shiftsHeader = getOpenShifts(reqBody.getOpenShiftId(), jdbcClient);
+
+        populateOpenShiftDetails(userId, shiftsHeader, reqBody.getOpenShiftId(), jdbcClient);
 
         return new
                 DMLResponseDto("S", "Open-shifts are updated successfully");
 
     }
 
-    public void populateOpenShiftDetails(Long userId, OpenShiftsHeader reqBody, JdbcClient jdbcClient) {
+    public void populateOpenShiftDetails(Long userId, OpenShiftsHeader reqBody, Long generatedOpenShiftId, JdbcClient jdbcClient) {
 
         LocalDate startDate = reqBody.getStartDate();
 //        LocalDate endDate = reqBody.getEndDate();
         for (OpenShiftLines openShiftLine : reqBody.getOpenShiftLines()) {
 
             if (Objects.nonNull(openShiftLine.getSun()) && openShiftLine.getSun() > 0) {
-                insertOpenShiftDetails(userId, openShiftLine, startDate, openShiftLine.getSun(), jdbcClient);
+                insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate, openShiftLine.getSun(), jdbcClient);
             }
 
             if (Objects.nonNull(openShiftLine.getMon()) && openShiftLine.getMon() > 0) {
-                insertOpenShiftDetails(userId, openShiftLine, startDate.plusDays(1), openShiftLine.getMon(), jdbcClient);
+                insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate.plusDays(1), openShiftLine.getMon(), jdbcClient);
             }
 
             if (Objects.nonNull(openShiftLine.getTue()) && openShiftLine.getTue() > 0) {
-                insertOpenShiftDetails(userId, openShiftLine, startDate.plusDays(2), openShiftLine.getTue(), jdbcClient);
+                insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate.plusDays(2), openShiftLine.getTue(), jdbcClient);
             }
 
             if (Objects.nonNull(openShiftLine.getWed()) && openShiftLine.getWed() > 0) {
-                insertOpenShiftDetails(userId, openShiftLine, startDate.plusDays(3), openShiftLine.getWed(), jdbcClient);
+                insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate.plusDays(3), openShiftLine.getWed(), jdbcClient);
             }
 
             if (Objects.nonNull(openShiftLine.getThu()) && openShiftLine.getThu() > 0) {
-                insertOpenShiftDetails(userId, openShiftLine, startDate.plusDays(4), openShiftLine.getThu(), jdbcClient);
+                insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate.plusDays(4), openShiftLine.getThu(), jdbcClient);
             }
 
             if (Objects.nonNull(openShiftLine.getFri()) && openShiftLine.getFri() > 0) {
-                insertOpenShiftDetails(userId, openShiftLine, startDate.plusDays(5), openShiftLine.getFri(), jdbcClient);
+                insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate.plusDays(5), openShiftLine.getFri(), jdbcClient);
             }
 
             if (Objects.nonNull(openShiftLine.getSat()) && openShiftLine.getSat() > 0) {
-                insertOpenShiftDetails(userId, openShiftLine, startDate.plusDays(6), openShiftLine.getSat(), jdbcClient);
+                insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate.plusDays(6), openShiftLine.getSat(), jdbcClient);
             }
         }
 
     }
 
-    public void insertOpenShiftDetails(Long userId, OpenShiftLines openShiftLine, LocalDate effectiveDate, Long requestedFte, JdbcClient jdbcClient) {
+    public void insertOpenShiftDetails(Long userId, OpenShiftLines openShiftLine, Long generatedOpenShiftId, LocalDate effectiveDate, Long requestedFte, JdbcClient jdbcClient) {
 
         int insertedCounts = jdbcClient.sql(CreateOpenShiftDetail)
-                .param("openShiftId", openShiftLine.getOpenShiftId())
-                .param("demandTemplateLineId", openShiftLine.getOpenShiftLineId())
+                .param("openShiftId", generatedOpenShiftId)
+                .param("openShiftLineId", openShiftLine.getOpenShiftLineId())
                 .param("departmentId", openShiftLine.getDepartmentId())
                 .param("jobTitleId", openShiftLine.getJobTitleId())
                 .param("locationId", openShiftLine.getLocationId())
