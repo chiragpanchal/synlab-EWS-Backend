@@ -552,6 +552,7 @@ public class OpenShiftUtils {
             SELECT
                 pos.person_open_shift_id,
                 pos.open_shift_line_id,
+                pos.person_id,
                 pos.sun,
                 pos.mon,
                 pos.tue,
@@ -568,7 +569,7 @@ public class OpenShiftUtils {
                 sc_person_v           created_by_user,
                 sc_person_v           updated_by_user
              WHERE
-                    pos.person_id = :personId
+                    pos.person_id  IN (:personId)
                    AND pos.open_shift_line_id  = :openShiftLineId
                    AND created_by_user.user_id = pos.created_by
                    AND updated_by_user.user_id = pos.last_updated_by""";

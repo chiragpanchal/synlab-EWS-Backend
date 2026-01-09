@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public record PersonSelfApplicationsDto(
         Long personOpenShiftId,
         Long openShiftLineId,
+        Long personId,
         String sun,
         String mon,
         String tue,

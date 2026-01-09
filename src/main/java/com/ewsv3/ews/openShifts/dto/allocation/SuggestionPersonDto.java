@@ -12,6 +12,7 @@ public class SuggestionPersonDto {
     List<SuggestionPersonRostersDto> personRostersDtoList;
     List<SuggestionPersonLeavesDto> personLeavesDtos;
     List<SuggestionPersonHolidaysDto> personHolidaysDtos;
+    List<PersonSelfApplicationsDto> personSelfApplicationsDtos;
 
     public SuggestionPersonDto() {
     }
@@ -95,5 +96,13 @@ public class SuggestionPersonDto {
 
     public void setPersonHolidaysDtos(List<SuggestionPersonHolidaysDto> personHolidaysDtos) {
         this.personHolidaysDtos = personHolidaysDtos;
+    }
+
+    public List<PersonSelfApplicationsDto> getPersonSelfApplicationsDtos() {
+        return personSelfApplicationsDtos;
+    }
+
+    public void setPersonSelfApplicationsDtos(List<PersonSelfApplicationsDto> personSelfApplicationsDtos) {
+        this.personSelfApplicationsDtos = personSelfApplicationsDtos;
     }
 }

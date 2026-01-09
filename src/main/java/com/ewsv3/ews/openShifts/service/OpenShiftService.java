@@ -340,6 +340,12 @@ public class OpenShiftService {
                 .query(SuggestionPersonHolidaysDto.class)
                 .list();
 
+        List<PersonSelfApplicationsDto> personSelfApplicationsDtos = jdbcClient.sql(getSelfApplicationsSQL)
+                .param("personId", collectedPersonIds)
+                .param("openShiftLineId", reqDto.openShiftLineId())
+                .query(PersonSelfApplicationsDto.class)
+                .list();
+
         Map<Long, List<SuggestionPersonRostersDto>> rostersByPersonId =
                 rostersDtos.stream()
                         .collect(Collectors.groupingBy(SuggestionPersonRostersDto::personId));
@@ -352,6 +358,9 @@ public class OpenShiftService {
                 holidaysDtos.stream()
                         .collect(Collectors.groupingBy(SuggestionPersonHolidaysDto::personId));
 
+        Map<Long, List<PersonSelfApplicationsDto>> selfApplicationPersonId =
+                personSelfApplicationsDtos.stream()
+                        .collect(Collectors.groupingBy(PersonSelfApplicationsDto::personId));
 
         personDtoList.forEach(person -> {
             Long personId = person.getPersonId();
@@ -366,6 +375,10 @@ public class OpenShiftService {
 
             person.setPersonHolidaysDtos(
                     holidaysByPersonId.getOrDefault(personId, List.of())
+            );
+
+            person.setPersonSelfApplicationsDtos(
+                    selfApplicationPersonId.getOrDefault(personId, List.of())
             );
         });
 
