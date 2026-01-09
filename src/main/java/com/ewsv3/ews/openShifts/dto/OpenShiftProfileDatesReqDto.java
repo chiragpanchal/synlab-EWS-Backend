@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public record OpenShiftProfileDatesReqDto(
         Long profileId,
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        Long openShiftLineId
 ) {
 }

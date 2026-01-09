@@ -1,28 +1,46 @@
 package com.ewsv3.ews.openShifts.service;
 
 import com.ewsv3.ews.commons.dto.DMLResponseDto;
-import com.ewsv3.ews.openShifts.dto.OpenShiftDetailSkills;
-import com.ewsv3.ews.openShifts.dto.OpenShiftDetails;
-import com.ewsv3.ews.openShifts.dto.OpenShiftLines;
-import com.ewsv3.ews.openShifts.dto.OpenShiftsHeader;
+import com.ewsv3.ews.openShifts.dto.*;
+import com.ewsv3.ews.openShifts.dto.allocation.*;
 import com.ewsv3.ews.rosters.controller.RosterController;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.jdbc.core.simple.SimpleJdbcCall;
 import org.springframework.stereotype.Service;
 
+import java.security.PublicKey;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.ewsv3.ews.openShifts.service.OpenShiftUtils.*;
 
 @Service
 public class OpenShiftService {
 
+    private SimpleJdbcCall simpleJdbcCall;
+    private final JdbcTemplate jdbcTemplate;
+
     private static final Logger logger = LoggerFactory.getLogger(RosterController.class);
+
+    public OpenShiftService(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @PostConstruct
+    public void init() {
+        jdbcTemplate.setResultsMapCaseInsensitive(true);
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_PERSON_OPEN_SHIFT_BIDS_P");
+    }
 
     public OpenShiftsHeader getOpenShifts(Long openShiftId, JdbcClient jdbcClient) {
         logger.info("getOpenShifts - Entry - Time: {}, openShiftId: {}", LocalDateTime.now(), openShiftId);
@@ -246,6 +264,250 @@ public class OpenShiftService {
                 .param("lastUpdatedBy", userId)
                 .param("lastUpdateDate", LocalDateTime.now())
                 .update();
+
+    }
+
+    public Long getOpenshiftCountTk(Long userId, OpenShiftProfileDatesReqDto reqDto, JdbcClient jdbcClient) {
+        Long openShiftounts = jdbcClient.sql(getOpenShiftsCountsTimekeeper)
+                .param("profileId", reqDto.profileId())
+                .param("startDate", reqDto.startDate())
+                .param("endDate", reqDto.endDate())
+                .query(Long.class)
+                .optional()
+                .orElse(0L);
+
+        return openShiftounts;
+
+    }
+
+    public List<OpenShifListTkRespDto> getOpenshiftListTk(Long userId, OpenShiftProfileDatesReqDto reqDto, JdbcClient jdbcClient) {
+        List<OpenShifListTkRespDto> openShifListTkRespDtos = jdbcClient.sql(getOpenShiftListTimekeeper)
+                .param("profileId", reqDto.profileId())
+                .param("startDate", reqDto.startDate())
+                .param("endDate", reqDto.endDate())
+                .query(OpenShifListTkRespDto.class)
+                .list();
+
+        return openShifListTkRespDtos;
+
+    }
+
+    public List<SuggestionPersonDto> getSuggestPersonList(Long userId, OpenShiftProfileDatesReqDto reqDto, JdbcClient jdbcClient) {
+
+        OpenShiftLines shiftLines = jdbcClient.sql(GetOpenShiftLinesFromId)
+                .param("openShiftLineId", reqDto.openShiftLineId())
+                .query(OpenShiftLines.class)
+                .optional()
+                .orElse(null);
+
+        List<SuggestionPersonDto> personDtoList = jdbcClient.sql(getOpenShiftSuggestionPerson)
+                .param("userId", userId)
+                .param("profileId", reqDto.profileId())
+                .param("departmentId", shiftLines.getDepartmentId())
+                .param("locationId", shiftLines.getLocationId())
+                .param("jobTitleId", shiftLines.getJobTitleId())
+                .param("startDate", reqDto.startDate())
+                .param("endDate", reqDto.endDate())
+                .query(SuggestionPersonDto.class)
+                .list();
+
+        List<Long> collectedPersonIds = personDtoList.stream().map(SuggestionPersonDto::getPersonId).collect(Collectors.toList());
+
+
+        if (collectedPersonIds.isEmpty()) {
+            return null;
+        }
+
+
+        List<SuggestionPersonRostersDto> rostersDtos = jdbcClient.sql(getOpenShiftSuggestionPersonRosters)
+                .param("personId", collectedPersonIds)
+                .param("startDate", reqDto.startDate())
+                .param("endDate", reqDto.endDate())
+                .query(SuggestionPersonRostersDto.class)
+                .list();
+
+        List<SuggestionPersonLeavesDto> leavesDtos = jdbcClient.sql(getOpenShiftSuggestionPersonLeaves)
+                .param("personId", collectedPersonIds)
+                .param("startDate", reqDto.startDate())
+                .param("endDate", reqDto.endDate())
+                .query(SuggestionPersonLeavesDto.class)
+                .list();
+
+        List<SuggestionPersonHolidaysDto> holidaysDtos = jdbcClient.sql(getOpenShiftSuggestionPersonHolidays)
+                .param("personId", collectedPersonIds)
+                .param("startDate", reqDto.startDate())
+                .param("endDate", reqDto.endDate())
+                .query(SuggestionPersonHolidaysDto.class)
+                .list();
+
+        Map<Long, List<SuggestionPersonRostersDto>> rostersByPersonId =
+                rostersDtos.stream()
+                        .collect(Collectors.groupingBy(SuggestionPersonRostersDto::personId));
+
+        Map<Long, List<SuggestionPersonLeavesDto>> leavesByPersonId =
+                leavesDtos.stream()
+                        .collect(Collectors.groupingBy(SuggestionPersonLeavesDto::personId));
+
+        Map<Long, List<SuggestionPersonHolidaysDto>> holidaysByPersonId =
+                holidaysDtos.stream()
+                        .collect(Collectors.groupingBy(SuggestionPersonHolidaysDto::personId));
+
+
+        personDtoList.forEach(person -> {
+            Long personId = person.getPersonId();
+
+            person.setPersonRostersDtoList(
+                    rostersByPersonId.getOrDefault(personId, List.of())
+            );
+
+            person.setPersonLeavesDtos(
+                    leavesByPersonId.getOrDefault(personId, List.of())
+            );
+
+            person.setPersonHolidaysDtos(
+                    holidaysByPersonId.getOrDefault(personId, List.of())
+            );
+        });
+
+        return personDtoList;
+
+    }
+
+    public List<OpenShifListTkRespDto> getEmployeeOpenShifts(Long userId, JdbcClient jdbcClient) {
+
+        List<OpenShifListTkRespDto> openShifList = jdbcClient.sql(getEmployeeOpenShifts)
+                .param("userId", userId)
+                .query(OpenShifListTkRespDto.class)
+                .list();
+        return openShifList;
+
+    }
+
+    public DMLResponseDto bidOpenShift(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+
+
+        DMLResponseDto dmlResponseDto= new DMLResponseDto();
+
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_PERSON_OPEN_SHIFT_BIDS_P");
+        Map<String, Object> inParamMap = new HashMap<>();
+
+        AtomicReference<String> errorMessage = new AtomicReference<>("");
+        AtomicInteger transCounts = new AtomicInteger();
+
+
+        inParamMap.put("p_person_open_shift_id", reqDto.personOpenShiftId());
+        inParamMap.put("p_person_id", reqDto.personId());
+        inParamMap.put("p_open_shift_line_id", reqDto.openShiftLineId());
+        inParamMap.put("p_sun", reqDto.sun());
+        inParamMap.put("p_mon", reqDto.mon());
+        inParamMap.put("p_tue", reqDto.tue());
+        inParamMap.put("p_wed", reqDto.wed());
+        inParamMap.put("p_thu", reqDto.thu());
+        inParamMap.put("p_fri", reqDto.fri());
+        inParamMap.put("p_sat", reqDto.sat());
+        inParamMap.put("p_user_id", userId);
+
+        SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+        // System.out.println(inSource);
+        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
+
+        AtomicReference<Object> sMessage = new AtomicReference<>();
+
+        simpleJdbcCallResult.forEach((s, o) -> {
+            // System.out.println(s);
+            // System.out.println(o);
+
+            if (s.equals("P_OUT")) {
+                String strMessage = o.toString();
+                // System.out.println("strMessage:" + strMessage);
+                sMessage.set(o);
+            }
+        });
+
+        String messageString = sMessage.get().toString();
+
+        String flag = messageString.substring(0, 1);
+        // System.out.println("flag:" + flag);
+        if (flag.equals("E")) {
+            errorMessage.set(messageString.substring(2));
+        } else {
+            // deleteCounts.set(Integer.parseInt(messageString.substring(2)));
+            transCounts.addAndGet(Integer.parseInt(messageString.substring(2)));
+            // System.out.println("transCounts:" + transCounts);
+        }
+
+        if (!errorMessage.get().isEmpty()) {
+            dmlResponseDto.setStatusMessage("E");
+            dmlResponseDto.setDetailMessage(errorMessage.get());
+            return dmlResponseDto;
+        }
+
+        dmlResponseDto.setStatusMessage("S");
+        dmlResponseDto.setDetailMessage(messageString.substring(2));
+
+        return dmlResponseDto;
+    }
+
+    public TotalApplictionCountsDto getTotalApplications(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+
+        TotalApplictionCountsDto countsDto = jdbcClient.sql(getTotalApplicationCountsSQL)
+                .param("openShiftLineId", reqDto.openShiftLineId())
+                .query(TotalApplictionCountsDto.class)
+                .optional()
+                .orElse(null);
+
+        return countsDto;
+
+    }
+
+    public SelfApplicationRespSto getSelfApplications(Long userId, Long personId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+
+        OpenShiftLines shiftLines = jdbcClient.sql(GetOpenShiftLinesFromId)
+                .param("openShiftLineId", reqDto.openShiftLineId())
+                .query(OpenShiftLines.class)
+                .optional()
+                .orElse(null);
+
+        OpenShiftsHeader shiftsHeader = jdbcClient.sql(GetOpenShiftsByOpenShiftId)
+                .param("openShiftId", shiftLines.getOpenShiftId())
+                .query(OpenShiftsHeader.class)
+                .single();
+
+        PersonSelfApplicationsDto selfApplicationsDto = jdbcClient.sql(getSelfApplicationsSQL)
+                .param("personId", personId)
+                .param("openShiftLineId", reqDto.openShiftLineId())
+                .query(PersonSelfApplicationsDto.class)
+                .optional()
+                .orElse(null);
+
+        List<SuggestionPersonRostersDto> rostersDtos = jdbcClient.sql(getOpenShiftSuggestionPersonRosters)
+                .param("personId", personId)
+                .param("startDate", shiftsHeader.getStartDate())
+                .param("endDate", shiftsHeader.getEndDate())
+                .query(SuggestionPersonRostersDto.class)
+                .list();
+
+        List<SuggestionPersonLeavesDto> leavesDtos = jdbcClient.sql(getOpenShiftSuggestionPersonLeaves)
+                .param("personId", personId)
+                .param("startDate", shiftsHeader.getStartDate())
+                .param("endDate", shiftsHeader.getEndDate())
+                .query(SuggestionPersonLeavesDto.class)
+                .list();
+
+        List<SuggestionPersonHolidaysDto> holidaysDtos = jdbcClient.sql(getOpenShiftSuggestionPersonHolidays)
+                .param("personId", personId)
+                .param("startDate", shiftsHeader.getStartDate())
+                .param("endDate", shiftsHeader.getEndDate())
+                .query(SuggestionPersonHolidaysDto.class)
+                .list();
+
+        SelfApplicationRespSto selfApplicationRespSto= new SelfApplicationRespSto();
+        selfApplicationRespSto.setPersonSelfApplicationsDto(selfApplicationsDto);
+        selfApplicationRespSto.setPersonRostersDtoList(rostersDtos);
+        selfApplicationRespSto.setPersonLeavesDtos(leavesDtos);
+        selfApplicationRespSto.setPersonHolidaysDtos(holidaysDtos);
+
+        return selfApplicationRespSto;
 
     }
 
