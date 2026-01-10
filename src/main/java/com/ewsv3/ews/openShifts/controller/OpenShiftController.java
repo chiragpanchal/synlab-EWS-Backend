@@ -194,6 +194,26 @@ public class OpenShiftController {
 
     }
 
+    @PostMapping("open-shift-approved-appl")
+    public ResponseEntity<ApprovedApplicationCountsDto> getApprovedApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto){
+        logger.info("open-shift-approved-appl - Entry -  Time: {}, req {} ,",
+                LocalDateTime.now(), reqDto);
+        try {
+
+            ApprovedApplicationCountsDto approvedApplications = this.openShiftService.getApprovedApplications(getCurrentUserId(), reqDto, this.jdbcClient);
+
+            logger.info("open-shift-approved-appl - Exit - Time: {} , response  {}",
+                    LocalDateTime.now(), approvedApplications);
+            return new ResponseEntity<>(approvedApplications, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            logger.error("open-shift-approved-appl - Exception -  Time: {}, req {},  Error: {}", LocalDateTime.now(),
+                    exception.getMessage(), reqDto, exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
     @PostMapping("self-appl-list")
     public ResponseEntity<SelfApplicationRespSto> getSelfApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto){
         logger.info("self-appl-list - Entry -  Time: {}, req {} ,",

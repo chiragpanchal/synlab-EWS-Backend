@@ -27,6 +27,10 @@ public record OpenShifListTkRespDto(
         String workDurationName,
         LocalDateTime timeStart,
         LocalDateTime timeEnd,
-        String isApplied
+        String isApplied,
+        Integer requestedCount,
+        Integer appliedCount,
+        Integer approvedCount
+
 ) {
 }

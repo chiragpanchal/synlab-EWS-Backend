@@ -473,6 +473,18 @@ public class OpenShiftService {
 
     }
 
+    public ApprovedApplicationCountsDto getApprovedApplications(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+
+        ApprovedApplicationCountsDto countsDto = jdbcClient.sql(getApprovedApplicationCountsSQL)
+                .param("openShiftLineId", reqDto.openShiftLineId())
+                .query(ApprovedApplicationCountsDto.class)
+                .optional()
+                .orElse(null);
+
+        return countsDto;
+
+    }
+
     public SelfApplicationRespSto getSelfApplications(Long userId, Long personId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
 
         OpenShiftLines shiftLines = jdbcClient.sql(GetOpenShiftLinesFromId)

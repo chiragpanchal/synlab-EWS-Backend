@@ -327,7 +327,33 @@ public class OpenShiftUtils {
                      ) is_applied
                    FROM
                      sc_person_open_shifts pos
-                  WHERE pos.open_shift_line_id = ol.open_shift_line_id) is_applied
+                  WHERE pos.open_shift_line_id = ol.open_shift_line_id) is_applied,
+                  (
+                          SELECT
+                              SUM(fte_requested)
+                            FROM
+                              sc_open_shifts_d osd
+                           WHERE
+                              osd.open_shift_line_id = ol.open_shift_line_id
+                      )             requested_count,
+                      (
+                          SELECT
+                              COUNT(DISTINCT open_shift_detail_id)
+                            FROM
+                              sc_person_open_shift_details posd
+                           WHERE
+                                  posd.open_shift_line_id = ol.open_shift_line_id
+                                 AND status = 'APPL'
+                      )             applied_count,
+                      (
+                          SELECT
+                              COUNT(DISTINCT open_shift_detail_id)
+                            FROM
+                              sc_person_open_shift_details posd
+                           WHERE
+                                  posd.open_shift_line_id = ol.open_shift_line_id
+                                 AND status = 'APPR'
+                      )             approved_count
               FROM
                 sc_open_shifts_h oh,
                 sc_open_shifts_l ol,
@@ -495,7 +521,33 @@ public class OpenShiftUtils {
                      sc_person_open_shifts pos
                   WHERE
                          pos.person_id = per.person_id
-                        AND pos.open_shift_line_id = ol.open_shift_line_id) is_applied
+                        AND pos.open_shift_line_id = ol.open_shift_line_id) is_applied,
+                (
+                        SELECT
+                            SUM(fte_requested)
+                          FROM
+                            sc_open_shifts_d osd
+                         WHERE
+                            osd.open_shift_line_id = ol.open_shift_line_id
+                    )             requested_count,
+                    (
+                        SELECT
+                            COUNT(DISTINCT open_shift_detail_id)
+                          FROM
+                            sc_person_open_shift_details posd
+                         WHERE
+                                posd.open_shift_line_id = ol.open_shift_line_id
+                               AND status = 'APPL'
+                    )             applied_count,
+                    (
+                        SELECT
+                            COUNT(DISTINCT open_shift_detail_id)
+                          FROM
+                            sc_person_open_shift_details posd
+                         WHERE
+                                posd.open_shift_line_id = ol.open_shift_line_id
+                               AND status = 'APPR'
+                    )             approved_count
               FROM
                 sc_person_v              per,
                 sc_person_preferred_jobs pj,
@@ -547,6 +599,20 @@ public class OpenShiftUtils {
                 pos.open_shift_line_id = :openShiftLineId
              GROUP BY
                 pos.open_shift_line_id""";
+
+    public static String getApprovedApplicationCountsSQL= """
+            SELECT
+                pos.open_shift_line_id,
+                SUM(CASE WHEN sun = 'APPR' THEN 1 ELSE 0 END) AS sun_appr_cnt,
+                SUM(CASE WHEN mon = 'APPR' THEN 1 ELSE 0 END) AS mon_appr_cnt,
+                SUM(CASE WHEN tue = 'APPR' THEN 1 ELSE 0 END) AS tue_appr_cnt,
+                SUM(CASE WHEN wed = 'APPR' THEN 1 ELSE 0 END) AS wed_appr_cnt,
+                SUM(CASE WHEN thu = 'APPR' THEN 1 ELSE 0 END) AS thu_appr_cnt,
+                SUM(CASE WHEN fri = 'APPR' THEN 1 ELSE 0 END) AS fri_appr_cnt,
+                SUM(CASE WHEN sat = 'APPR' THEN 1 ELSE 0 END) AS sat_appr_cnt
+            FROM sc_person_open_shifts pos
+            WHERE pos.open_shift_line_id = :openShiftLineId
+            GROUP BY pos.open_shift_line_id""";
 
     public static String getSelfApplicationsSQL= """
             SELECT
