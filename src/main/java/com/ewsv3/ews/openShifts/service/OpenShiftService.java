@@ -82,10 +82,23 @@ public class OpenShiftService {
                 .param("lastUpdateDate", new Date())
                 .update();
 
+        logger.info("open-shift create - Entry , generatedOpenShiftId: {}",
+                generatedOpenShiftId);
+
         if (createdCount == 1) {
 
+
             for (OpenShiftLines openShiftLine : reqBody.getOpenShiftLines()) {
+
+                Long generatedOpenShiftLineId = jdbcClient
+                        .sql("SELECT OPEN_SHIFT_ID_SQ.NEXTVAL FROM dual")
+                        .query(Long.class)
+                        .single();
+                logger.info("open-shift create - Entry , generatedOpenShiftLineId: {}",
+                        generatedOpenShiftLineId);
+
                 int createdLioneCount = jdbcClient.sql(CreateOpenShiftLine)
+                        .param("openShiftLineId", generatedOpenShiftLineId)
                         .param("openShiftId", generatedOpenShiftId)
                         .param("demandTemplateLineId", openShiftLine.getDemandTemplateLineId())
                         .param("departmentId", openShiftLine.getDepartmentId())
@@ -104,6 +117,34 @@ public class OpenShiftService {
                         .param("lastUpdatedBy", userId)
                         .param("lastUpdateDate", new Date())
                         .update();
+
+                if (!openShiftLine.getOpenShiftDetailSkills().isEmpty()) {
+                    for (OpenShiftDetailSkills skill : openShiftLine.getOpenShiftDetailSkills()) {
+
+                        Long generatedOpenShiftsSkillId = jdbcClient
+                                .sql("SELECT OPEN_SHIFT_ID_SQ.NEXTVAL FROM dual")
+                                .query(Long.class)
+                                .single();
+
+                        logger.info("open-shift create - Entry , generatedOpenShiftsSkillId: {}",
+                                generatedOpenShiftsSkillId);
+                        logger.info("open-shift create - Entry , generatedOpenShiftLineId: {}",
+                                generatedOpenShiftLineId);
+
+                        int createdSkillCount = jdbcClient.sql(insertDemandLineSkillsSQL)
+                                .param("openShiftsSkillId", generatedOpenShiftsSkillId)
+                                .param("openShiftLineId", generatedOpenShiftLineId)
+                                .param("skillId", skill.getSkillId())
+                                .param("createdBy", userId)
+                                .param("createdOn", new Date())
+                                .param("lastUpdatedBy", userId)
+                                .param("lastUpdateDate", new Date())
+                                .update();
+                    }
+
+
+                }
+
             }
 
 
@@ -244,6 +285,8 @@ public class OpenShiftService {
             if (Objects.nonNull(openShiftLine.getSat()) && openShiftLine.getSat() > 0) {
                 insertOpenShiftDetails(userId, openShiftLine, generatedOpenShiftId, startDate.plusDays(6), openShiftLine.getSat(), jdbcClient);
             }
+
+
         }
 
     }
@@ -396,10 +439,10 @@ public class OpenShiftService {
 
     }
 
-    public DMLResponseDto bidOpenShift(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+    public DMLResponseDto bidOpenShift(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient) {
 
 
-        DMLResponseDto dmlResponseDto= new DMLResponseDto();
+        DMLResponseDto dmlResponseDto = new DMLResponseDto();
 
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_PERSON_OPEN_SHIFT_BIDS_P");
         Map<String, Object> inParamMap = new HashMap<>();
@@ -461,7 +504,7 @@ public class OpenShiftService {
         return dmlResponseDto;
     }
 
-    public TotalApplictionCountsDto getTotalApplications(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+    public TotalApplictionCountsDto getTotalApplications(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient) {
 
         TotalApplictionCountsDto countsDto = jdbcClient.sql(getTotalApplicationCountsSQL)
                 .param("openShiftLineId", reqDto.openShiftLineId())
@@ -473,7 +516,7 @@ public class OpenShiftService {
 
     }
 
-    public ApprovedApplicationCountsDto getApprovedApplications(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+    public ApprovedApplicationCountsDto getApprovedApplications(Long userId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient) {
 
         ApprovedApplicationCountsDto countsDto = jdbcClient.sql(getApprovedApplicationCountsSQL)
                 .param("openShiftLineId", reqDto.openShiftLineId())
@@ -485,7 +528,7 @@ public class OpenShiftService {
 
     }
 
-    public SelfApplicationRespSto getSelfApplications(Long userId, Long personId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient){
+    public SelfApplicationRespSto getSelfApplications(Long userId, Long personId, PersonOpenShiftBidReqDto reqDto, JdbcClient jdbcClient) {
 
         OpenShiftLines shiftLines = jdbcClient.sql(GetOpenShiftLinesFromId)
                 .param("openShiftLineId", reqDto.openShiftLineId())
@@ -526,7 +569,7 @@ public class OpenShiftService {
                 .query(SuggestionPersonHolidaysDto.class)
                 .list();
 
-        SelfApplicationRespSto selfApplicationRespSto= new SelfApplicationRespSto();
+        SelfApplicationRespSto selfApplicationRespSto = new SelfApplicationRespSto();
         selfApplicationRespSto.setPersonSelfApplicationsDto(selfApplicationsDto);
         selfApplicationRespSto.setPersonRostersDtoList(rostersDtos);
         selfApplicationRespSto.setPersonLeavesDtos(leavesDtos);
@@ -534,6 +577,17 @@ public class OpenShiftService {
 
         return selfApplicationRespSto;
 
+    }
+
+    public Integer recallOpenShiftLine(Long userId, OpenShiftProfileDatesReqDto reqDto, JdbcClient jdbcClient) {
+
+        int updatedCounts = jdbcClient.sql(recallOpenShiftLineSQL)
+                .param("openShiftLineId", reqDto.openShiftLineId())
+                .param("lastUpdatedBy", userId)
+                .param("lastUpdateDate", new Date())
+                .update();
+
+        return updatedCounts;
     }
 
 

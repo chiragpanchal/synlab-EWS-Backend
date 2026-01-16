@@ -2,7 +2,7 @@ package com.ewsv3.ews.openShifts.service;
 
 public class OpenShiftUtils {
 
-    public static String GetOpenShiftsByProfile= """
+    public static String GetOpenShiftsByProfile = """
             SELECT
                 open_shift_id,
                 start_date,
@@ -26,7 +26,7 @@ public class OpenShiftUtils {
              ORDER BY
                 start_date DESC""";
 
-    public static String GetOpenShiftsByOpenShiftId= """
+    public static String GetOpenShiftsByOpenShiftId = """
             SELECT
                 h.open_shift_id,
                 h.start_date,
@@ -47,7 +47,7 @@ public class OpenShiftUtils {
              ORDER BY
                 start_date DESC""";
 
-    public static String GetOpenShiftLines= """
+    public static String GetOpenShiftLines = """
             SELECT
                 l.open_shift_line_id,
                 l.open_shift_id,
@@ -76,7 +76,7 @@ public class OpenShiftUtils {
              ORDER BY
                 open_shift_line_id""";
 
-    public static String GetOpenShiftLinesFromId= """
+    public static String GetOpenShiftLinesFromId = """
             SELECT
                 l.open_shift_line_id,
                 l.open_shift_id,
@@ -105,7 +105,7 @@ public class OpenShiftUtils {
              ORDER BY
                 open_shift_line_id""";
 
-    public static String GetOpenShiftDetails= """
+    public static String GetOpenShiftDetails = """
             SELECT
                 l.open_shift_line_id,
                 l.open_shift_id,
@@ -129,7 +129,7 @@ public class OpenShiftUtils {
              ORDER BY
                 open_shift_line_id""";
 
-    public static String CreateOpenShiftHeader= """
+    public static String CreateOpenShiftHeader = """
             INSERT INTO sc_open_shifts_h (
                 open_shift_id,
                 start_date,
@@ -154,7 +154,7 @@ public class OpenShiftUtils {
                 :recalled
             )""";
 
-    public static String UpdateOpenShiftHeader= """
+    public static String UpdateOpenShiftHeader = """
             UPDATE sc_open_shifts_h h
                SET
                 h.recalled = 'Y',
@@ -163,8 +163,9 @@ public class OpenShiftUtils {
              WHERE
                 open_shift_id = :openShiftId""";
 
-    public static String CreateOpenShiftLine= """
+    public static String CreateOpenShiftLine = """
             INSERT INTO sc_open_shifts_l (
+                open_shift_line_id,
                 open_shift_id,
                 demand_template_line_id,
                 department_id,
@@ -183,6 +184,7 @@ public class OpenShiftUtils {
                 last_updated_by,
                 last_update_date
             ) VALUES (
+                :openShiftLineId,
                 :openShiftId,
                 :demandTemplateLineId,
                 :departmentId,
@@ -202,7 +204,7 @@ public class OpenShiftUtils {
                 :lastUpdateDate
             )""";
 
-    public static String CreateOpenShiftDetail= """
+    public static String CreateOpenShiftDetail = """
             INSERT INTO sc_open_shifts_d (
                 open_shift_id,
                 open_shift_line_id,
@@ -231,7 +233,7 @@ public class OpenShiftUtils {
                 :lastUpdateDate
             )""";
 
-    public static String UpdateOpenShiftDetail= """
+    public static String UpdateOpenShiftDetail = """
             UPDATE sc_open_shifts_d l
                SET
                 department_id = :departmentId,
@@ -245,7 +247,7 @@ public class OpenShiftUtils {
              WHERE
                 l.open_shift_line_id = :openShiftLineId""";
 
-    public static String UpdateOpenShiftLine= """
+    public static String UpdateOpenShiftLine = """
             UPDATE sc_open_shifts_l l
                SET
                 department_id = :departmentId,
@@ -264,17 +266,17 @@ public class OpenShiftUtils {
              WHERE
                 l.open_shift_line_id = :openShiftLineId""";
 
-    public static String DeleteOpenShiftLine= """
+    public static String DeleteOpenShiftLine = """
             DELETE sc_open_shifts_l l
              WHERE
                 l.open_shift_line_id = :openShiftLineId;""";
 
-    public static String DeleteOpenShiftdetail= """
+    public static String DeleteOpenShiftdetail = """
             DELETE sc_open_shifts_d l
              WHERE
                 l.open_shift_line_id = :openShiftLineId;""";
 
-    public static String getOpenShiftsCountsTimekeeper= """
+    public static String getOpenShiftsCountsTimekeeper = """
             SELECT
                 COUNT(distinct od.open_shift_detail_id) open_shift_counts
               FROM
@@ -293,7 +295,7 @@ public class OpenShiftUtils {
                     OR :startDate BETWEEN oh.start_date AND oh.end_date )
                    AND usr.user_id           = oh.created_by""";
 
-    public static String getOpenShiftListTimekeeper= """
+    public static String getOpenShiftListTimekeeper = """
             SELECT
                 oh.open_shift_id,
                 oh.start_date,
@@ -377,7 +379,7 @@ public class OpenShiftUtils {
                     and usr.user_id= oh.created_by\s
                     order by oh.created_on desc,open_shift_line_id""";
 
-    public static String getOpenShiftSuggestionPerson= """
+    public static String getOpenShiftSuggestionPerson = """
             SELECT
                 person_id,
                 person_name,
@@ -434,7 +436,7 @@ public class OpenShiftUtils {
                 nvl(rate,0),
                 person_name ASC""";
 
-    public static String getOpenShiftSuggestionPersonRosters= """
+    public static String getOpenShiftSuggestionPersonRosters = """
             SELECT
                 spr.person_id,
                 spr.effective_date,
@@ -453,7 +455,7 @@ public class OpenShiftUtils {
                 spr.effective_date,
                 spr.time_start""";
 
-    public static String getOpenShiftSuggestionPersonLeaves= """
+    public static String getOpenShiftSuggestionPersonLeaves = """
             SELECT
                 lv.person_id,
                 lv.absence_name,
@@ -471,7 +473,7 @@ public class OpenShiftUtils {
                 lv.person_id,
                 lv.leave_date""";
 
-    public static String getOpenShiftSuggestionPersonHolidays= """
+    public static String getOpenShiftSuggestionPersonHolidays = """
             SELECT
                 ph.person_id,
                 ph.holiday_name,
@@ -485,7 +487,7 @@ public class OpenShiftUtils {
                 ph.person_id,
                 ph.holiday_date""";
 
-    public static String getEmployeeOpenShifts= """
+    public static String getEmployeeOpenShifts = """
             SELECT
                 oh.open_shift_id,
                 oh.start_date,
@@ -583,7 +585,7 @@ public class OpenShiftUtils {
                 oh.open_shift_id desc,
                 ol.open_shift_line_id""";
 
-    public static String getTotalApplicationCountsSQL= """
+    public static String getTotalApplicationCountsSQL = """
             SELECT
                 pos.open_shift_line_id,
                 COUNT(pos.sun) sun,
@@ -600,7 +602,7 @@ public class OpenShiftUtils {
              GROUP BY
                 pos.open_shift_line_id""";
 
-    public static String getApprovedApplicationCountsSQL= """
+    public static String getApprovedApplicationCountsSQL = """
             SELECT
                 pos.open_shift_line_id,
                 SUM(CASE WHEN sun = 'APPR' THEN 1 ELSE 0 END) AS sun_appr_cnt,
@@ -614,7 +616,7 @@ public class OpenShiftUtils {
             WHERE pos.open_shift_line_id = :openShiftLineId
             GROUP BY pos.open_shift_line_id""";
 
-    public static String getSelfApplicationsSQL= """
+    public static String getSelfApplicationsSQL = """
             SELECT
                 pos.person_open_shift_id,
                 pos.open_shift_line_id,
@@ -639,5 +641,33 @@ public class OpenShiftUtils {
                    AND pos.open_shift_line_id  = :openShiftLineId
                    AND created_by_user.user_id = pos.created_by
                    AND updated_by_user.user_id = pos.last_updated_by""";
+
+    public static String insertDemandLineSkillsSQL = """
+            INSERT INTO sc_open_shifts_d_skills (
+                open_shifts_skill_id,
+                open_shift_line_id,
+                skill_id,
+                created_by,
+                created_on,
+                last_updated_by,
+                last_update_date
+            ) VALUES (
+                :openShiftsSkillId,
+                :openShiftLineId,
+                :skillId,
+                :createdBy,
+                :createdOn,
+                :lastUpdatedBy,
+                :lastUpdateDate
+            )""";
+
+    public static String recallOpenShiftLineSQL = """
+            UPDATE sc_open_shifts_l l
+               SET
+                l.recalled = 'Y',
+                l.last_updated_by=:lastUpdatedBy,
+                l.last_update_date=:lastUpdateDate
+             WHERE
+                open_shift_line_id = :openShiftLineId""";
 
 }

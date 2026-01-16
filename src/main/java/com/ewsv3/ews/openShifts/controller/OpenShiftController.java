@@ -6,10 +6,7 @@ import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.commons.dto.UserIdReqDto;
 import com.ewsv3.ews.commons.dto.UserProfileResponse;
 import com.ewsv3.ews.commons.service.CommonService;
-import com.ewsv3.ews.openShifts.dto.OpenShifListTkRespDto;
-import com.ewsv3.ews.openShifts.dto.OpenShiftCountsRespDto;
-import com.ewsv3.ews.openShifts.dto.OpenShiftProfileDatesReqDto;
-import com.ewsv3.ews.openShifts.dto.OpenShiftsHeader;
+import com.ewsv3.ews.openShifts.dto.*;
 import com.ewsv3.ews.openShifts.dto.allocation.*;
 import com.ewsv3.ews.openShifts.service.OpenShiftService;
 import org.slf4j.Logger;
@@ -24,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/api/open-shift")
@@ -51,8 +50,21 @@ public class OpenShiftController {
 
     @PostMapping("create")
     public ResponseEntity<DMLResponseDto> createOpenShifts(@RequestHeader Map<String, String> headers, @RequestBody OpenShiftsHeader reqBody) {
-        logger.info("open-shift create - Entry - Time: {}, reqBody: {}",
-                LocalDateTime.now(), reqBody);
+        logger.info("open-shift create - Entry - Time: {}, reqBody.getOpenShiftLines(): {}",
+                LocalDateTime.now(), reqBody.getOpenShiftLines());
+        logger.info("open-shift create - Entry - Time: {}, reqBody.getOpenShiftLines().size(): {}",
+                LocalDateTime.now(), reqBody.getOpenShiftLines().size());
+
+
+        for (OpenShiftLines shiftLine : reqBody.getOpenShiftLines()) {
+            if (!shiftLine.getOpenShiftDetailSkills().isEmpty()) {
+                List<Long> skillList = shiftLine.getOpenShiftDetailSkills().stream().map(OpenShiftDetailSkills::getSkillId).toList();
+                logger.info("open-shift create - Entry - Time: {}, skillList.size: {}",
+                        LocalDateTime.now(), skillList.size());
+            }
+        }
+
+
         try {
 //            UserProfileResponse userFromUserId = this.commonService
 //                    .getUserFromUserId(new UserIdReqDto(getCurrentUserId()), jdbcClient);
@@ -175,7 +187,7 @@ public class OpenShiftController {
     }
 
     @PostMapping("open-shift-total-appl")
-    public ResponseEntity<TotalApplictionCountsDto> getTotalApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto){
+    public ResponseEntity<TotalApplictionCountsDto> getTotalApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto) {
         logger.info("open-shift-total-appl - Entry -  Time: {}, req {} ,",
                 LocalDateTime.now(), reqDto);
         try {
@@ -195,7 +207,7 @@ public class OpenShiftController {
     }
 
     @PostMapping("open-shift-approved-appl")
-    public ResponseEntity<ApprovedApplicationCountsDto> getApprovedApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto){
+    public ResponseEntity<ApprovedApplicationCountsDto> getApprovedApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto) {
         logger.info("open-shift-approved-appl - Entry -  Time: {}, req {} ,",
                 LocalDateTime.now(), reqDto);
         try {
@@ -215,7 +227,7 @@ public class OpenShiftController {
     }
 
     @PostMapping("self-appl-list")
-    public ResponseEntity<SelfApplicationRespSto> getSelfApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto){
+    public ResponseEntity<SelfApplicationRespSto> getSelfApplications(@RequestHeader Map<String, String> headers, @RequestBody PersonOpenShiftBidReqDto reqDto) {
         logger.info("self-appl-list - Entry -  Time: {}, req {} ,",
                 LocalDateTime.now(), reqDto);
         try {
@@ -230,6 +242,30 @@ public class OpenShiftController {
 
         } catch (Exception exception) {
             logger.error("self-appl-list - Exception -  Time: {}, req {},  Error: {}", LocalDateTime.now(),
+                    exception.getMessage(), reqDto, exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("recall-open-shift-line")
+    public ResponseEntity<DMLResponseDto> recallOpenShiftLine(@RequestHeader Map<String, String> headers, @RequestBody OpenShiftProfileDatesReqDto reqDto) {
+
+        logger.info("rollback-line - Entry -  Time: {}, req {} ,",
+                LocalDateTime.now(), reqDto);
+        try {
+
+//            UserProfileResponse userFromUserId = this.commonService
+//                    .getUserFromUserId(new UserIdReqDto(getCurrentUserId()), jdbcClient);
+//            SelfApplicationRespSto selfApplications = this.openShiftService.getSelfApplications(getCurrentUserId(), userFromUserId.personId(), reqDto, this.jdbcClient);
+
+            Integer recalledCounts = this.openShiftService.recallOpenShiftLine(getCurrentUserId(), reqDto, this.jdbcClient);
+            logger.info("rollback-line - Exit - Time: {} ,req {} , recalledCounts  {}",
+                    LocalDateTime.now(), reqDto, recalledCounts);
+            return new ResponseEntity<>(new DMLResponseDto("S", "OpenShift rollback successfully"), HttpStatus.OK);
+
+        } catch (Exception exception) {
+            logger.error("rollback-line - Exception -  Time: {}, req {},  Error: {}", LocalDateTime.now(),
                     exception.getMessage(), reqDto, exception);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
