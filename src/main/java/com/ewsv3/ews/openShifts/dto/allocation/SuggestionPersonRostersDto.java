@@ -8,6 +8,7 @@ public record SuggestionPersonRostersDto(
         LocalDate effectiveDate,
         LocalDateTime timeStart,
         LocalDateTime timeEnd,
-        String workDurationCode
+        String workDurationCode,
+        String openShiftStatus
         ) {
 }

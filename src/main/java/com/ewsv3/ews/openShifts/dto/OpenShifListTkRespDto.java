@@ -30,7 +30,9 @@ public record OpenShifListTkRespDto(
         String isApplied,
         Integer requestedCount,
         Integer appliedCount,
-        Integer approvedCount
+        Integer approvedCount,
+        String recalled,
+        String skills
 
 ) {
 }

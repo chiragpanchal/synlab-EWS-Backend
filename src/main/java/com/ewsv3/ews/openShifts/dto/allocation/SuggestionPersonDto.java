@@ -9,6 +9,7 @@ public class SuggestionPersonDto {
     String gradeName;
     Double rate;
     Double schHrs;
+    Double matchedPerc;
     List<SuggestionPersonRostersDto> personRostersDtoList;
     List<SuggestionPersonLeavesDto> personLeavesDtos;
     List<SuggestionPersonHolidaysDto> personHolidaysDtos;
@@ -17,13 +18,14 @@ public class SuggestionPersonDto {
     public SuggestionPersonDto() {
     }
 
-    public SuggestionPersonDto(Long personId, String personName, String employeeNumber, String gradeName, Double rate, Double schHrs) {
+    public SuggestionPersonDto(Long personId, String personName, String employeeNumber, String gradeName, Double rate, Double schHrs, Double matchedPerc) {
         this.personId = personId;
         this.personName = personName;
         this.employeeNumber = employeeNumber;
         this.gradeName = gradeName;
         this.rate = rate;
         this.schHrs = schHrs;
+        this.matchedPerc = matchedPerc;
     }
 
     public Long getPersonId() {
@@ -76,6 +78,14 @@ public class SuggestionPersonDto {
 
     public List<SuggestionPersonRostersDto> getPersonRostersDtoList() {
         return personRostersDtoList;
+    }
+
+    public Double getMatchedPerc() {
+        return matchedPerc;
+    }
+
+    public void setMatchedPerc(Double matchedPerc) {
+        this.matchedPerc = matchedPerc;
     }
 
     public void setPersonRostersDtoList(List<SuggestionPersonRostersDto> personRostersDtoList) {

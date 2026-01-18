@@ -355,7 +355,20 @@ public class OpenShiftUtils {
                            WHERE
                                   posd.open_shift_line_id = ol.open_shift_line_id
                                  AND status = 'APPR'
-                      )             approved_count
+                      )             approved_count,
+                      ol.recalled,
+                      (SELECT
+                           LISTAGG(ss.skill,
+                                   ', ') WITHIN GROUP(
+                            ORDER BY
+                               ss.skill
+                           ) skills
+                         FROM
+                           sc_open_shifts_d_skills osd,
+                           sc_skills               ss
+                        WHERE
+                               osd.open_shift_line_id = ol.open_shift_line_id
+                              AND ss.skill_id = osd.skill_id) skills
               FROM
                 sc_open_shifts_h oh,
                 sc_open_shifts_l ol,
@@ -386,7 +399,8 @@ public class OpenShiftUtils {
                 employee_number,
                 grade_name,
                 sch_hrs,
-                rate
+                rate,
+                matched_perc
               FROM
                 (
                     SELECT
@@ -408,7 +422,12 @@ public class OpenShiftUtils {
                                    AND trunc(
                                     spr.effective_date
                                 ) BETWEEN :startDate AND :endDate
-                        ) sch_hrs
+                        ) sch_hrs,
+                         sc_get_skill_match_pers_f (
+                                 p_person_id               => tkv.person_id,
+                                 p_person_preferred_job_id => pj.person_preferred_job_id,
+                                 p_open_shift_line_id      => :openShiftLineId
+                             )matched_perc
                       FROM
                         sc_timekeeper_person_v   tkv,
                         sc_person_preferred_jobs pj
@@ -430,9 +449,9 @@ public class OpenShiftUtils {
                 )
              ORDER BY
                 nvl(
-                    sch_hrs,
+                    matched_perc,
                     0
-                ) ASC,
+                ) DESC,
                 nvl(rate,0),
                 person_name ASC""";
 
@@ -442,7 +461,27 @@ public class OpenShiftUtils {
                 spr.effective_date,
                 spr.time_start,
                 spr.time_end,
-                swd.work_duration_code
+                swd.work_duration_code,
+                (
+                        SELECT
+                            decode(
+                                posd.status,
+                                'APPR',
+                                'Approved',
+                                'DECL',
+                                'Declined',
+                                'APPL',
+                                'Applied',
+                                posd.status
+                            )
+                          FROM
+                            sc_person_open_shift_details posd,
+                            sc_open_shifts_d             psd
+                         WHERE
+                                person_id = spr.person_id
+                               AND psd.open_shift_detail_id = posd.open_shift_detail_id
+                               AND psd.effective_date       = spr.effective_date
+                    ) open_shift_status
               FROM
                 sc_person_rosters spr,
                 sc_work_duration  swd
@@ -549,7 +588,20 @@ public class OpenShiftUtils {
                          WHERE
                                 posd.open_shift_line_id = ol.open_shift_line_id
                                AND status = 'APPR'
-                    )             approved_count
+                    )             approved_count,
+                    ol.recalled,
+                      (SELECT
+                           LISTAGG(ss.skill,
+                                   ', ') WITHIN GROUP(
+                            ORDER BY
+                               ss.skill
+                           ) skills
+                         FROM
+                           sc_open_shifts_d_skills osd,
+                           sc_skills               ss
+                        WHERE
+                               osd.open_shift_line_id = ol.open_shift_line_id
+                              AND ss.skill_id = osd.skill_id) skills
               FROM
                 sc_person_v              per,
                 sc_person_preferred_jobs pj,

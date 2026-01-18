@@ -351,6 +351,7 @@ public class OpenShiftService {
                 .param("jobTitleId", shiftLines.getJobTitleId())
                 .param("startDate", reqDto.startDate())
                 .param("endDate", reqDto.endDate())
+                .param("openShiftLineId", reqDto.openShiftLineId())
                 .query(SuggestionPersonDto.class)
                 .list();
 
