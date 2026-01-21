@@ -15,5 +15,6 @@ public record WorkDurationDtoAssignment(
         String sat,
         String sun,
         String duration,
+        String timeHour,
         long workDurationCategoryId) {
 }

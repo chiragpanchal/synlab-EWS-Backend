@@ -171,6 +171,7 @@ public class WorkDurationService {
                     .param("created_on", new java.sql.Timestamp(System.currentTimeMillis()))
                     .param("last_updated_by", userId)
                     .param("last_update_date", new java.sql.Timestamp(System.currentTimeMillis()))
+                    .param("timeHour", workDuration.timeHour())
                     .update();
 
             // Set the generated ID back to the workDuration object (if possible)
@@ -212,6 +213,7 @@ public class WorkDurationService {
                     .param("break_mins", workDuration.breakMins())
                     .param("last_updated_by", userId)
                     .param("last_update_date", new java.sql.Timestamp(System.currentTimeMillis()))
+                    .param("timeHour", workDuration.timeHour())
                     .update();
 
             //System.out.println("Updated WorkDuration, updCounts: " + updCounts);

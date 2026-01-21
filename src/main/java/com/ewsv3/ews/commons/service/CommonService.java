@@ -1,5 +1,7 @@
 package com.ewsv3.ews.commons.service;
 
+import com.ewsv3.ews.commons.dto.PersonIdReqDto;
+import com.ewsv3.ews.commons.dto.PersonSkillsRespDto;
 import com.ewsv3.ews.commons.dto.UserIdReqDto;
 import com.ewsv3.ews.commons.dto.UserProfileResponse;
 import com.ewsv3.ews.commons.dto.masters.*;
@@ -120,7 +122,7 @@ public class CommonService {
     }
 
     public AllMasterDtoLov allMasterDtoLov(JdbcClient jdbcClient) {
-        
+
         return new AllMasterDtoLov(
                 getDepartments(jdbcClient),
                 getJobs(jdbcClient),
@@ -137,7 +139,7 @@ public class CommonService {
         );
     }
 
-    public UserProfileResponse getUserFromUserId(UserIdReqDto dto, JdbcClient jdbcClient){
+    public UserProfileResponse getUserFromUserId(UserIdReqDto dto, JdbcClient jdbcClient) {
 
         UserProfileResponse userProfileResponse = jdbcClient.sql(CommonUtils.sqlGetUserFromUserId)
                 .param("userId", dto.userId())
@@ -145,6 +147,16 @@ public class CommonService {
                 .single();
 
         return userProfileResponse;
+    }
+
+    public List<PersonSkillsRespDto> getPersonSkills(PersonIdReqDto reqDto, JdbcClient jdbcClient) {
+
+        List<PersonSkillsRespDto> personSkillsRespDtos = jdbcClient.sql(personSkillsSQL)
+                .param("personId", reqDto.personId())
+                .query(PersonSkillsRespDto.class)
+                .list();
+
+        return personSkillsRespDtos;
     }
 
 

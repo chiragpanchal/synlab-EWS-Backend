@@ -36,7 +36,8 @@ public class workrotationsUtils {
                    d.last_updated_by,
                    d.last_update_date,
                    c.full_name created_by_name,
-                   u.full_name last_updated_by_name                   
+                   u.full_name last_updated_by_name,
+                   d.time_Hour
                  FROM
                     sc_work_duration d,
                     sc_person_v c,
@@ -44,7 +45,7 @@ public class workrotationsUtils {
                 WHERE (work_duration_id = NVL(:workDurationId, work_duration_id)
                     or :workDurationId=0)
                     and c.user_id=d.created_by
-                    and u.user_id=d.last_updated_by   
+                    and u.user_id=d.last_updated_by
                     AND ( lower(work_duration_code) LIKE '%'
                                              || lower(:searchText)
                                              || '%'
@@ -158,7 +159,8 @@ public class workrotationsUtils {
                 created_by,
                 created_on,
                 last_updated_by,
-                last_update_date
+                last_update_date,
+                time_hour
             ) VALUES (
                 :work_duration_id,
                 :work_duration_code,
@@ -190,7 +192,8 @@ public class workrotationsUtils {
                 :created_by,
                 :created_on,
                 :last_updated_by,
-                :last_update_date
+                :last_update_date.
+                :time_hour
             )
             """;
 
@@ -223,7 +226,8 @@ public class workrotationsUtils {
                 eroster_code = :eroster_code,
                 break_mins = :break_mins,
                 last_updated_by = :last_updated_by,
-                last_update_date = :last_update_date
+                last_update_date = :last_update_date,
+                time_hour = :timeHour
             WHERE
                 work_duration_id = :work_duration_id
             """;

@@ -435,7 +435,7 @@ public class OpenShiftUtils {
                             tkv.timekeeper_user_id = :userId
                            AND tkv.profile_id       = :profileId
                            AND tkv.department_id    = :departmentId
-                           AND tkv.work_location_id = :locationId
+                           -- AND tkv.work_location_id = :locationId
                            AND pj.person_id         = tkv.person_id
                            AND pj.job_title_id      = :jobTitleId
                            AND nvl(
@@ -721,5 +721,6 @@ public class OpenShiftUtils {
                 l.last_update_date=:lastUpdateDate
              WHERE
                 open_shift_line_id = :openShiftLineId""";
+
 
 }

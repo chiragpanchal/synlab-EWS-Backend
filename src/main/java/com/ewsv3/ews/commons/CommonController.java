@@ -1,6 +1,8 @@
 package com.ewsv3.ews.commons;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.PersonIdReqDto;
+import com.ewsv3.ews.commons.dto.PersonSkillsRespDto;
 import com.ewsv3.ews.commons.dto.UserIdReqDto;
 import com.ewsv3.ews.commons.dto.UserProfileResponse;
 import com.ewsv3.ews.commons.dto.masters.*;
@@ -14,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.PublicKey;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -59,19 +62,19 @@ public class CommonController {
 
     @PostMapping("all-person")
     public ResponseEntity<List<PersonDtoLov>> getAllPerson(@RequestHeader Map<String, String> header,
-            @RequestBody PersonRequestDto requestDto) {
+                                                           @RequestBody PersonRequestDto requestDto) {
         logger.info("GET_ALL_PERSON - Entry - Time: {}, Request strPerson: {}", LocalDateTime.now(), requestDto.strPerson());
 
         try {
             // System.out.println("all-person requestDto.strPerson():" + requestDto.strPerson());
             List<PersonDtoLov> personDtoLovs = this.commonService.getPerson(requestDto, this.jdbcClient);
             logger.info("GET_ALL_PERSON - Exit - Time: {}, Request strPerson: {}, Response Count: {}",
-                LocalDateTime.now(), requestDto.strPerson(), personDtoLovs.size());
+                    LocalDateTime.now(), requestDto.strPerson(), personDtoLovs.size());
             return new ResponseEntity<>(personDtoLovs, HttpStatus.OK);
         } catch (Exception exception) {
             // System.out.println(exception.getMessage());
             logger.error("GET_ALL_PERSON - Exception - Time: {}, Request: {}, Error: {}",
-                LocalDateTime.now(), requestDto, exception.getMessage(), exception);
+                    LocalDateTime.now(), requestDto, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -79,18 +82,18 @@ public class CommonController {
 
     @PostMapping("all-projects")
     public ResponseEntity<List<ProjectsDtoLov>> getAllProjects(@RequestHeader Map<String, String> header,
-            @RequestBody ProjectRequestDto requestDto) {
+                                                               @RequestBody ProjectRequestDto requestDto) {
         logger.info("GET_ALL_PROJECTS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestDto);
 
         try {
             List<ProjectsDtoLov> projectsDtoLovs = this.commonService.getProjects(requestDto, this.jdbcClient);
             logger.info("GET_ALL_PROJECTS - Exit - Time: {}, Request: {}, Response Count: {}",
-                LocalDateTime.now(), requestDto, projectsDtoLovs.size());
+                    LocalDateTime.now(), requestDto, projectsDtoLovs.size());
             return new ResponseEntity<>(projectsDtoLovs, HttpStatus.OK);
         } catch (Exception exception) {
             // System.out.println(exception.getMessage());
             logger.error("GET_ALL_PROJECTS - Exception - Time: {}, Request: {}, Error: {}",
-                LocalDateTime.now(), requestDto, exception.getMessage(), exception);
+                    LocalDateTime.now(), requestDto, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -99,18 +102,40 @@ public class CommonController {
 
     @PostMapping("user-from-user-id")
     public ResponseEntity<UserProfileResponse> getUserFromUserId(@RequestHeader Map<String, String> header,
-            @RequestBody UserIdReqDto dto) {
+                                                                 @RequestBody UserIdReqDto dto) {
         logger.info("GET_USER_FROM_USER_ID - Entry - Time: {}, Request: {}", LocalDateTime.now(), dto);
 
         try {
             UserProfileResponse userProfileResponse = this.commonService.getUserFromUserId(dto, this.jdbcClient);
             logger.info("GET_USER_FROM_USER_ID - Exit - Time: {}, Request: {}, Response: {}",
-                LocalDateTime.now(), dto, userProfileResponse);
+                    LocalDateTime.now(), dto, userProfileResponse);
             return new ResponseEntity<>(userProfileResponse, HttpStatus.OK);
         } catch (Exception exception) {
             // System.out.println(exception.getMessage());
             logger.error("GET_USER_FROM_USER_ID - Exception - Time: {}, Request: {}, Error: {}",
-                LocalDateTime.now(), dto, exception.getMessage(), exception);
+                    LocalDateTime.now(), dto, exception.getMessage(), exception);
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("person-skills")
+    public ResponseEntity<List<PersonSkillsRespDto>> getPersonSkills(
+            @RequestHeader Map<String, String> header,
+            @RequestBody PersonIdReqDto reqDto
+    ) {
+
+        logger.info("person-skills - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqDto);
+
+        try {
+            List<PersonSkillsRespDto> personSkills = this.commonService.getPersonSkills(reqDto, this.jdbcClient);
+            logger.info("person-skills - Exit - Time: {}, Request: {}, Response counts: {}",
+                    LocalDateTime.now(), reqDto, personSkills.size());
+            return new ResponseEntity<>(personSkills, HttpStatus.OK);
+        } catch (Exception exception) {
+            // System.out.println(exception.getMessage());
+            logger.error("person-skills - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), reqDto, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

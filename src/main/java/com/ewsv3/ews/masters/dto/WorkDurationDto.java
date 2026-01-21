@@ -10,6 +10,7 @@ public class WorkDurationDto {
         private long workDurationId;
         private String workDurationCode;
         private String workDurationName;
+        private String timeHour;
         private LocalDate validFrom;
         private LocalDate validTo;
         private LocalDateTime timeStart;
@@ -38,10 +39,11 @@ public class WorkDurationDto {
     public WorkDurationDto() {
     }
 
-    public WorkDurationDto(long workDurationId, String workDurationCode, String workDurationName, LocalDate validFrom, LocalDate validTo, LocalDateTime timeStart, LocalDateTime breakStart, LocalDateTime breakEnd, LocalDateTime timeEnd, long enterpriseId, String mon, String tue, String wed, String thu, String fri, String sat, String sun, String colorCode, double duration, long workDurationCategoryId, String exceptionEvents, Double minWorkHrs, Double maxWorkHrs, String workUnit, Long hcmScheduleId, String erosterCode) {
+    public WorkDurationDto(long workDurationId, String workDurationCode, String workDurationName,  String timeHour,LocalDate validFrom, LocalDate validTo, LocalDateTime timeStart, LocalDateTime breakStart, LocalDateTime breakEnd, LocalDateTime timeEnd, long enterpriseId, String mon, String tue, String wed, String thu, String fri, String sat, String sun, String colorCode, double duration, long workDurationCategoryId, String exceptionEvents, Double minWorkHrs, Double maxWorkHrs, String workUnit, Long hcmScheduleId, String erosterCode) {
         this.workDurationId = workDurationId;
         this.workDurationCode = workDurationCode;
         this.workDurationName = workDurationName;
+        this.timeHour = timeHour;
         this.validFrom = validFrom;
         this.validTo = validTo;
         this.timeStart = timeStart;
@@ -90,6 +92,14 @@ public class WorkDurationDto {
 
     public void setWorkDurationName(String workDurationName) {
         this.workDurationName = workDurationName;
+    }
+
+    public String getTimeHour() {
+        return timeHour;
+    }
+
+    public void setTimeHour(String timeHour) {
+        this.timeHour = timeHour;
     }
 
     public LocalDate getValidFrom() {

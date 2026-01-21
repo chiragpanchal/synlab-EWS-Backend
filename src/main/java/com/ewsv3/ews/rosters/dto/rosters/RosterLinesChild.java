@@ -24,6 +24,7 @@ public record RosterLinesChild(
         Long workDurationId,
         String workDurationCode,
         String workDurationName,
+        String timeHour,
         Long schCost,
         String currencyCode
 ) {
@@ -49,6 +50,7 @@ public record RosterLinesChild(
                 this.workDurationId,
                 this.workDurationCode,
                 this.workDurationName,
+                this.timeHour,
                 this.schCost,
                 this.currencyCode
         );

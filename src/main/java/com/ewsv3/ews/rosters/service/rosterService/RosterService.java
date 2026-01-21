@@ -9,6 +9,7 @@ import com.ewsv3.ews.rosters.dto.rosters.validate.DemandLineResponse;
 import com.ewsv3.ews.rosters.dto.rosters.validate.ScheduleLineResponse;
 import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterReqBody;
 import com.ewsv3.ews.rosters.dto.rosters.validate.ValidateRosterResponse;
+import com.ewsv3.ews.team.dto.ProfileDatesRequestBody;
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.ewsv3.ews.rosters.service.utils.RosterSql.*;
 
@@ -56,7 +58,7 @@ public class RosterService {
     }
 
     public List<PersonRosters> getPersonRosters(Long userId, Long profileId, Date startDate, Date endDate,
-            JdbcClient jdbcClient) {
+                                                JdbcClient jdbcClient) {
 
         // ServiceUtils serviceUtils = new ServiceUtils();
 
@@ -83,7 +85,7 @@ public class RosterService {
     }
 
     public PersonRosterSqlResp getPersonRosterSql_old(Long userId, PersonRosterPivotReq personRosterPivotReq,
-            NamedParameterJdbcTemplate namedParameterJdbcTemplate, JdbcClient jdbcClient) {
+                                                      NamedParameterJdbcTemplate namedParameterJdbcTemplate, JdbcClient jdbcClient) {
 
         // ServiceUtils serviceUtils = new ServiceUtils();
 
@@ -141,8 +143,8 @@ public class RosterService {
     }
 
     public PersonRosterSqlResp getPersonRosterSql(long userId, Long profileId, Long personId, LocalDate startDate,
-            LocalDate endDate, int page, int size, String text, String filterFlag, JdbcClient jdbcClient,
-            NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+                                                  LocalDate endDate, int page, int size, String text, String filterFlag, JdbcClient jdbcClient,
+                                                  NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 
         // System.out.println("getPersonRosterSql userId:" + userId);
         Map<String, Object> objectMap = null;
@@ -175,6 +177,19 @@ public class RosterService {
                     namedParameterJdbcTemplate);
             return new PersonRosterSqlResp(rosterLines, kpiString);
         }
+
+        // step 1.5: Get Roster Error String for schedule rule
+        List<RosterErrorString> rosterErrorStrings = jdbcClient.sql(errorStringSQL)
+                .param("userId", userId)
+                .param("profileId", profileId)
+                .param("startDate", startDate)
+                .param("endDate", endDate)
+                .param("offset", page)
+                .param("pageSize", size)
+                .param("text", searchText)
+                .param("pFilterFlag", filterFlag == null ? "Y" : filterFlag)
+                .query(RosterErrorString.class)
+                .list();
 
         // Step 2: Get all roster children in one batch query (PERFORMANCE OPTIMIZATION)
         // System.out.println("Fetching all roster children in batch - Performance
@@ -240,6 +255,15 @@ public class RosterService {
             // dates.children().length);
             // }
             rosterLine.setChildren(childDatesList);
+
+            RosterErrorString errorString = rosterErrorStrings.stream().filter(str -> str.personId() == rosterLine.getPersonId()).findFirst().orElse(null);
+
+//            assert errorString != null;
+            if (errorString != null) {
+                rosterLine.setErrorString(errorString.errorString());
+            } else {
+                rosterLine.setErrorString(null);
+            }
         }
 
         // for (RosterLines line : rosterLines) {
@@ -264,7 +288,7 @@ public class RosterService {
      * Helper method to get KPI string - extracted for reusability and cleaner code
      */
     private String getKpiString(long userId, Long profileId, LocalDate startDate, LocalDate endDate,
-            String searchText, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
+                                String searchText, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
         System.out.printf("\n\t\tgetPersonRosterSql: KPI Procedure call BEGIN%s========================> \n",
                 LocalTime.now());
 
@@ -310,6 +334,7 @@ public class RosterService {
                 null, // workDurationId
                 null, // workDurationCode
                 null, // workDurationName
+                null, // timeHour
                 null,
                 null);
         emptyChild.setEffectiveDate(date);
@@ -317,8 +342,8 @@ public class RosterService {
     }
 
     public List<PersonRosterPivotResponse> getPersonRostersProcedure(Long userId,
-            PersonRosterPivotReq personRosterPivotReq, NamedParameterJdbcTemplate namedParameterJdbcTemplate,
-            JdbcClient jdbcClient) {
+                                                                     PersonRosterPivotReq personRosterPivotReq, NamedParameterJdbcTemplate namedParameterJdbcTemplate,
+                                                                     JdbcClient jdbcClient) {
 
         // System.out.println("inside getPersonRostersProcedure");
         // System.out.println("personRosterPivotReq:%s\n" + personRosterPivotReq);
@@ -368,7 +393,7 @@ public class RosterService {
     }
 
     public List<PersonRostersSmall> getPersonRostersSmall(Long userId, Long profileId, Date startDate, Date endDate,
-            JdbcClient jdbcClient) {
+                                                          JdbcClient jdbcClient) {
 
         // ServiceUtils serviceUtils = new ServiceUtils();
 
@@ -500,7 +525,7 @@ public class RosterService {
     }
 
     public List<PersonRosters> getSinglePersonRosters(Long userId, Long personId, Long personRosterId, Date startDate,
-            Date endDate, JdbcClient jdbcClient) {
+                                                      Date endDate, JdbcClient jdbcClient) {
         Map<String, Object> objectMap = new HashMap<>();
 
         objectMap.put("personId", personId);
@@ -533,7 +558,7 @@ public class RosterService {
     }
 
     public RosterDMLResponseDto deletePersonRoster(Long userId, RosterDeleteReasonReqBody reqBody,
-            JdbcClient jdbcClient) {
+                                                   JdbcClient jdbcClient) {
 
         RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
         AtomicReference<String> errorMessage = new AtomicReference<>("");
@@ -670,7 +695,7 @@ public class RosterService {
     }
 
     public RosterDMLResponseDto createRota(Long userId, List<RotaCreationReqBody> reqBody,
-            JdbcClient jdbcClient) {
+                                           JdbcClient jdbcClient) {
 
         RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
 
@@ -750,7 +775,7 @@ public class RosterService {
     }
 
     public RosterDMLResponseDto createPersonRota(Long userId, List<PersonRotationAssocReqBody> assocReqBodies,
-            JdbcClient jdbcClient) {
+                                                 JdbcClient jdbcClient) {
 
         int dmlCounts = 0;
         int errCounts = 0;
@@ -914,7 +939,7 @@ public class RosterService {
     }
 
     public DemandAllocationRespBody getDemandAllocations(Long userId, DemandAllocationReqBody reqBody,
-            JdbcClient jdbcClient) {
+                                                         JdbcClient jdbcClient) {
 
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sc_generate_demand_rosters_p");
         Map<String, Object> inProcParamMap = new HashMap<>();
@@ -962,7 +987,7 @@ public class RosterService {
     }
 
     public DemandAllocationRespBody getDemandAllocationsNew(Long userId, DemandAllocationReqBody reqBody,
-            JdbcClient jdbcClient) {
+                                                            JdbcClient jdbcClient) {
         logger.info("getDemandAllocationsNew - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sp_generate_staff_schedule");
         Map<String, Object> inProcParamMap = new HashMap<>();
@@ -1016,7 +1041,7 @@ public class RosterService {
     }
 
     public ValidateRosterResponse getValidateRosterResponse(Long userId, ValidateRosterReqBody reqBody,
-            JdbcClient jdbcClient) {
+                                                            JdbcClient jdbcClient) {
         Map<String, Object> objectMap = new HashMap<>();
 
         objectMap.put("userId", userId);
@@ -1067,6 +1092,7 @@ public class RosterService {
         inParamMap.put("p_person_roster_id", reqBody.personRosterId());
         inParamMap.put("p_person_id", reqBody.personId());
         inParamMap.put("p_effective_date", reqBody.effectiveDate());
+        inParamMap.put("p_mode", "DRAG");
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
         // System.out.println(inSource);
@@ -1185,5 +1211,23 @@ public class RosterService {
 
         return responseDto;
 
+    }
+
+
+    public List<AlternatePersonDto> getAlternatePersonList(Long userId,
+                                                           AlternateStaffReqBody requestBody,
+                                                           JdbcClient jdbcClient) {
+
+        List<AlternatePersonDto> personDtoList = jdbcClient.sql(reAssignmentSQL)
+                .param("userId", userId)
+                .param("profileId", requestBody.profileId())
+                .param("startDate", requestBody.startDate())
+                .param("endDate", requestBody.endDate())
+                .param("personId", requestBody.personId())
+                .param("personRosterId", requestBody.personRosterId())
+                .query(AlternatePersonDto.class)
+                .list();
+
+        return personDtoList;
     }
 }

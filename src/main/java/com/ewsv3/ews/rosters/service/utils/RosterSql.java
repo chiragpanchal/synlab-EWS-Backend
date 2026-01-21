@@ -7,7 +7,54 @@ package com.ewsv3.ews.rosters.service.utils;
 //                                 p_end_date   => :endDate
 //                             ) error_string
 
+
 public class RosterSql {
+
+    public static String errorStringSQL= """
+            SELECT
+                person_id,
+                error_string
+              FROM
+                (
+                    SELECT
+                        tkv.person_id,
+                        sc_get_schedule_rule_error_f(
+                                                    p_profile_id => tkv.profile_id,
+                                                    p_person_id => tkv.person_id,
+                                                    p_start_date => :startDate,
+                                                    p_end_date => :endDate
+                        ) error_string
+                      FROM
+                        sc_timekeeper_person_v tkv,
+                        sc_person_v            per
+                     WHERE
+                            tkv.timekeeper_user_id = :userId
+                           AND tkv.profile_id = :profileId
+                           AND ( lower(
+                            tkv.employee_number
+                        ) LIKE lower(
+                            :text
+                        )
+                            OR lower(
+                            tkv.person_name
+                        ) LIKE lower(
+                            :text
+                        ) )
+                           AND per.person_id  = tkv.person_id
+            --                                       AND (:personId = 0 OR per.person_id = :personId)
+            --                                       AND 'Y'= sc_person_rosters_filter_f(p_person_id =>tkv.person_id ,p_person_roster_id => null, p_start_date=> trunc(:startDate) , p_end_date=> trunc(:endDate) ,p_filter_flag=>:pFilterFlag)
+                           AND nvl(
+                            tkv.hire_date,
+                            :startDate
+                        ) <= :startDate
+                           AND nvl(
+                            tkv.termination_date,
+                            :endDate
+                        ) >= :endDate
+                )
+             WHERE
+                error_string IS NOT NULL""";
+
     public static String RosterTeamSql = """
             SELECT
                             person_id,
@@ -72,6 +119,7 @@ public class RosterSql {
                 swd.work_duration_id,
                 swd.work_duration_code,
                 swd.work_duration_name,
+                swd.time_hour,
                 ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
                 fc.currency_code
               FROM
@@ -122,6 +170,7 @@ public class RosterSql {
                 swd.work_duration_id,
                 swd.work_duration_code,
                 swd.work_duration_name,
+                swd.time_hour,
                 ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
                 fc.currency_code
               FROM
@@ -202,6 +251,7 @@ public class RosterSql {
                 spr.skill_id,
                  swd.work_duration_code,
                 swd.work_duration_name,
+                swd.time_hour,
                 swd.color_code,
                 swc.category_name,
                  sd.department_name,
@@ -280,6 +330,7 @@ public class RosterSql {
                 spr.skill_id,
                 swd.work_duration_code,
                 swd.work_duration_name,
+                swd.time_hour,
                 swd.color_code,
                 swc.category_name,
                 sd.department_name,
@@ -601,5 +652,109 @@ public class RosterSql {
                 spr.work_location_id,
                 spr.time_start,
                 spr.time_end""";
+
+    public static String reAssignmentSQL= """
+            SELECT
+                person_id,
+                person_name,
+                employee_number,
+                grade_name,
+                sch_hrs,
+                rate,
+                matched_perc
+              FROM
+                (
+                    SELECT
+                        tkv.person_id,
+                        tkv.person_name,
+                        tkv.employee_number,
+                        tkv.grade_name,
+                        pj.per_hr_sal rate,
+                        (
+                            SELECT
+                                SUM((spr.time_end - spr.time_start) * 24) hrs
+                              FROM
+                                sc_person_rosters spr,
+                                sc_work_duration  swd
+                             WHERE
+                                    spr.person_id = tkv.person_id
+                                   AND swd.work_duration_id = spr.work_duration_id
+                                   AND swd.work_duration_code <> 'OFF'
+                                   AND trunc(
+                                    spr.effective_date
+                                ) BETWEEN :startDate AND :endDate
+                        )             sch_hrs,
+                        sc_get_skill_match_pers_f(
+                                                 p_person_id => tkv.person_id,
+                                                 p_person_preferred_job_id => pj.person_preferred_job_id,
+                                                 p_open_shift_line_id => NULL,
+                                                 p_person_roster_id => :personRosterId
+                        )             matched_perc
+                      FROM
+                        sc_timekeeper_person_v   tkv,
+                        sc_person_preferred_jobs pj
+                     WHERE
+                            tkv.timekeeper_user_id = :userId
+                           AND tkv.profile_id = :profileId
+            --               AND tkv.department_id = :departmentId
+                           AND pj.person_id   = tkv.person_id
+                           AND tkv.person_id <> :personId
+            --               AND pj.job_title_id   = :jobTitleId
+                           AND ( tkv.department_id,
+                                 pj.job_title_id ) IN (
+                            SELECT
+                                spr.department_id,
+                                spr.job_title_id
+                              FROM
+                                sc_person_rosters spr
+                             WHERE
+                                spr.person_roster_id = :personRosterId
+                        )
+                           AND 0              = (
+                            SELECT
+                                COUNT(spr.person_roster_id)
+                              FROM
+                                sc_person_rosters spr
+                             WHERE
+                                    spr.person_id = tkv.person_id
+                                   AND spr.effective_date BETWEEN :startDate AND :endDate
+                        )
+                           AND 0              = (
+                            SELECT
+                                COUNT(lv.absence_attendances_id)
+                              FROM
+                                sc_person_absences_t lv
+                             WHERE
+                                    lv.person_id = tkv.person_id
+                                   AND lv.leave_date BETWEEN :startDate AND :endDate
+                        )
+                           AND 0              = (
+                            SELECT
+                                COUNT(ph.holiday_id)
+                              FROM
+                                sc_person_holidays ph
+                             WHERE
+                                    ph.person_id = tkv.person_id
+                                   AND ph.holiday_date BETWEEN :startDate AND :endDate
+                        )
+                           AND nvl(
+                            tkv.hire_date,
+                            :startDate
+                        ) <= :startDate
+                           AND nvl(
+                            tkv.termination_date,
+                            :endDate
+                        ) >= :endDate
+                )
+             ORDER BY
+                nvl(
+                    matched_perc,
+                    0
+                ) DESC,
+                nvl(
+                    rate,
+                    0
+                ),
+                person_name ASC""";
 
 }

@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public record DragDropReqBody(
         Long personRosterId,
         Long personId,
-        LocalDate effectiveDate) {
+        LocalDate effectiveDate,
+        String mode) {
 
 }

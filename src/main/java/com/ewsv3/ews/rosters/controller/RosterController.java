@@ -172,6 +172,7 @@ public class RosterController {
     // page,int size,String text, String filterFlag, JdbcClient jdbcClient,
     // NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 
+
     @PostMapping("/rosters-sql")
     @CrossOrigin
     public ResponseEntity<PersonRosterSqlResp> getRostersSQL(@RequestHeader Map<String, String> header,
@@ -195,6 +196,7 @@ public class RosterController {
             // PersonRosterSqlResp personRosterSqlResp =
             // this.rosterService.getPersonRosterSql(userInfo.userId(), requestBody,
             // namedParameterJdbcTemplate, jdbcClient);
+
             PersonRosterSqlResp personRosterSqlResp = this.rosterService.getPersonRosterSql(
                     getCurrentUserId(),
                     requestBody.profileId(),
@@ -495,6 +497,34 @@ public class RosterController {
         } catch (Exception exception) {
             // System.out.println(exception.getMessage());
             logger.error("QUICK_COPY_ROSTER - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), requestBody, exception.getMessage(), exception);
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    @PostMapping("alternate-staff")
+    @CrossOrigin
+    public ResponseEntity<List<AlternatePersonDto>> getAlternatePersonList(
+            @RequestHeader Map<String, String> header,
+            @RequestBody AlternateStaffReqBody requestBody
+    ){
+
+        logger.info("alternate-staff - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+        try {
+            // System.out.println("quick-copy > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("quick-copy > requestBody:" + requestBody);
+
+            List<AlternatePersonDto> alternatePersonList = this.rosterService.getAlternatePersonList(
+                    getCurrentUserId(),
+                    requestBody,
+                    jdbcClient);
+            logger.info("alternate-staff - Exit - Time: {}, alternatePersonList Counts: {}", LocalDateTime.now(), alternatePersonList.size());
+            return new ResponseEntity<>(alternatePersonList, HttpStatus.OK);
+        } catch (Exception exception) {
+            // System.out.println(exception.getMessage());
+            logger.error("alternate-staff - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

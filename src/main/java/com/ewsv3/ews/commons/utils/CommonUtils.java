@@ -156,4 +156,30 @@ public class CommonUtils {
             order by
                 grade_name""";
 
+    public static String personSkillsSQL= """
+            SELECT
+                pps.person_preferred_skill_id,
+                ppj.person_id,
+                job.job_title,
+                ppj.job_title_id,
+                ppj.per_hr_sal rate,
+                sc.currency_code,
+                ss.skill_id,
+                ss.skill
+              FROM
+                sc_person_preferred_jobs   ppj,
+                sc_currencies              sc,
+                sc_jobs                    job,
+                sc_person_preferred_skills pps,
+                sc_skills                  ss
+             WHERE
+                    job.job_title_id = ppj.job_title_id
+                   AND sc.currency_id (+)          = ppj.currency_id
+                   AND pps.person_preferred_job_id = ppj.person_preferred_job_id
+                   AND ss.skill_id                 = pps.skill_id
+                   AND ppj.person_id               = :personId
+             ORDER BY
+                job.job_title,
+                ss.skill""";
+
 }

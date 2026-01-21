@@ -50,6 +50,7 @@ public record PersonRosters(
         Long skillId,
         String workDurationCode,
         String workDurationName,
+        String timeHour,
         String colorCode,
         String categoryName,
         String departmentName,

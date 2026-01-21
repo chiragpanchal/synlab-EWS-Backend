@@ -151,7 +151,7 @@ public class RequestController {
 
     }
 
-    @GetMapping("dest-rosters")
+    @PostMapping("dest-rosters")
     @CrossOrigin
     public ResponseEntity<List<DestinationRosterResponseBody>> getDestinationRosters(
             @RequestHeader Map<String, String> headers,

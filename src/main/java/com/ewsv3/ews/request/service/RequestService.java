@@ -246,7 +246,7 @@ public class RequestService {
     public List<DestinationRosterResponseBody> getDestinationRosters(DestinationRosterReqBody reqBody,
             JdbcClient jdbcClient) {
         Map<String, Object> reqApprovalMap = new HashMap<>();
-        reqApprovalMap.put("personRosterId", reqBody.personRosterId());
+        reqApprovalMap.put("personRosterId", reqBody.sPersonRosterId());
         List<DestinationRosterResponseBody> rosterResponseBodyList = jdbcClient.sql(DestinationRostersSql)
                 .params(reqApprovalMap)
                 .query(DestinationRosterResponseBody.class).list();

@@ -36,6 +36,7 @@ public record WorkDuration(
         Long lastUpdatedBy,
         LocalDateTime lastUpdateDate,
         String createdByName,
-        String lastUpdatedByName
+        String lastUpdatedByName,
+        String timeHour
 ) {
 }

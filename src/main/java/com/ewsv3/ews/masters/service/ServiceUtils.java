@@ -158,7 +158,8 @@ public class ServiceUtils {
                 max_work_hrs,
                 work_unit,
                 hcm_schedule_id,
-                null eroster_code
+                null eroster_code,
+                time_hour
             FROM
                 sc_work_duration""";
 
