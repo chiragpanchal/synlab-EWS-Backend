@@ -7,11 +7,10 @@ public record TimesheetReportReqDto(
         LocalDate endDate,
         Long departmentId,
         Long jobTitleId,
-        Long personId,
-        String pendingWith,
+        String status,//status filter
+        String payCodeName,//payCode filter
         String employeeText,
-        String profileId,
-        Long payCodeId,
-        String status
+        String pendingWith,
+        Long profileId
 ) {
 }

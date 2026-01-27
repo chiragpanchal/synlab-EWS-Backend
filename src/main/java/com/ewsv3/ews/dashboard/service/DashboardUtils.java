@@ -112,7 +112,8 @@ public class DashboardUtils {
                         ', ') within group(
                 order by
                     violation_code
-                ) violation_code
+                ) violation_code,
+                swap_details
             from
                 (
                     select
@@ -156,7 +157,10 @@ public class DashboardUtils {
                                 and st2.holiday_id is null
                                 and st2.person_request_id is null
                         ) punch_lines,
-                        st.violation_code
+                        st.violation_code,
+                        sc_get_roster_name_f (
+                             p_person_roster_id => spra.d_person_roster_id
+                        )swap_details
                     from
                         sc_person_requests_appr spra,
                         sc_requests_master      srm,
@@ -196,7 +200,8 @@ public class DashboardUtils {
                 person_request_id,
                 item_key,
                 reason,
-                comments
+                comments,
+                swap_details
             order by
                 start_date desc
             """;

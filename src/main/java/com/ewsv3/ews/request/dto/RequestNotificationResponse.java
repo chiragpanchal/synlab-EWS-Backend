@@ -20,6 +20,7 @@ public record RequestNotificationResponse(
                 String comments,
                 String schedules,
                 String punches,
-                String violation_code) {
+                String violation_code,
+                String swapDetails) {
 
 }

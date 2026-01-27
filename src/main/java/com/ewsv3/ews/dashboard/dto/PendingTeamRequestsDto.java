@@ -20,5 +20,6 @@ public record PendingTeamRequestsDto(
         String comments,
         String schedules,
         String punches,
-        String violation_code) {
+        String violation_code,
+        String swapDetails) {
 }

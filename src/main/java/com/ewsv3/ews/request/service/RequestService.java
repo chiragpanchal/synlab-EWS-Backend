@@ -198,7 +198,7 @@ public class RequestService {
                 cs.setNull(27, Types.TIMESTAMP); // p_new_time_end
                 cs.setObject(28, reqBody.sPersonRosterId(), Types.NUMERIC);
                 // cs.setNull(28, Types.NUMERIC); // p_s_person_roster_id
-                cs.setNull(29, Types.NUMERIC); // p_d_person_roster_id
+                cs.setObject(29,reqBody.dPersonRosterId(), Types.NUMERIC); // p_d_person_roster_id
 
                 // Register OUT parameters
                 cs.registerOutParameter(1, Types.NUMERIC); // p_person_request_id (IN OUT)

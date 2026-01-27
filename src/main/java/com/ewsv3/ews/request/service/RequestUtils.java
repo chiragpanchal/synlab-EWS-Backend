@@ -299,7 +299,7 @@ public class RequestUtils {
                             spr2.person_roster_id = :personRosterId
                         and spr2.department_id = spr.department_id
                         and spr2.job_title_id  = spr.job_title_id
-                        and spr.effective_date between spr2.effective_date and spr2.effective_date + 2
+                        and spr.effective_date between spr2.effective_date-2 and spr2.effective_date + 2
                 )
                 and not exists (
                     select
@@ -316,9 +316,10 @@ public class RequestUtils {
                     from
                         sc_person_rosters spr2
                     where
-                            spr2.person_id = spr.person_id
+                           1=1-- spr2.person_id = spr.person_id
                         and spr2.effective_date   = spr.effective_date
-                        and spr2.person_roster_id = :personRosterId
+                        -- and spr2.person_roster_id = :personRosterId
+                        and spr2.person_id in (select spr0.person_id from sc_person_rosters spr0 where spr0.person_roster_id=:personRosterId)
                 )
             order by
                 per.full_name,
@@ -373,7 +374,8 @@ public class RequestUtils {
                         ', ') within group(
                 order by
                     violation_code
-                ) violation_code
+                ) violation_code,
+                swap_details
             from
                 (
                     select
@@ -418,7 +420,10 @@ public class RequestUtils {
                                 and st2.holiday_id is null
                                 and st2.person_request_id is null
                         )             punch_lines,
-                        st.violation_code
+                        st.violation_code,
+                        sc_get_roster_name_f (
+                            p_person_roster_id => sapr.d_person_roster_id
+                        )swap_details
                     from
                         sc_notifications        wn,
                         sc_items                si,
@@ -465,7 +470,8 @@ public class RequestUtils {
                 item_key,
                 notification_id,
                 to_user_id,
-                violation_code
+                violation_code,
+                swap_details
             order by
                 pending_since desc""";
 }

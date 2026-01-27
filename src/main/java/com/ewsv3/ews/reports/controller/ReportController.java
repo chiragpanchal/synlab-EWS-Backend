@@ -1,8 +1,15 @@
 package com.ewsv3.ews.reports.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.reports.dto.requestStatusReport.RequestStatusReportReqBody;
+import com.ewsv3.ews.reports.dto.requestStatusReport.RequestStatusRespDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportReqDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportRespDto;
+import com.ewsv3.ews.reports.dto.timesheetReport.xx_TimesheetReportResponse;
+import com.ewsv3.ews.reports.service.requestStatusReport.RequestStatusReportService;
+import com.ewsv3.ews.reports.dto.rosterAuditReport.RosterAuditReqDto;
+import com.ewsv3.ews.reports.dto.rosterAuditReport.RosterAuditResponseDto;
+import com.ewsv3.ews.reports.service.rosterAuditReport.RosterAuditService;
 import com.ewsv3.ews.reports.service.timesheetReport.TimesheetReportService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +31,14 @@ public class ReportController {
 
     private final JdbcClient jdbcClient;
     private final TimesheetReportService timesheetReportService;
+    private final RosterAuditService rosterAuditService;
+    private final RequestStatusReportService requestStatusReportService;
 
-    public ReportController(JdbcClient jdbcClient, TimesheetReportService timesheetReportService) {
+    public ReportController(JdbcClient jdbcClient, TimesheetReportService timesheetReportService, RosterAuditService rosterAuditService, RequestStatusReportService requestStatusReportService) {
         this.jdbcClient = jdbcClient;
         this.timesheetReportService = timesheetReportService;
+        this.rosterAuditService = rosterAuditService;
+        this.requestStatusReportService = requestStatusReportService;
     }
 
     private Long getCurrentUserId() {
@@ -41,9 +52,9 @@ public class ReportController {
 
     @PostMapping("timesheet-report")
     public ResponseEntity<List<TimesheetReportRespDto>> getTimesheetDetails(@RequestHeader Map<String, String> header,
-                                                                            @RequestParam(defaultValue = "0") int page,
-                                                                            @RequestParam(defaultValue = "500") int size,
-                                                                            @RequestBody TimesheetReportReqDto reqDto) {
+                                                                                @RequestParam(defaultValue = "0") int page,
+                                                                                @RequestParam(defaultValue = "500") int size,
+                                                                                @RequestBody TimesheetReportReqDto reqDto) {
         logger.info("GET_TIMESHEET_REPORT - Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
         try {
             //System.out.println("timesheet-report reqDto:" + reqDto);
@@ -57,6 +68,50 @@ public class ReportController {
 
         }
 
+
+    }
+
+    @PostMapping("roster-audit-report")
+    public ResponseEntity<List<RosterAuditResponseDto>> getRosterAuditReport(@RequestHeader Map<String, String> header,
+                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                             @RequestParam(defaultValue = "500") int size,
+                                                                             @RequestBody RosterAuditReqDto reqDto){
+
+
+        logger.info("roster-audit-report - Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
+        try {
+            //System.out.println("timesheet-report reqDto:" + reqDto);
+            List<RosterAuditResponseDto> rosterAuditReport = this.rosterAuditService.getRosterAuditReport(getCurrentUserId(), page, size, reqDto, this.jdbcClient);
+            logger.info("roster-audit-report - Exit - Time: {}, Page: {}, Size: {}, Response Count: {}", LocalDateTime.now(), page, size, rosterAuditReport.size());
+            return new ResponseEntity<>(rosterAuditReport, HttpStatus.OK);
+        } catch (Error error) {
+            //System.out.println("timesheet-report error:" + error.getMessage());
+            logger.error("roster-audit-report - Exception - Time: {}, Page: {}, Size: {}, Request: {}, Error: {}", LocalDateTime.now(), page, size, reqDto, error.getMessage(), error);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+
+    }
+
+    @PostMapping("request-status-report")
+    public ResponseEntity<List<RequestStatusRespDto>> getRequestStatusReport(@RequestHeader Map<String, String> header,
+                                                                           @RequestParam(defaultValue = "0") int page,
+                                                                           @RequestParam(defaultValue = "500") int size,
+                                                                           @RequestBody RequestStatusReportReqBody reqDto){
+
+
+        logger.info("request-status-report - Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
+        try {
+            //System.out.println("timesheet-report reqDto:" + reqDto);
+            List<RequestStatusRespDto> requestStatusReport = this.requestStatusReportService.getRequestStatusReport(getCurrentUserId(), page, size, reqDto, this.jdbcClient);
+            logger.info("request-status-report - Exit - Time: {}, Page: {}, Size: {}, Response Count: {}", LocalDateTime.now(), page, size, requestStatusReport.size());
+            return new ResponseEntity<>(requestStatusReport, HttpStatus.OK);
+        } catch (Error error) {
+            //System.out.println("timesheet-report error:" + error.getMessage());
+            logger.error("request-status-report - Exception - Time: {}, Page: {}, Size: {}, Request: {}, Error: {}", LocalDateTime.now(), page, size, reqDto, error.getMessage(), error);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
 
     }
 

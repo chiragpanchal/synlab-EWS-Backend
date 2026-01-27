@@ -1092,7 +1092,8 @@ public class RosterService {
         inParamMap.put("p_person_roster_id", reqBody.personRosterId());
         inParamMap.put("p_person_id", reqBody.personId());
         inParamMap.put("p_effective_date", reqBody.effectiveDate());
-        inParamMap.put("p_mode", "DRAG");
+//        inParamMap.put("p_mode", "DRAG");
+        inParamMap.put("p_mode", reqBody.mode());
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
         // System.out.println(inSource);

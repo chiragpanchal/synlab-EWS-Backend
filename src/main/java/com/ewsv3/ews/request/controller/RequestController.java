@@ -186,6 +186,7 @@ public class RequestController {
             List<RequestNotificationResponse> requestNotifications = this.requestService
                     .getRequestNotifications(getCurrentUserId(), jdbcClient);
             logger.info("GET_REQUEST_NOTIFICATIONS - Exit - Time: {}, Response Count: {}", LocalDateTime.now(), requestNotifications.size());
+            logger.info("GET_REQUEST_NOTIFICATIONS - Exit - Time: {}, Response :{}", LocalDateTime.now(), requestNotifications);
             return new ResponseEntity<>(requestNotifications, HttpStatus.OK);
 
         } catch (Exception exception) {
