@@ -743,4 +743,70 @@ public class ServiceUtils {
                 v.group_name,
                 v.seq,
                 v.task_name""";
+
+    public static String shiftGroupSql = """
+            SELECT DISTINCT
+                sg.shift_group_id,
+                sg.shift_group_name
+              FROM
+                sc_shift_group        sg,
+                sc_shift_group_shifts sgs
+             WHERE
+                    sg.enable = 'Y'
+                   AND sgs.shift_group_id = sg.shift_group_id
+             ORDER BY
+                shift_group_name""";
+
+    public static String shiftGroupShiftsSql= """
+            SELECT
+                sgs.shift_group_work_shift_id,
+                sgs.on_call,
+                vsv_oc.value_meaning on_call_meaning,
+                sgs.emergency,
+                vsv_er.value_meaning emergency_meaning,
+                swd.work_duration_id,
+                swd.work_duration_code,
+                swd.work_duration_name,
+                swd.valid_from,
+                swd.valid_to,
+                swd.time_start,
+                swd.break_start,
+                swd.break_end,
+                swd.time_end,
+                swd.enterprise_id,
+                swd.mon,
+                swd.tue,
+                swd.wed,
+                swd.thu,
+                swd.fri,
+                swd.sat,
+                swd.sun,
+                swd.color_code,
+                swd.duration,
+                swd.work_duration_category_id,
+                swd.exception_events,
+                swd.min_work_hrs,
+                swd.max_work_hrs,
+                swd.work_unit,
+                swd.hcm_schedule_id,
+                NULL                 eroster_code,
+                swd.time_hour
+              FROM
+                sc_shift_group_shifts sgs,
+                sc_work_duration      swd,
+                sc_value_sets         vs_oc,
+                sc_value_set_values   vsv_oc,
+                sc_value_sets         vs_er,
+                sc_value_set_values   vsv_er
+             WHERE
+                    sgs.shift_group_id = :shiftGroupId
+                   AND swd.work_duration_id          = sgs.work_duration_id
+                   AND vs_oc.value_set_name (+)      = 'On Call Type'
+                   AND vsv_oc.value_set_id (+)       = vs_oc.value_set_id
+                   AND vsv_oc.value_set_value_id (+) = sgs.on_call
+                   AND vs_er.value_set_name (+)      = 'Emergency Type'
+                   AND vsv_er.value_set_id (+)       = vs_er.value_set_id
+                   AND vsv_er.value_set_value_id (+) = sgs.emergency
+             ORDER BY
+                swd.time_start""";
 }

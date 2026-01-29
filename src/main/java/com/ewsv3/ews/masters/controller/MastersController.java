@@ -2,10 +2,7 @@ package com.ewsv3.ews.masters.controller;
 
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
-import com.ewsv3.ews.masters.dto.TimekeeperProfiles;
-import com.ewsv3.ews.masters.dto.UserDateRequestBody;
-import com.ewsv3.ews.masters.dto.UserProfileReqBody;
-import com.ewsv3.ews.masters.dto.WorkStructureMasters;
+import com.ewsv3.ews.masters.dto.*;
 import com.ewsv3.ews.masters.service.MasterDataService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,6 +84,31 @@ public class MastersController {
         }
 
     }
+
+    @PostMapping("/shift-group-shifts-roster")
+    @CrossOrigin
+    public ResponseEntity<List<ShiftGroupShiftsDto>> getShiftGroupShifts(@RequestHeader Map<String, String> header, @RequestBody ShiftGroupDto reqBody
+    ) {
+        logger.info("shift-group-shifts-roster - Entry - Time: {}, UserId: {}, Request: {}",
+                LocalDateTime.now(), getCurrentUserId(), reqBody);
+
+        try {
+            // System.out.println("work-structure-masters > headers" + header);
+            // System.out.println("work-structure-masters > reqBody" + reqBody);
+            List<ShiftGroupShiftsDto> shiftGroupShifts = this.masterDataService.getShiftGroupShifts(reqBody, this.jdbcClient);
+            logger.info("shift-group-shifts-roster - Exit - Time: {}, UserId: {}, Request: {}, shiftGroupShifts.size(): {}",
+                    LocalDateTime.now(), getCurrentUserId(), reqBody, shiftGroupShifts.size());
+            return new ResponseEntity<>(shiftGroupShifts, HttpStatus.OK);
+        } catch (Error error) {
+            logger.error("shift-group-shifts-roster - Exception - Time: {}, UserId: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), getCurrentUserId(), reqBody, error.getMessage(), error);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+
+    }
+
+
 
 
 }

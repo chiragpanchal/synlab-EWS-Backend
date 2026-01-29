@@ -17,7 +17,8 @@ public record RosterMasters(
         ArrayList<ValueSetDto> onCallDtoList,
         ArrayList<ValueSetDto> emergencyDtoList,
         ArrayList<DepartmentJobDto> departmentJobDtoList,
-        ArrayList<ValueSetDto> deleteRosterReasonList
+        ArrayList<ValueSetDto> deleteRosterReasonList,
+        ArrayList<ShiftGroupDto> shiftGroupDtoList
 ) {
 
     public RosterMasters {
@@ -25,7 +26,7 @@ public record RosterMasters(
     }
 
     public RosterMasters(ArrayList<PersonDto> personDtoList) {
-        this(0, personDtoList, null, null, null, null, null, null, null,null);
+        this(0, personDtoList, null, null, null, null, null, null, null, null, null);
     }
 
     @Override
@@ -41,6 +42,7 @@ public record RosterMasters(
                 ", emergencyDtoList=" + emergencyDtoList +
                 ", departmentJobDtoList=" + departmentJobDtoList +
                 ", deleteRosterReasonList=" + deleteRosterReasonList +
+                ", shiftGroupDtoList=" + shiftGroupDtoList +
                 '}';
     }
 }

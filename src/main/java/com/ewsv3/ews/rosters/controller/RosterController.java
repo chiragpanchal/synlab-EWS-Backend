@@ -235,7 +235,8 @@ public class RosterController {
             // getCurrentUserId());
             RosterDMLResponseDto spotRoster = this.rosterService.createSpotRoster(getCurrentUserId(), requestBody);
             // System.out.println("createSpotRosters spotRoster:" + spotRoster);
-            logger.info("CREATE_SPOT_ROSTERS - Exit - Time: {}, Response: {}", LocalDateTime.now(), spotRoster);
+            logger.info("CREATE_SPOT_ROSTERS - Exit - Time: {}, Response getStatusMessage: {}", LocalDateTime.now(), spotRoster.getStatusMessage());
+            logger.info("CREATE_SPOT_ROSTERS - Exit - Time: {}, Response getDetailMessage: {}", LocalDateTime.now(), spotRoster.getDetailMessage());
             return new ResponseEntity<>(spotRoster, HttpStatus.OK);
         } catch (Exception exception) {
             logger.error("CREATE_SPOT_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",

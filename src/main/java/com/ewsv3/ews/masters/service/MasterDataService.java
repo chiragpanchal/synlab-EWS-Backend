@@ -142,6 +142,13 @@ public class MasterDataService {
         // System.out.printf("\ndepartmentJobDtoList completed");
         // System.out.printf("\ndepartmentJobDtoList
         // ---------------------------------------%s\n", departmentJobDtoList);
+
+        // ---------------------------------------%s\n", departmentJobDtoList)
+
+        List<ShiftGroupDto> shiftGroupDtoList = jdbcClient.sql(shiftGroupSql)
+                .query(ShiftGroupDto.class)
+                .list();
+
         RosterMasters rosterMasters = new RosterMasters(userId,
                 new ArrayList<PersonDto>(personDtoList),
                 new ArrayList<DepartmentDto>(departmentDtoList),
@@ -151,14 +158,15 @@ public class MasterDataService {
                 new ArrayList<ValueSetDto>(oncallDtoList),
                 new ArrayList<ValueSetDto>(emergencyTypeDtoList),
                 new ArrayList<DepartmentJobDto>(departmentJobDtoList),
-                new ArrayList<ValueSetDto>(deleteRosterReasonList));
+                new ArrayList<ValueSetDto>(deleteRosterReasonList),
+                new ArrayList<ShiftGroupDto>(shiftGroupDtoList));
         //System.out.println("\n---------------------------------------rosterMasters %s\n" + rosterMasters);
 
         return rosterMasters;
     }
 
-    public WorkStructureMasters getWorkStructureMasters(Long userId,UserProfileReqBody reqBody,
-                                                 JdbcClient jdbcClient) {
+    public WorkStructureMasters getWorkStructureMasters(Long userId, UserProfileReqBody reqBody,
+                                                        JdbcClient jdbcClient) {
 
         // ServiceUtils serviceUtils = new ServiceUtils();
 
@@ -223,6 +231,17 @@ public class MasterDataService {
         //System.out.println("\n---------------------------------------workStructureMasters %s\n" + workStructureMasters);
 
         return workStructureMasters;
+    }
+
+    public List<ShiftGroupShiftsDto> getShiftGroupShifts(ShiftGroupDto shiftGroupDto, JdbcClient jdbcClient){
+
+        List<ShiftGroupShiftsDto> shiftGroupShiftsDtoList = jdbcClient.sql(shiftGroupShiftsSql)
+                .param("shiftGroupId", shiftGroupDto.shiftGroupId())
+                .query(ShiftGroupShiftsDto.class)
+                .list();
+
+        return shiftGroupShiftsDtoList;
+
     }
 
 

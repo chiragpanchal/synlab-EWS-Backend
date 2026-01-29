@@ -449,8 +449,21 @@ public class RosterService {
                     inParamMap.put("p_department_id", selected.departmentId());
                     inParamMap.put("p_work_location_id", selected.locationId());
                     inParamMap.put("p_work_duration_id", workDurationDtoAssignment.workDurationId());
-                    inParamMap.put("p_on_call", selected.onCallType());
-                    inParamMap.put("p_emergency", selected.emergencyType());
+//                    inParamMap.put("p_on_call", selected.onCallType());
+//                    inParamMap.put("p_emergency", selected.emergencyType());
+
+                    if (workDurationDtoAssignment.onCallType() != null && !workDurationDtoAssignment.onCallType().isBlank()) {
+                        inParamMap.put("p_on_call", workDurationDtoAssignment.onCallType());
+                    } else {
+                        inParamMap.put("p_on_call", selected.onCallType());
+                    }
+                    if (workDurationDtoAssignment.emergencyType() != null && !workDurationDtoAssignment.emergencyType().isBlank()) {
+                        inParamMap.put("p_emergency", workDurationDtoAssignment.emergencyType());
+                    } else {
+                        inParamMap.put("p_emergency", selected.emergencyType());
+                    }
+
+//                    inParamMap.put("p_emergency", workDurationDtoAssignment.emergencyType());
                     inParamMap.put("p_sun", workDurationDtoAssignment.sun());
                     inParamMap.put("p_mon", workDurationDtoAssignment.mon());
                     inParamMap.put("p_tue", workDurationDtoAssignment.tue());
@@ -518,9 +531,11 @@ public class RosterService {
             // System.out.println("error:" + exception.getMessage());
             responseDto.setStatusMessage("E");
             responseDto.setDetailMessage(exception.getMessage());
+
+            return responseDto;
         }
 
-        return null;
+//        return null;
 
     }
 

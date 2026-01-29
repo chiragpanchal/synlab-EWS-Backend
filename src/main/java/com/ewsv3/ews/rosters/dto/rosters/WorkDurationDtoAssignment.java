@@ -16,5 +16,7 @@ public record WorkDurationDtoAssignment(
         String sun,
         String duration,
         String timeHour,
-        long workDurationCategoryId) {
+        long workDurationCategoryId,
+        String emergencyType,
+        String onCallType) {
 }
