@@ -1,11 +1,15 @@
 package com.ewsv3.ews.reports.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.UserIdReqDto;
+import com.ewsv3.ews.commons.dto.UserProfileResponse;
+import com.ewsv3.ews.commons.service.CommonService;
+import com.ewsv3.ews.reports.dto.reportMasters.AllReportMasters;
 import com.ewsv3.ews.reports.dto.requestStatusReport.RequestStatusReportReqBody;
 import com.ewsv3.ews.reports.dto.requestStatusReport.RequestStatusRespDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportReqDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportRespDto;
-import com.ewsv3.ews.reports.dto.timesheetReport.xx_TimesheetReportResponse;
+import com.ewsv3.ews.reports.service.reportMaters.ReportMasterService;
 import com.ewsv3.ews.reports.service.requestStatusReport.RequestStatusReportService;
 import com.ewsv3.ews.reports.dto.rosterAuditReport.RosterAuditReqDto;
 import com.ewsv3.ews.reports.dto.rosterAuditReport.RosterAuditResponseDto;
@@ -30,15 +34,19 @@ public class ReportController {
     private static final Logger logger = LoggerFactory.getLogger(ReportController.class);
 
     private final JdbcClient jdbcClient;
+    private final CommonService commonService;
     private final TimesheetReportService timesheetReportService;
     private final RosterAuditService rosterAuditService;
     private final RequestStatusReportService requestStatusReportService;
+    private final ReportMasterService reportMasterService;
 
-    public ReportController(JdbcClient jdbcClient, TimesheetReportService timesheetReportService, RosterAuditService rosterAuditService, RequestStatusReportService requestStatusReportService) {
+    public ReportController(JdbcClient jdbcClient, CommonService commonService, TimesheetReportService timesheetReportService, RosterAuditService rosterAuditService, RequestStatusReportService requestStatusReportService, ReportMasterService reportMasterService) {
         this.jdbcClient = jdbcClient;
+        this.commonService = commonService;
         this.timesheetReportService = timesheetReportService;
         this.rosterAuditService = rosterAuditService;
         this.requestStatusReportService = requestStatusReportService;
+        this.reportMasterService = reportMasterService;
     }
 
     private Long getCurrentUserId() {
@@ -111,6 +119,24 @@ public class ReportController {
             logger.error("request-status-report - Exception - Time: {}, Page: {}, Size: {}, Request: {}, Error: {}", LocalDateTime.now(), page, size, reqDto, error.getMessage(), error);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 
+        }
+
+    }
+
+    @GetMapping("report-masters")
+    public ResponseEntity<AllReportMasters> getReportMasters(@RequestHeader Map<String, String> header){
+        logger.info("report-masters - Entry - Time: {}", LocalDateTime.now());
+        try{
+            UserProfileResponse userFromUserId = this.commonService
+                    .getUserFromUserId(new UserIdReqDto(getCurrentUserId()), jdbcClient);
+            AllReportMasters allReportMasters = reportMasterService.getAllReportMasters(getCurrentUserId(), userFromUserId.personId(), jdbcClient);
+            logger.info("report-masters  - Exit - Time: {}, allReportMasters.getReportDepartmentDtoList().size(): {}", LocalDateTime.now(), allReportMasters.getReportDepartmentDtoList().size() );
+            logger.info("report-masters  - Exit - Time: {}, allReportMasters.getReportJobDtoList().size(): {}", LocalDateTime.now(), allReportMasters.getReportJobDtoList().size() );
+            return new ResponseEntity<>(allReportMasters, HttpStatus.OK);
+
+        } catch (Exception e) {
+            logger.error("report-masters - Exception - Time: {}  Error: {}", LocalDateTime.now(),  e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }

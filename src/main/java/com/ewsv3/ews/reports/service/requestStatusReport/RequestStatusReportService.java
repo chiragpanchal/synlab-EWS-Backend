@@ -19,12 +19,18 @@ public class RequestStatusReportService {
                                                              RequestStatusReportReqBody reqBody,
                                                              JdbcClient jdbcClient
                                                              ){
+        String employeeTextParam = "%" + (reqBody.employeeText() == null ? "" : reqBody.employeeText()) + "%";
+        String pendingWithParam = "%" + (reqBody.pendingWith() == null ? "" : reqBody.pendingWith()) + "%";
 
         List<RequestStatusRespDto> statusRespDtoList = jdbcClient.sql(RequestStatusReportSql)
                 .param("startDate", reqBody.startDate())
                 .param("endDate", reqBody.endDate())
                 .param("requestName", reqBody.requestName())
                 .param("status", reqBody.status())
+                .param("departmentId", reqBody.departmentId())
+                .param("text", employeeTextParam)
+                .param("pendingWith", pendingWithParam)
+                .param("jobTitleId",reqBody.jobTitleId())
                 .param("offset", page)
                 .param("pageSize", size)
                 .query(RequestStatusRespDto.class)

@@ -6,6 +6,10 @@ import java.time.LocalDateTime;
 public record RequestStatusRespDto(
         String fullName,
         String employeeNumber,
+        String departmentName,
+        String jobTitle,
+        String gradeName,
+        String locationName,
         String requestName,
         String reason,
         LocalDate dateStart,

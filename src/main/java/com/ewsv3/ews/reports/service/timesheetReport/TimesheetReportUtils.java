@@ -58,65 +58,30 @@ public class TimesheetReportUtils {
                 )            status,
                 vn.pending_with,
                 (
-                    SELECT
-                        per.full_name
-                        || ' ['
-                        || per.employee_number
-                        || ']'
-                      FROM
-                        sc_notif_comments wc,
-                        sc_person_v       per
-                     WHERE
-                        wc.notif_comment_id IN (
-                            SELECT
-                                MIN(wc2.notif_comment_id)
-                              FROM
-                                sc_notif_comments wc2,
-                                sc_notifications  ns
-                             WHERE
-                                    1 = 1
-                --wc2.notification_id = wc.notification_id
-                                   AND ns.notification_id = wc2.notification_id
-                                   AND wc2.action_taken   = 'APPROVED'
-                                   AND ns.item_key        = tts.item_key
-                        )
-                           AND wc.created_by = per.user_id
-                )            first_approver,
-                (
-                    SELECT
-                        per.full_name
-                        || ' ['
-                        || per.employee_number
-                        || ']'
-                      FROM
-                        sc_notif_comments wc,
-                        sc_person_v       per
-                     WHERE
-                        wc.notif_comment_id IN (
-                            SELECT
-                                MAX(wc2.notif_comment_id)
-                              FROM
-                                sc_notif_comments wc2,
-                                sc_notifications  ns
-                             WHERE
-                                    wc2.notification_id = wc.notification_id
-                                   AND ns.notification_id = wc2.notification_id
-                                   AND wc2.action_taken   = 'APPROVED'
-                                   AND ns.item_key        = tts.item_key
-                        )
-                           AND wc.notif_comment_id NOT IN (
-                            SELECT
-                                MIN(wc2.notif_comment_id)
-                              FROM
-                                sc_notif_comments wc2,
-                                sc_notifications  ns
-                             WHERE
-                                    ns.notification_id = wc2.notification_id
-                                   AND wc2.action_taken = 'APPROVED'
-                                   AND ns.item_key      = tts.item_key
-                        )
-                           AND wc.created_by = per.user_id
-                )            second_approver,
+                     SELECT
+                         approed_by
+                       FROM
+                         sc_approved_notifications_v v
+                      WHERE
+                             v.item_key = tts.item_key
+                            AND ROWNUM < 2
+                 )                 first_approver,
+                 (
+                     SELECT
+                         approed_by
+                       FROM
+                         (
+                             SELECT
+                                 approed_by
+                               FROM
+                                 sc_approved_notifications_v v
+                              WHERE
+                                     v.item_key = tts.item_key
+                                    AND ROWNUM >= 2
+                         )
+                      WHERE
+                         ROWNUM < 2
+                 )                 second_approver,
                 to_char(
                     tts.sch_start_time,
                     'hh:mi am'
@@ -164,7 +129,7 @@ public class TimesheetReportUtils {
                    AND vn.item_key (+)    = si.item_key
                    and sub_per.person_id(+) = si.CREATED_BY_PERSON_ID
                    AND tts.effective_date BETWEEN :startDate AND :endDate
-                   and (:status is null 
+                   and (:status is null
                    OR decode(
                                 tts.item_key,
                                 NULL,
@@ -176,8 +141,8 @@ public class TimesheetReportUtils {
                                     'Approved'
                                 )
                             ) = :status)
-                   AND (:payCodeName is null 
-                   OR pc.pay_code_name   =  :payCodeName)                
+                   AND (:payCodeName is null
+                   OR pc.pay_code_name   =  :payCodeName)
                 and (:departmentId = 0 OR sd.department_id = :departmentId )
                 and (:jobTitleId = 0 OR sj.job_title_id = :jobTitleId )
                    AND lower(

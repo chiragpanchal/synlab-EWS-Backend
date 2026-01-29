@@ -8,6 +8,10 @@ public record RequestStatusReportReqBody (
         LocalDate startDate,
         LocalDate endDate,
         String requestName,
-        String status
+        String status,
+        Long departmentId,
+        Long jobTitleId,
+        String employeeText,
+        String pendingWith
 ){
 }

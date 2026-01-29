@@ -1,11 +1,9 @@
 package com.ewsv3.ews.reports.service.timesheetReport;
 
-import com.ewsv3.ews.openShifts.dto.allocation.SuggestionPersonDto;
 import com.ewsv3.ews.reports.controller.ReportController;
 import com.ewsv3.ews.reports.dto.ReportPersonDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportReqDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportRespDto;
-import com.ewsv3.ews.reports.dto.timesheetReport.xx_TimesheetReportResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
@@ -14,10 +12,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.ewsv3.ews.reports.service.timesheetReport.TimesheetReportUtils.*;
-import static java.awt.SystemColor.text;
 
 @Service
 public class TimesheetReportService {
@@ -38,7 +34,7 @@ public class TimesheetReportService {
             // line manager
             personList = jdbcClient.sql(sqlLineManagerRecordsReportSQL)
                     .param("userId", userId)
-                    .param("text", "%" + text + "%")
+                    .param("text", employeeTextParam)
                     .param("status", reqDto.status())
                     .param("payCodeName", reqDto.payCodeName())
                     .param("text", employeeTextParam)
@@ -54,7 +50,7 @@ public class TimesheetReportService {
             // Timekeeper Profile
             personList = jdbcClient.sql(sqlTimesheetPersonListReportSQL)
                     .param("userId", userId)
-                    .param("text", "%" + text + "%")
+                    .param("text", employeeTextParam)
                     .param("status", reqDto.status())
                     .param("payCodeName", reqDto.payCodeName())
 //                    .param("pendingWithParam",pendingWithParam)

@@ -6,6 +6,10 @@ public class RequestStatusReportUtils {
             SELECT
                 q.full_name,
                 q.employee_number,
+                q.department_name,
+                q.job_title,
+                q.grade_name,
+                q.location_name,
                 q.request_name,
                 q.reason,
                 q.date_start,
@@ -21,31 +25,16 @@ public class RequestStatusReportUtils {
                 q.day_less_mins,
                 q.schedule_details,
                 q.punch_details,
-                (
-                    SELECT
-                        LISTAGG(mgr.full_name,
-                                ', ') WITHIN GROUP(
-                         ORDER BY
-                            mgr.full_name
-                        )
-                      FROM
-                        sc_notifications wn,
-                        sc_person_v      mgr
-                     WHERE
-                            wn.item_key = q.item_key
-                           AND upper(
-                            wn.status
-                        ) = 'OPEN'
-                           AND wn.action_type   = 'Approval'
-                           AND ( ( wn.more_info_user_id = mgr.user_id )
-                            OR ( wn.more_info_user_id IS NULL
-                           AND wn.to_user_id    = mgr.user_id ) )
-                ) pending_on
+                q.pending_on
               FROM
                 (
                     SELECT
                         per.full_name,
                         per.employee_number,
+                        per.department_name,
+                        per.job_title,
+                        per.grade_name,
+                        per.location_name,
                         srm.request_name,
                         srr.reason,
                         date_start,
@@ -76,7 +65,7 @@ public class RequestStatusReportUtils {
                             sapr.time_end,
                             'hh:mi am'
                         ) )                request_time,
-            --            sapr.time_end,
+                        --            sapr.time_end,
                         sapr.comments,
                         si.item_key,
                         si.start_date      submit_date,
@@ -97,16 +86,18 @@ public class RequestStatusReportUtils {
                              || ' - '
                              || swd.time_start)
                         )                  schedule_details,
-                        sapr.punch_details
+                        sapr.punch_details,
+                        vn.pending_with    pending_on
                       FROM
-                        sc_items                si,
-                        sc_tasks                st,
-                        sc_person_v             per,
-                        sc_person_requests_appr sapr,
-                        sc_requests_master      srm,
-                        sc_request_reasons      srr,
-                        sc_timecards            sc,
-                        sc_work_duration        swd
+                        sc_items                   si,
+                        sc_tasks                   st,
+                        sc_person_v                per,
+                        sc_person_requests_appr    sapr,
+                        sc_requests_master         srm,
+                        sc_request_reasons         srr,
+                        sc_timecards               sc,
+                        sc_work_duration           swd,
+                        sc_pending_notifications_v vn
                      WHERE
                             st.task_id = si.task_id
                            AND per.person_id             = si.selected_person_id
@@ -118,8 +109,31 @@ public class RequestStatusReportUtils {
                            AND sc.person_id              = sapr.person_id
                            AND sc.effective_date         = sapr.date_start
                            AND sapr.date_start BETWEEN :startDate AND :endDate
-                           AND (:requestName is null
-                            OR srm.request_name = :requestName)
+                           AND ( lower(
+                            per.employee_number
+                        ) LIKE lower(
+                            :text
+                        )
+                            OR lower(
+                            per.full_name
+                        ) LIKE lower(
+                            :text
+                        ) )
+                           AND vn.item_key (+)           = sapr.item_key
+                           AND ( :departmentId = 0
+                            OR per.department_id          = :departmentId )
+                           AND ( :jobTitleId = 0
+                            OR per.job_title_id           = :jobTitleId )
+                           AND lower(
+                            nvl(
+                                vn.pending_with,
+                                '%'
+                            )
+                        ) LIKE lower(
+                            :pendingWith
+                        )
+                           AND ( :requestName IS NULL
+                            OR srm.request_name           = :requestName )
                            AND ( :status = 'Approved'
                            AND si.completion_date IS NOT NULL
                             OR :status                    = 'Pending Approval'
@@ -132,5 +146,5 @@ public class RequestStatusReportUtils {
                 q.date_start,
                 q.time_start,
                 q.full_name
-             OFFSET :offset * :pageSize ROWS FETCH NEXT :pageSize ROWS ONLY""";
+            OFFSET :offset * :pageSize ROWS FETCH NEXT :pageSize ROWS ONLY""";
 }
