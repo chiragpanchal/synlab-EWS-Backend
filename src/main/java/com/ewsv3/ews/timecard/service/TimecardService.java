@@ -32,7 +32,7 @@ public class TimecardService {
         Map<String, Object> personDateMap = new HashMap<>();
 
         //System.out.println("-------SelfTiemcardImpl");
-        //System.out.println("-------personId" + personId);
+        System.out.println("-------personId" + personId);
         //System.out.println("-------startDate" + startDate);
         //System.out.println("-------endDate" + endDate);
 

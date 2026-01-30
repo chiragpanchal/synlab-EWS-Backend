@@ -26,6 +26,7 @@ public class TimecardUtils {
                 (lv.absence_name ||'-'|| ph.holiday_name) time_type,
                 nvl(st.primary_row,'N') primary_row,
                 st.violation_code,
+                st.occurences,
                 sw.work_duration_code,
                 (
                         select

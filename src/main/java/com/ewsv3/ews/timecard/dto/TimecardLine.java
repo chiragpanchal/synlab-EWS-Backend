@@ -30,16 +30,16 @@ public class TimecardLine {
     private String primaryRow;
     private String timeType;
     private String violationCode;
+    private Integer occurences;
     private String workDurationCode;
     private Integer requestCounts;
     private List<TimecardActuals> timecardActuals;
     private List<RequestResp> requestRespList;
 
     public TimecardLine() {
-
     }
 
-    public TimecardLine(Long timecardId, Long personRosterId, LocalDate effectiveDate, Long jobTitleId, String jobTitle, Long departmentId, String departmentName, Long workLocationId, String locationName, String onCall, String emergency, String project, String task, LocalDateTime schTimeStart, LocalDateTime schTimeEnd, Double schHrs, LocalDateTime inTime, LocalDateTime outTime, Double actHrs, String primaryRow, String timeType, String violationCode, String workDurationCode, Integer requestCounts, List<TimecardActuals> timecardActuals, List<RequestResp> requestRespList) {
+    public TimecardLine(Long timecardId, Long personRosterId, LocalDate effectiveDate, Long jobTitleId, String jobTitle, Long departmentId, String departmentName, Long workLocationId, String locationName, String onCall, String emergency, String project, String task, LocalDateTime schTimeStart, LocalDateTime schTimeEnd, Double schHrs, LocalDateTime inTime, LocalDateTime outTime, Double actHrs, String primaryRow, String timeType, String violationCode,Integer occurences, String workDurationCode, Integer requestCounts, List<TimecardActuals> timecardActuals, List<RequestResp> requestRespList) {
         this.timecardId = timecardId;
         this.personRosterId = personRosterId;
         this.effectiveDate = effectiveDate;
@@ -62,6 +62,7 @@ public class TimecardLine {
         this.primaryRow = primaryRow;
         this.timeType = timeType;
         this.violationCode = violationCode;
+        this.occurences = occurences;
         this.workDurationCode = workDurationCode;
         this.requestCounts = requestCounts;
         this.timecardActuals = timecardActuals;
@@ -242,6 +243,14 @@ public class TimecardLine {
 
     public void setViolationCode(String violationCode) {
         this.violationCode = violationCode;
+    }
+
+    public Integer getOccurences() {
+        return occurences;
+    }
+
+    public void setOccurences(Integer occurences) {
+        this.occurences = occurences;
     }
 
     public String getWorkDurationCode() {
