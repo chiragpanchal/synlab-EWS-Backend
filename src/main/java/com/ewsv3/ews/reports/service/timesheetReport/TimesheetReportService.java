@@ -46,6 +46,21 @@ public class TimesheetReportService {
                     .query(ReportPersonDto.class)
                     .list();
 
+        }else if (reqDto.profileId() == 1) {
+            // all reportees
+            personList = jdbcClient.sql(sqlAllReporteesReportSQL)
+                    .param("userId", userId)
+                    .param("text", employeeTextParam)
+                    .param("status", reqDto.status())
+                    .param("payCodeName", reqDto.payCodeName())
+                    .param("text", employeeTextParam)
+//                    .param("pendingWithParam", pendingWithParam)
+                    .param("startDate", reqDto.startDate())
+                    .param("endDate", reqDto.endDate())
+                    .param("departmentId",reqDto.departmentId())
+                    .param("jobTitleId",reqDto.jobTitleId())
+                    .query(ReportPersonDto.class)
+                    .list();
         } else {
             // Timekeeper Profile
             personList = jdbcClient.sql(sqlTimesheetPersonListReportSQL)

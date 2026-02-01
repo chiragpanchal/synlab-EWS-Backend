@@ -2,6 +2,136 @@ package com.ewsv3.ews.reports.service.reportMaters;
 
 public class ReportMastersUtils {
 
+    /*PERSON*/
+    public static String reportPersonTKSQL= """
+            SELECT DISTINCT
+                tkv.person_id,
+                tkv.employee_number,
+                tkv.person_name,
+                tkv.department_name,
+                tkv.job_title,
+                tkv.grade_name,
+                tkv.location_name
+              FROM
+                sc_timekeeper_person_v tkv
+             WHERE
+                    tkv.timekeeper_user_id = :userId
+                   AND tkv.profile_id = :profileId
+                   AND ( lower(
+                                   tkv.employee_number
+                               ) LIKE lower(
+                                   :text
+                               )
+                                   OR lower(
+                                   tkv.person_name
+                               ) LIKE lower(
+                                   :text
+                               ) )
+                   AND nvl(
+                    tkv.hire_date,
+                    :startDate
+                ) <= :startDate
+                   AND nvl(
+                    tkv.termination_date,
+                    :endDate
+                ) >= :endDate
+             ORDER BY
+                tkv.person_name
+            OFFSET :offset * :pageSize ROWS
+             FETCH NEXT :pageSize ROWS ONLY""";
+
+    public static String reportPersonDirectReporteesSQL= """
+            SELECT DISTINCT
+                per.person_id,
+                per.employee_number,
+                per.full_name person_name,
+                per.department_name,
+                per.job_title,
+                per.grade_name,
+                per.location_name
+              FROM
+                sc_person_v per
+             WHERE
+                EXISTS (
+                    SELECT
+                        'Y'
+                      FROM
+                        sc_person_manager spm
+                     WHERE
+                            spm.manager_id = :personId
+                           AND spm.person_id = per.person_id
+                )
+                AND ( lower(
+                                per.employee_number
+                            ) LIKE lower(
+                                :text
+                            )
+                                OR lower(
+                                per.full_name
+                            ) LIKE lower(
+                                :text
+                            ) )
+                   AND nvl(
+                    per.hire_date,
+                    :startDate
+                ) <= :startDate
+                   AND nvl(
+                    per.termination_date,
+                    :endDate
+                ) >= :endDate
+             ORDER BY
+                per.full_name
+            OFFSET :offset * :pageSize ROWS
+             FETCH NEXT :pageSize ROWS ONLY""";
+
+    public static String reportPersonAllReporteesSQL= """
+            SELECT DISTINCT
+                per.person_id,
+                per.employee_number,
+                per.full_name person_name,
+                per.department_name,
+                per.job_title,
+                per.grade_name,
+                per.location_name
+              FROM
+                sc_person_v per
+             WHERE
+                EXISTS (
+                    SELECT
+                        'Y'
+                      FROM
+                        sc_person_manager spm
+                     WHERE
+                        spm.person_id = per.person_id
+                    START WITH
+                        spm.manager_id = :personId
+                    CONNECT BY
+                        PRIOR spm.manager_id = spm.person_id
+                )
+                AND ( lower(
+                                per.employee_number
+                            ) LIKE lower(
+                                :text
+                            )
+                                OR lower(
+                                per.full_name
+                            ) LIKE lower(
+                                :text
+                            ) )
+                   AND nvl(
+                    per.hire_date,
+                    :startDate
+                ) <= :startDate
+                   AND nvl(
+                    per.termination_date,
+                    :endDate
+                ) >= :endDate
+             ORDER BY
+                per.full_name
+            OFFSET :offset * :pageSize ROWS
+             FETCH NEXT :pageSize ROWS ONLY""";
+
+
     /*DEPARTMENT*/
     public static String reportDepartmentTKSQL= """
             SELECT DISTINCT

@@ -4,6 +4,7 @@ import com.ewsv3.ews.reports.dto.reportMasters.*;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.ewsv3.ews.reports.service.reportMaters.ReportMastersUtils.*;
@@ -67,6 +68,58 @@ public class ReportMasterService {
         );
 
         return allReportMaters;
+
+    }
+
+    public List<ReportPersonDto> getReportPerson(Long userId, Long personId, int page,
+                                                 int size, ReportPersonReqDto reqDto, JdbcClient jdbcClient) {
+
+
+        String employeeTextParam = "%" + (reqDto.text() == null ? "" : reqDto.text()) + "%";
+        List<ReportPersonDto> personList = new ArrayList<>();
+
+//        System.out.println("getReportPerson employeeTextParam:"+employeeTextParam);
+//        System.out.println("getReportPerson reqDto:"+reqDto);
+//        System.out.println("getReportPerson userId:"+userId);
+//        System.out.println("getReportPerson personId:"+personId);
+
+        if (reqDto.profileId() == 0) {
+            //Direct Reportees
+            personList = jdbcClient.sql(reportPersonDirectReporteesSQL)
+                    .param("personId", personId)
+                    .param("startDate", reqDto.startDate())
+                    .param("endDate", reqDto.endDate())
+                    .param("text", employeeTextParam)
+                    .param("offset", page)
+                    .param("pageSize", size)
+                    .query(ReportPersonDto.class)
+                    .list();
+        } else if (reqDto.profileId() == 1) {
+            //All Reportees
+            personList = jdbcClient.sql(reportPersonAllReporteesSQL)
+                    .param("personId", personId)
+                    .param("startDate", reqDto.startDate())
+                    .param("endDate", reqDto.endDate())
+                    .param("text", employeeTextParam)
+                    .param("offset", page)
+                    .param("pageSize", size)
+                    .query(ReportPersonDto.class)
+                    .list();
+        } else {
+            personList = jdbcClient.sql(reportPersonTKSQL)
+                    .param("userId", userId)
+                    .param("profileId", reqDto.profileId())
+                    .param("startDate", reqDto.startDate())
+                    .param("endDate", reqDto.endDate())
+                    .param("text", employeeTextParam)
+                    .param("offset", page)
+                    .param("pageSize", size)
+                    .query(ReportPersonDto.class)
+                    .list();
+
+        }
+
+        return personList;
 
     }
 

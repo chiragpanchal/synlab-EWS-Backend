@@ -4,11 +4,14 @@ import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.commons.dto.UserIdReqDto;
 import com.ewsv3.ews.commons.dto.UserProfileResponse;
 import com.ewsv3.ews.commons.service.CommonService;
+import com.ewsv3.ews.reports.dto.attendaneDetails.AttendanceDetailsDto;
+import com.ewsv3.ews.reports.dto.attendaneDetails.AttendanceDetailsReqDto;
 import com.ewsv3.ews.reports.dto.reportMasters.AllReportMasters;
 import com.ewsv3.ews.reports.dto.requestStatusReport.RequestStatusReportReqBody;
 import com.ewsv3.ews.reports.dto.requestStatusReport.RequestStatusRespDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportReqDto;
 import com.ewsv3.ews.reports.dto.timesheetReport.TimesheetReportRespDto;
+import com.ewsv3.ews.reports.service.attendaneDetails.AttendanceDetailsService;
 import com.ewsv3.ews.reports.service.reportMaters.ReportMasterService;
 import com.ewsv3.ews.reports.service.requestStatusReport.RequestStatusReportService;
 import com.ewsv3.ews.reports.dto.rosterAuditReport.RosterAuditReqDto;
@@ -39,14 +42,16 @@ public class ReportController {
     private final RosterAuditService rosterAuditService;
     private final RequestStatusReportService requestStatusReportService;
     private final ReportMasterService reportMasterService;
+    private final AttendanceDetailsService attendanceDetailsService;
 
-    public ReportController(JdbcClient jdbcClient, CommonService commonService, TimesheetReportService timesheetReportService, RosterAuditService rosterAuditService, RequestStatusReportService requestStatusReportService, ReportMasterService reportMasterService) {
+    public ReportController(JdbcClient jdbcClient, CommonService commonService, TimesheetReportService timesheetReportService, RosterAuditService rosterAuditService, RequestStatusReportService requestStatusReportService, ReportMasterService reportMasterService, AttendanceDetailsService attendanceDetailsService) {
         this.jdbcClient = jdbcClient;
         this.commonService = commonService;
         this.timesheetReportService = timesheetReportService;
         this.rosterAuditService = rosterAuditService;
         this.requestStatusReportService = requestStatusReportService;
         this.reportMasterService = reportMasterService;
+        this.attendanceDetailsService = attendanceDetailsService;
     }
 
     private Long getCurrentUserId() {
@@ -60,9 +65,9 @@ public class ReportController {
 
     @PostMapping("timesheet-report")
     public ResponseEntity<List<TimesheetReportRespDto>> getTimesheetDetails(@RequestHeader Map<String, String> header,
-                                                                                @RequestParam(defaultValue = "0") int page,
-                                                                                @RequestParam(defaultValue = "500") int size,
-                                                                                @RequestBody TimesheetReportReqDto reqDto) {
+                                                                            @RequestParam(defaultValue = "0") int page,
+                                                                            @RequestParam(defaultValue = "500") int size,
+                                                                            @RequestBody TimesheetReportReqDto reqDto) {
         logger.info("GET_TIMESHEET_REPORT - Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
         try {
             //System.out.println("timesheet-report reqDto:" + reqDto);
@@ -72,7 +77,7 @@ public class ReportController {
         } catch (Error error) {
             //System.out.println("timesheet-report error:" + error.getMessage());
             logger.error("GET_TIMESHEET_REPORT - Exception - Time: {}, Page: {}, Size: {}, Request: {}, Error: {}", LocalDateTime.now(), page, size, reqDto, error.getMessage(), error);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         }
 
@@ -83,7 +88,7 @@ public class ReportController {
     public ResponseEntity<List<RosterAuditResponseDto>> getRosterAuditReport(@RequestHeader Map<String, String> header,
                                                                              @RequestParam(defaultValue = "0") int page,
                                                                              @RequestParam(defaultValue = "500") int size,
-                                                                             @RequestBody RosterAuditReqDto reqDto){
+                                                                             @RequestBody RosterAuditReqDto reqDto) {
 
 
         logger.info("roster-audit-report - Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
@@ -95,7 +100,7 @@ public class ReportController {
         } catch (Error error) {
             //System.out.println("timesheet-report error:" + error.getMessage());
             logger.error("roster-audit-report - Exception - Time: {}, Page: {}, Size: {}, Request: {}, Error: {}", LocalDateTime.now(), page, size, reqDto, error.getMessage(), error);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         }
 
@@ -103,9 +108,9 @@ public class ReportController {
 
     @PostMapping("request-status-report")
     public ResponseEntity<List<RequestStatusRespDto>> getRequestStatusReport(@RequestHeader Map<String, String> header,
-                                                                           @RequestParam(defaultValue = "0") int page,
-                                                                           @RequestParam(defaultValue = "500") int size,
-                                                                           @RequestBody RequestStatusReportReqBody reqDto){
+                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                             @RequestParam(defaultValue = "500") int size,
+                                                                             @RequestBody RequestStatusReportReqBody reqDto) {
 
 
         logger.info("request-status-report - Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
@@ -117,26 +122,51 @@ public class ReportController {
         } catch (Error error) {
             //System.out.println("timesheet-report error:" + error.getMessage());
             logger.error("request-status-report - Exception - Time: {}, Page: {}, Size: {}, Request: {}, Error: {}", LocalDateTime.now(), page, size, reqDto, error.getMessage(), error);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
         }
 
     }
 
     @GetMapping("report-masters")
-    public ResponseEntity<AllReportMasters> getReportMasters(@RequestHeader Map<String, String> header){
+    public ResponseEntity<AllReportMasters> getReportMasters(@RequestHeader Map<String, String> header) {
         logger.info("report-masters - Entry - Time: {}", LocalDateTime.now());
-        try{
+        try {
             UserProfileResponse userFromUserId = this.commonService
                     .getUserFromUserId(new UserIdReqDto(getCurrentUserId()), jdbcClient);
             AllReportMasters allReportMasters = reportMasterService.getAllReportMasters(getCurrentUserId(), userFromUserId.personId(), jdbcClient);
-            logger.info("report-masters  - Exit - Time: {}, allReportMasters.getReportDepartmentDtoList().size(): {}", LocalDateTime.now(), allReportMasters.getReportDepartmentDtoList().size() );
-            logger.info("report-masters  - Exit - Time: {}, allReportMasters.getReportJobDtoList().size(): {}", LocalDateTime.now(), allReportMasters.getReportJobDtoList().size() );
+            logger.info("report-masters  - Exit - Time: {}, allReportMasters.getReportDepartmentDtoList().size(): {}", LocalDateTime.now(), allReportMasters.getReportDepartmentDtoList().size());
+            logger.info("report-masters  - Exit - Time: {}, allReportMasters.getReportJobDtoList().size(): {}", LocalDateTime.now(), allReportMasters.getReportJobDtoList().size());
             return new ResponseEntity<>(allReportMasters, HttpStatus.OK);
 
         } catch (Exception e) {
-            logger.error("report-masters - Exception - Time: {}  Error: {}", LocalDateTime.now(),  e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("report-masters - Exception - Time: {}  Error: {}", LocalDateTime.now(), e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+    }
+
+
+    @PostMapping("attendance-details-report")
+    public ResponseEntity<List<AttendanceDetailsDto>> getAttendanecDetailsReport(@RequestHeader Map<String, String> header,
+                                                                                 @RequestParam(defaultValue = "0") int page,
+                                                                                 @RequestParam(defaultValue = "500") int size,
+                                                                                 @RequestBody AttendanceDetailsReqDto reqDto) {
+
+
+        logger.info("attendance-details-report- Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
+        try {
+            UserProfileResponse userFromUserId = this.commonService
+                    .getUserFromUserId(new UserIdReqDto(getCurrentUserId()), jdbcClient);
+            //System.out.println("timesheet-report reqDto:" + reqDto);
+            List<AttendanceDetailsDto> attendanceDetails = this.attendanceDetailsService.getAttendanceDetails(getCurrentUserId(), userFromUserId.personId(), page, size, reqDto, this.jdbcClient);
+            logger.info("attendance-details-report - Exit - Time: {}, Page: {}, Size: {}, Response Count: {}", LocalDateTime.now(), page, size, attendanceDetails.size());
+            return new ResponseEntity<>(attendanceDetails, HttpStatus.OK);
+        } catch (Error error) {
+            //System.out.println("timesheet-report error:" + error.getMessage());
+            logger.error("attendance-details-report - Exception - Time: {}, Page: {}, Size: {}, Request: {}, Error: {}", LocalDateTime.now(), page, size, reqDto, error.getMessage(), error);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
         }
 
     }

@@ -202,6 +202,53 @@ public class TimesheetReportUtils {
                     ) >= :endDate
             order by per.full_name""";
 
+    public static String sqlAllReporteesReportSQL= """
+            select
+                            per.person_id,
+                            per.assignment_id,
+                            per.employee_number,
+                            per.assignment_number,
+                            per.full_name person_name,
+                            per.job_title,
+                            per.department_name,
+                            per.grade_name,
+                            per.user_id   person_user_id
+                        from
+                            sc_person_manager pm,
+                            sc_person_v       per
+                        where exists (
+                             SELECT
+                                'Y'
+                              FROM
+                                sc_person_manager spm
+                             WHERE spm.person_id = per.person_id
+                             START WITH spm.manager_id = :personId
+                             CONNECT BY PRIOR spm.manager_id= spm.person_id
+                        )
+                            and (:departmentId = 0 OR per.department_id= :departmentId )
+                            and (:jobTitleId = 0 OR per.job_Title_Id= :jobTitleId )
+                            and 'Y'= sc_timesheet_status_filter_f(p_person_id=> pm.person_id , p_start_date=>:startDate , p_end_date=> :endDate ,p_tts_timesheet_id => null, p_filter_flag=> :status )
+                            and 'Y'= sc_timesheet_pay_code_filter_f(p_person_id=> pm.person_id , p_start_date=>:startDate , p_end_date=> :endDate , p_tts_timesheet_id => null, p_pay_code_flag=> :payCodeName )
+                            and ( lower(
+                                        per.employee_number
+                                    ) like lower(
+                                        :text
+                                    )
+                                          or lower(
+                                        per.full_name
+                                    ) like lower(
+                                        :text
+                                    ) )
+                            and nvl(
+                                    per.hire_date,
+                                    :startDate
+                                ) <= :startDate
+                                and nvl(
+                                    per.termination_date,
+                                    :endDate
+                                ) >= :endDate
+                        order by per.full_name""";
+
     public static String sqlTimesheetPersonListReportSQL = """
             select
                 person_id,
