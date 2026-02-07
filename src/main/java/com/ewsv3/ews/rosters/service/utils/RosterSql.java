@@ -106,7 +106,7 @@ public class RosterSql {
                 spr.effective_date,
                 spr.time_start,
                 spr.time_end,
-                ( spr.time_end - spr.time_start ) * 24 sch_hrs,
+                round(( spr.time_end - spr.time_start ) * 24,2) sch_hrs,
                 spr.department_id                      sch_department_id,
                 spr.job_title_id                       sch_job_title_id,
                 spr.work_location_id                   sch_work_location_id,
@@ -157,7 +157,7 @@ public class RosterSql {
                 spr.effective_date,
                 spr.time_start,
                 spr.time_end,
-                ( spr.time_end - spr.time_start ) * 24 sch_hrs,
+                round(( spr.time_end - spr.time_start ) * 24,2) sch_hrs,
                 spr.department_id                      sch_department_id,
                 spr.job_title_id                       sch_job_title_id,
                 spr.work_location_id                   sch_work_location_id,
@@ -256,7 +256,7 @@ public class RosterSql {
                 swc.category_name,
                  sd.department_name,
                  sj.job_title,
-                 (spr.time_end -spr.time_start)*24 sch_hrs,
+                 round((spr.time_end -spr.time_start)*24,2) sch_hrs,
                  to_char(spr.time_start,'hh:mi am')time_start_short,
                  to_char(spr.time_end,'hh:mi am')time_end_short
              FROM
@@ -335,7 +335,7 @@ public class RosterSql {
                 swc.category_name,
                 sd.department_name,
                 sj.job_title,
-                ( spr.time_end - spr.time_start ) * 24 sch_hrs,
+                round(( spr.time_end - spr.time_start ) * 24,2) sch_hrs,
                 to_char(
                     spr.time_start,
                     'hh:mi am'
@@ -443,7 +443,7 @@ public class RosterSql {
                 t.rate,
                 t.alloc_flag,
                 t.alloc_time,
-                t.sch_hrs
+                round(t.sch_hrs,2) sch_hrs 
             from
                 sc_demand_allocation_t t,
                 sc_person_v            per
@@ -502,7 +502,7 @@ public class RosterSql {
                 ( schedule_time_start
                   || ' - '
                   || schedule_time_end ) alloc_time,
-                shift_hours            sch_hrs
+                round(shift_hours,2)        sch_hrs
               FROM
                 sc_demand_template_h         h,
                 sc_demand_template_l         l,
@@ -659,7 +659,7 @@ public class RosterSql {
                 person_name,
                 employee_number,
                 grade_name,
-                sch_hrs,
+                round(sch_hrs,2) sch_hrs,
                 rate,
                 matched_perc
               FROM
@@ -672,7 +672,7 @@ public class RosterSql {
                         pj.per_hr_sal rate,
                         (
                             SELECT
-                                SUM((spr.time_end - spr.time_start) * 24) hrs
+                                round(SUM((spr.time_end - spr.time_start) * 24),2) hrs
                               FROM
                                 sc_person_rosters spr,
                                 sc_work_duration  swd
