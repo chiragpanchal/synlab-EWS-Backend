@@ -466,7 +466,7 @@ public class RosterSql {
                h.profile_id,
                l.demand_template_line_id,
                sl.effective_date,
-               sl.fte_required  req_fte,
+               (sl.fte_required)  req_fte,
                COUNT(person_id) alloc_fte,
                l.work_duration_id
              FROM
@@ -478,7 +478,7 @@ public class RosterSql {
                   AND l.demand_template_id       = h.demand_template_id
                   AND sl.demand_template_line_id = l.demand_template_line_id
                   AND suggestion_id              = :suggestionId
-                  AND selected_flag              = 'Y'
+                  -- AND selected_flag              = 'Y'
             GROUP BY
                h.profile_id,
                l.demand_template_line_id,

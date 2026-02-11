@@ -21,7 +21,7 @@ public class PersonPreferredJobSql {
                 AND tkv.profile_id = :profileId
                 AND nvl(tkv.hire_date, :startDate) <= :startDate
                 AND nvl(tkv.termination_date, :endDate) >= :endDate
-                AND (lower(tkv.employee_number) like :text or lower(tkv.person_name) like :text)
+                AND (lower(tkv.employee_number) like lower(:text) or lower(tkv.person_name) like lower(:text))
                 ORDER BY
                     tkv.person_name,
                     tkv.employee_number

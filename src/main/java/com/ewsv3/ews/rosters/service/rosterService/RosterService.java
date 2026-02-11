@@ -1035,7 +1035,7 @@ public class RosterService {
 
         for (DemandAllocationSummary summary : summaryList) {
 
-            // System.out.println("getDemandAllocations summary:" + summary);
+             System.out.println("getDemandAllocations summary.getEffectiveDate():" + summary.getEffectiveDate());
 
             List<DemandAllocationLines> lines = jdbcClient.sql(sqlDemandAllocationLinesNEW)
                     .param("demandTemplateId", reqBody.demandTemplateId())
