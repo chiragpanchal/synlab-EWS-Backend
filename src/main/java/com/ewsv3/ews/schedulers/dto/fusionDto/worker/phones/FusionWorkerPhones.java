@@ -32,11 +32,11 @@ public record FusionWorkerPhones(
 
                 @JsonProperty("Validity") String validity,
 
-                @JsonIgnore() @JsonProperty("CreatedBy") String createdBy,
+                @JsonProperty("CreatedBy") String createdBy,
 
                 @JsonProperty("CreationDate") OffsetDateTime creationDate,
 
-                @JsonIgnore() @JsonProperty("LastUpdatedBy") String lastUpdatedBy,
+                @JsonProperty("LastUpdatedBy") String lastUpdatedBy,
 
                 @JsonProperty("LastUpdateDate") OffsetDateTime lastUpdateDate,
 

@@ -8,7 +8,16 @@
       "Bash(git clean:*)",
       "Bash(git add:*)",
       "Bash(find:*)",
-      "Bash(redis-cli:*)"
+      "Bash(redis-cli:*)",
+      "Bash(go version:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(go build:*)",
+      "Bash(go get:*)",
+      "Bash(go mod edit:*)",
+      "Bash(go vet:*)",
+      "Bash(go env:*)",
+      "Bash(where:*)",
+      "Bash(copy:*)"
     ],
     "deny": [],
     "ask": []

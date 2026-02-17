@@ -1,5 +1,6 @@
 package com.ewsv3.ews.schedulers.service;
 
+import com.ewsv3.ews.schedulers.controller.ScherduletController;
 import com.ewsv3.ews.schedulers.dto.fusionDto.businessUnits.FusionBusinessUnit;
 import com.ewsv3.ews.schedulers.dto.fusionDto.businessUnits.FusionBusinessUnitResponse;
 import com.ewsv3.ews.schedulers.dto.fusionDto.commons.LinksObject;
@@ -12,6 +13,11 @@ import com.ewsv3.ews.schedulers.dto.fusionDto.job.FusionJob;
 import com.ewsv3.ews.schedulers.dto.fusionDto.job.FusionJobFamily;
 import com.ewsv3.ews.schedulers.dto.fusionDto.job.FusionJobFamilyResponse;
 import com.ewsv3.ews.schedulers.dto.fusionDto.job.FusionJobResponse;
+import com.ewsv3.ews.schedulers.dto.fusionDto.worker.assignments.FusionAssignmentDff;
+import com.ewsv3.ews.schedulers.dto.fusionDto.worker.assignments.FusionAssignmentDffResponse;
+import com.ewsv3.ews.schedulers.dto.fusionDto.worker.assignments.FusionAssignments;
+import com.ewsv3.ews.schedulers.dto.fusionDto.worker.assignments.FusionAssignmentsResponse;
+import com.ewsv3.ews.schedulers.dto.fusionDto.worker.workRelationShips.FusionWorkRelationships;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.citizenship.FusionWorkerCitizenshipResponse;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.citizenship.FusionWorkerCitizenships;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.emails.FusionWorkerEmailResponse;
@@ -20,18 +26,21 @@ import com.ewsv3.ews.schedulers.dto.fusionDto.worker.names.FusionWorkerNames;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.names.FusionWorkerNamesResponse;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.phones.FusionWorkerPhones;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.phones.FusionWorkerPhonesResponse;
+import com.ewsv3.ews.schedulers.dto.fusionDto.worker.workRelationShips.FusionWorkRelationshipsResponse;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.worker.FusionWorker;
 import com.ewsv3.ews.schedulers.dto.fusionDto.worker.worker.FusionWorkerResponse;
-import com.ewsv3.ews.schedulers.service.SchedulerSql;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.web.client.RestClient;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -42,6 +51,8 @@ import java.util.concurrent.Executors;
 public class ObjectTransformation {
 
     private final int API_LIMIT = 100;
+
+    private static final Logger logger = LoggerFactory.getLogger(ScherduletController.class);
 
     public void businessUnitTransform(String batchId, JsonNode rootNode, JdbcClient jdbcClient) {
         //System.out.println("businessUnitTransform start:");
@@ -71,6 +82,7 @@ public class ObjectTransformation {
                             .params(businessUnit.Status())
                             .update();
                 } catch (Exception e) {
+                    logger.error("businessUnitTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                     // TODO: Add logging service here to track DB calls
                     // System.out.println("error inserting business unit:" + businessUnit + ",
                     // error:" + e.getMessage());
@@ -79,6 +91,7 @@ public class ObjectTransformation {
             }
 
         } catch (JsonProcessingException e) {
+            logger.error("businessUnitTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
             //System.out.println("error parsing business unit, rootNode:" + rootNode);
             // TODO: Add logging service here for response parsing error
         }
@@ -87,7 +100,7 @@ public class ObjectTransformation {
     }
 
     public void departmentTransform(String batchId, String serviceUrl, RestClient restClient, String encodedAuth,
-            JdbcClient jdbcClient) throws JsonProcessingException {
+                                    JdbcClient jdbcClient) throws JsonProcessingException {
         //System.out.println("departmentTransform start:");
         int limit = API_LIMIT;
         int offset = 0;
@@ -138,6 +151,7 @@ public class ObjectTransformation {
                                 .params(fusionDepartment.status())
                                 .update();
                     } catch (Exception e) {
+                        logger.error("departmentTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                         // TODO: Add logging service here to track DB calls
                         // System.out.println("error inserting fusionDepartment:" + fusionDepartment +
                         // ", error:" + e.getMessage());
@@ -156,6 +170,7 @@ public class ObjectTransformation {
                                 JsonNode deptDffNode = objectMapper.readTree(orgDffBody);
                                 departmentDFFTransform(deptDffNode, jdbcClient);
                             } catch (JsonProcessingException e) {
+                                logger.error("departmentTransform DFF insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                                 // TODO: Add logging service here to track DB calls
                                 throw new RuntimeException(e);
                             }
@@ -165,6 +180,7 @@ public class ObjectTransformation {
                 }
 
             } catch (JsonProcessingException e) {
+                logger.error("departmentTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                 // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
                 // ", error:" + e.getMessage());
                 //System.out.println("error parsing fusionDepartment error:" + e.getMessage());
@@ -206,6 +222,7 @@ public class ObjectTransformation {
                             .params(fusionDepartmentDff.attribute5())
                             .update();
                 } catch (Exception e) {
+                    logger.error("departmentDFFTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                     // TODO: Add logging service here to track DB calls
                     // System.out.println("error inserting fusionDepartmentDff:" +
                     // fusionDepartmentDff + ", error:" + e.getMessage());
@@ -213,6 +230,7 @@ public class ObjectTransformation {
             }
 
         } catch (JsonProcessingException e) {
+            logger.error("departmentDFFTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
             //System.out.println("error parsing fusionDepartmentDff, rootNode:" + rootNode + ", error:" + e.getMessage());
             // TODO: Add logging service here for response parsing error
         }
@@ -221,7 +239,7 @@ public class ObjectTransformation {
     }
 
     public void jobTransform(String batchId, String serviceUrl, RestClient restClient, String encodedAuth,
-            JdbcClient jdbcClient) throws JsonProcessingException {
+                             JdbcClient jdbcClient) throws JsonProcessingException {
         //System.out.println("jobTransform start:");
         int limit = API_LIMIT;
         int offset = 0;
@@ -291,6 +309,7 @@ public class ObjectTransformation {
                                 .params(fusionJob.lastUpdateDate())
                                 .update();
                     } catch (Exception e) {
+                        logger.error("jobTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                         // TODO: Add logging service here to track DB calls
                         //System.out.println("error inserting fusionJob:" + fusionJob + ", error:" + e.getMessage());
                     }
@@ -298,6 +317,7 @@ public class ObjectTransformation {
                 }
 
             } catch (JsonProcessingException e) {
+                logger.error("jobTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                 // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
                 // ", error:" + e.getMessage());
                 //System.out.println("error parsing FusionJob error:" + e.getMessage());
@@ -313,7 +333,7 @@ public class ObjectTransformation {
     }
 
     public void jobFamiliesTransform(String batchId, String serviceUrl, RestClient restClient, String encodedAuth,
-            JdbcClient jdbcClient) throws JsonProcessingException {
+                                     JdbcClient jdbcClient) throws JsonProcessingException {
         //System.out.println("jobFamiliesTransform start:");
         int limit = API_LIMIT;
         int offset = 0;
@@ -370,6 +390,7 @@ public class ObjectTransformation {
                                 .params(fusionJobFamily.lastUpdateDate())
                                 .update();
                     } catch (Exception e) {
+                        logger.error("jobFamiliesTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                         // TODO: Add logging service here to track DB calls
                         //System.out.println(
                         //        "error inserting FusionJobFamily:" + fusionJobFamily + ", error:" + e.getMessage());
@@ -378,6 +399,7 @@ public class ObjectTransformation {
                 }
 
             } catch (JsonProcessingException e) {
+                logger.error("jobFamiliesTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                 // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
                 // ", error:" + e.getMessage());
                 //System.out.println("error parsing FusionJobFamily error:" + e.getMessage());
@@ -393,8 +415,8 @@ public class ObjectTransformation {
     }
 
     public void workerTransform(String batchId, String serviceUrl, RestClient restClient, String encodedAuth,
-            JdbcClient jdbcClient) throws JsonProcessingException {
-        //System.out.println("workerTransform start:");
+                                JdbcClient jdbcClient) throws JsonProcessingException {
+        System.out.println("workerTransform start:");
 
         List<errorLogs> errorLogs = new ArrayList<>();
 
@@ -402,14 +424,16 @@ public class ObjectTransformation {
         int offset = 0;
         boolean hasMore = true;
         while (hasMore) {
-            String workerUrl = serviceUrl + "?orderBy=PersonId&limit=" + limit + "&offset=" + offset;
-            //System.out.println("workerTransform workerUrl:" + workerUrl);
+//            String workerUrl = serviceUrl + "?orderBy=PersonId&limit=" + limit + "&offset=" + offset;
+            String workerUrl = serviceUrl;
+            System.out.println("workerTransform workerUrl:" + workerUrl);
             String workerBody = restClient.get()
                     .uri(workerUrl)
                     .accept(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Basic " + encodedAuth)
                     .retrieve()
                     .body(String.class);
+            System.out.println("workerTransform workerBody:" + workerBody);
 
             ObjectMapper objectMapper = new ObjectMapper();
             JsonNode rootNode = objectMapper.readTree(workerBody);
@@ -423,13 +447,15 @@ public class ObjectTransformation {
 
                 FusionWorkerResponse response = mapper.readValue(rootNode.toString(), FusionWorkerResponse.class);
                 hasMore = response.hasMore();
+                System.out.println("workerTransform hasMore:" + hasMore);
+
                 offset = response.offset() + limit;
 
                 if (response != null) {
                     fusionWorkerList.addAll(response.items());
                 }
 
-                // System.out.println("workerTransform fusionWorkerList:" + fusionWorkerList);
+                System.out.println("workerTransform fusionWorkerList:" + fusionWorkerList);
 
                 for (FusionWorker worker : fusionWorkerList) {
 
@@ -489,115 +515,138 @@ public class ObjectTransformation {
                                 .update();
                     } catch (Exception e) {
                         // TODO: Add logging service here to track DB calls
-                        //System.out.println("error inserting FusionWorker:" + worker + ", error:" + e.getMessage());
+                        logger.error("workerTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                         errorLogs.add(new errorLogs(batchId, "worker", workerUrl, e.getMessage()));
                     }
 
-                    // for (LinksObject linksObject : worker.links()) {
-                    //
-                    // if (Objects.equals(linksObject.name(), "citizenships")) {
-                    // citizenshipsLink = linksObject.href();
-                    //
-                    // try {
-                    // String citizenshipsBody = restClient.get()
-                    // .uri(citizenshipsLink)
-                    // .accept(MediaType.APPLICATION_JSON)
-                    // .header("Authorization", "Basic " + encodedAuth)
-                    // .retrieve()
-                    // .body(String.class);
-                    // JsonNode citizenshipsNode = objectMapper.readTree(citizenshipsBody);
-                    // citizenshipTransform(worker.personId(), citizenshipsNode, jdbcClient);
-                    // } catch (JsonProcessingException e) {
-                    // // TODO: Add logging service here to track DB calls
-                    // throw new RuntimeException(e);
-                    // } finally {
-                    // }
-                    //
-                    // }
-                    // if (Objects.equals(linksObject.name(), "emails")) {
-                    // emailsLink = linksObject.href();
-                    //
-                    // // Getting emails
-                    // try {
-                    // String emailsBody = restClient.get()
-                    // .uri(emailsLink)
-                    // .accept(MediaType.APPLICATION_JSON)
-                    // .header("Authorization", "Basic " + encodedAuth)
-                    // .retrieve()
-                    // .body(String.class);
-                    // JsonNode emailsNode = objectMapper.readTree(emailsBody);
-                    // emailsTransform(worker.personId(), emailsNode, jdbcClient);
-                    //// workerList.remove(fusionWorker);
-                    // } catch (JsonProcessingException e) {
-                    // System.err.println("Exception in json parsing emails : " + worker.personId()
-                    // + " - " + e.getMessage());
-                    // // TODO: Add logging service here to track DB calls
-                    // throw new RuntimeException(e);
-                    // } catch (Exception e) {
-                    // // Log and handle the error appropriately
-                    // System.err.println("Exception in processing emails: " + worker.personId() + "
-                    // - " + e.getMessage());
-                    // } finally {
-                    // }
-                    //
-                    // }
-                    // if (Objects.equals(linksObject.name(), "legislativeInfo")) {
-                    // legislativeinfoLink = linksObject.href();
-                    // }
-                    // if (Objects.equals(linksObject.name(), "names")) {
-                    // namesLink = linksObject.href();
-                    // try {
-                    // String restsBody = restClient.get()
-                    // .uri(namesLink)
-                    // .accept(MediaType.APPLICATION_JSON)
-                    // .header("Authorization", "Basic " + encodedAuth)
-                    // .retrieve()
-                    // .body(String.class);
-                    // JsonNode restsNode = objectMapper.readTree(restsBody);
-                    // namesTransform(worker.personId(), restsNode, jdbcClient);
-                    // } catch (JsonProcessingException e) {
-                    // // TODO: Add logging service here to track DB calls
-                    // throw new RuntimeException(e);
-                    // } finally {
-                    // }
-                    // }
-                    // if (Objects.equals(linksObject.name(), "phones")) {
-                    // phonesLinks = linksObject.href();
-                    //
-                    // try {
-                    //// System.out.println("phones start:");
-                    // String restsBody = restClient.get()
-                    // .uri(phonesLinks)
-                    // .accept(MediaType.APPLICATION_JSON)
-                    // .header("Authorization", "Basic " + encodedAuth)
-                    // .retrieve()
-                    // .body(String.class);
-                    // JsonNode restsNode = objectMapper.readTree(restsBody);
-                    // phonesTransform(worker.personId(), restsNode, jdbcClient);
-                    // } catch (JsonProcessingException e) {
-                    // // TODO: Add logging service here to track DB calls
-                    // throw new RuntimeException(e);
-                    // } finally {
-                    //// System.out.println("phones end:");
-                    // }
-                    // }
-                    // if (Objects.equals(linksObject.name(), "religions")) {
-                    // religionsLinks = linksObject.href();
-                    // }
-                    // if (Objects.equals(linksObject.name(), "workRelationships")) {
-                    // workrelationshipsLink = linksObject.href();
-                    // }
-                    // if (Objects.equals(linksObject.name(), "workersDFF")) {
-                    // workersdffLink = linksObject.href();
-                    // }
-                    // }
+                    for (LinksObject linksObject : worker.links()) {
+
+                        System.out.println("linksObject.name():" + linksObject.name());
+
+                        if (Objects.equals(linksObject.name(), "citizenships")) {
+                            citizenshipsLink = linksObject.href();
+
+                            try {
+                                String citizenshipsBody = restClient.get()
+                                        .uri(citizenshipsLink)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .header("Authorization", "Basic " + encodedAuth)
+                                        .retrieve()
+                                        .body(String.class);
+                                JsonNode citizenshipsNode = objectMapper.readTree(citizenshipsBody);
+                                citizenshipTransform(worker.personId(), citizenshipsNode, jdbcClient);
+                            } catch (JsonProcessingException e) {
+                                logger.error("workerTransform / citizenshipsNode - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                                // TODO: Add logging service here to track DB calls
+                                throw new RuntimeException(e);
+                            } finally {
+                            }
+
+                        }
+                        if (Objects.equals(linksObject.name(), "emails")) {
+                            emailsLink = linksObject.href();
+
+                            // Getting emails
+                            try {
+                                String emailsBody = restClient.get()
+                                        .uri(emailsLink)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .header("Authorization", "Basic " + encodedAuth)
+                                        .retrieve()
+                                        .body(String.class);
+                                JsonNode emailsNode = objectMapper.readTree(emailsBody);
+                                emailsTransform(worker.personId(), emailsNode, jdbcClient);
+                                // workerList.remove(fusionWorker);
+                            } catch (JsonProcessingException e) {
+                                logger.error("workerTransform / emailsNode JSON Parse- Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                                // TODO: Add logging service here to track DB calls
+                                throw new RuntimeException(e);
+                            } catch (Exception e) {
+                                logger.error("workerTransform / emailsNode - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                                // Log and handle the error appropriately
+                                System.err.println("Exception in processing emails: " + worker.personId() + " - " + e.getMessage());
+                            } finally {
+                            }
+
+                        }
+                        if (Objects.equals(linksObject.name(), "legislativeInfo")) {
+                            legislativeinfoLink = linksObject.href();
+                        }
+                        if (Objects.equals(linksObject.name(), "names")) {
+                            namesLink = linksObject.href();
+                            try {
+                                String restsBody = restClient.get()
+                                        .uri(namesLink)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .header("Authorization", "Basic " + encodedAuth)
+                                        .retrieve()
+                                        .body(String.class);
+                                JsonNode restsNode = objectMapper.readTree(restsBody);
+                                namesTransform(worker.personId(), restsNode, jdbcClient);
+                            } catch (JsonProcessingException e) {
+                                logger.error("workerTransform / namesTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                                // TODO: Add logging service here to track DB calls
+                                throw new RuntimeException(e);
+                            } finally {
+                            }
+                        }
+                        if (Objects.equals(linksObject.name(), "phones")) {
+                            phonesLinks = linksObject.href();
+
+                            try {
+                                // System.out.println("phones start:");
+                                String restsBody = restClient.get()
+                                        .uri(phonesLinks)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .header("Authorization", "Basic " + encodedAuth)
+                                        .retrieve()
+                                        .body(String.class);
+                                JsonNode restsNode = objectMapper.readTree(restsBody);
+                                phonesTransform(worker.personId(), restsNode, jdbcClient);
+                            } catch (JsonProcessingException e) {
+                                logger.error("workerTransform / phonesTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                                // TODO: Add logging service here to track DB calls
+                                throw new RuntimeException(e);
+                            } finally {
+                                // System.out.println("phones end:");
+                            }
+                        }
+                        if (Objects.equals(linksObject.name(), "religions")) {
+                            religionsLinks = linksObject.href();
+                        }
+                        if (Objects.equals(linksObject.name(), "workRelationships")) {
+                            workrelationshipsLink = linksObject.href();
+
+                            try {
+                                // System.out.println("phones start:");
+                                String restsBody = restClient.get()
+                                        .uri(workrelationshipsLink)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .header("Authorization", "Basic " + encodedAuth)
+                                        .retrieve()
+                                        .body(String.class);
+                                JsonNode restsNode = objectMapper.readTree(restsBody);
+                                workRelationshipTransform(worker.personId(), restsNode, jdbcClient, restClient, encodedAuth);
+                            } catch (JsonProcessingException e) {
+                                logger.error("workerTransform / workRelationshipTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                                // TODO: Add logging service here to track DB calls
+                                throw new RuntimeException(e);
+                            } finally {
+                                // System.out.println("phones end:");
+                            }
+
+                        }
+                        if (Objects.equals(linksObject.name(), "workersDFF")) {
+                            workersdffLink = linksObject.href();
+                        }
+                    }
 
                 }
 
             } catch (JsonProcessingException e) {
+                logger.error("workerTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                 // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
                 // ", error:" + e.getMessage());
-                //System.out.println("error parsing fusionDepartment error:" + e.getMessage());
                 // TODO: Add logging service here for response parsing error
             }
 
@@ -612,134 +661,145 @@ public class ObjectTransformation {
         ObjectMapper objectMapper = new ObjectMapper();
         ExecutorService exeService = Executors.newVirtualThreadPerTaskExecutor();
 
-        try {
-            // Use CompletableFuture for parallel execution
-            List<CompletableFuture<Void>> futures = new ArrayList<>();
-            int workerCounts = 1;
-
-            for (FusionWorker fusionWorker : workerList) {
-
-                workerCounts = workerCounts + 1;
-
-                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
-
-                    // Getting citizenships
-                    try {
-                        String respBody = restClient.get()
-                                .uri(fusionWorker.citizenshipsLink())
-                                .accept(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Basic " + encodedAuth)
-                                .retrieve()
-                                .body(String.class);
-                        JsonNode emailsNode = objectMapper.readTree(respBody);
-                        citizenshipTransform(fusionWorker.personId(), emailsNode, jdbcClient);
-                    } catch (JsonProcessingException e) {
-                        // TODO: Add logging service here to track DB calls
-                        throw new RuntimeException(e);
-                    } catch (Exception e) {
-                        // Log and handle the error appropriately
-                        errorLogs.add(new errorLogs(batchId, "citizenships", fusionWorker.citizenshipsLink(),
-                                e.getMessage()));
-                        //System.err.println("Exception in processing citizenships: " + fusionWorker.personId() + " - "
-                        //        + e.getMessage());
-                    } finally {
-                    }
-
-                    // Getting emails
-                    try {
-                        String emailsBody = restClient.get()
-                                .uri(fusionWorker.emailsLink())
-                                .accept(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Basic " + encodedAuth)
-                                .retrieve()
-                                .body(String.class);
-                        JsonNode emailsNode = objectMapper.readTree(emailsBody);
-                        emailsTransform(fusionWorker.personId(), emailsNode, jdbcClient);
-                    } catch (JsonProcessingException e) {
-                        // TODO: Add logging service here to track DB calls
-                        throw new RuntimeException(e);
-                    } catch (Exception e) {
-                        // Log and handle the error appropriately
-                        errorLogs.add(new errorLogs(batchId, "citizenships", fusionWorker.citizenshipsLink(),
-                                e.getMessage()));
-                        //System.err.println(
-                        //        "Exception in processing emails: " + fusionWorker.personId() + " - " + e.getMessage());
-                    } finally {
-                    }
-
-                    // Getting phones
-                    try {
-                        String respBody = restClient.get()
-                                .uri(fusionWorker.phonesLinks())
-                                .accept(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Basic " + encodedAuth)
-                                .retrieve()
-                                .body(String.class);
-                        JsonNode emailsNode = objectMapper.readTree(respBody);
-                        phonesTransform(fusionWorker.personId(), emailsNode, jdbcClient);
-                    } catch (JsonProcessingException e) {
-                        // TODO: Add logging service here to track DB calls
-                        throw new RuntimeException(e);
-                    } catch (Exception e) {
-                        // Log and handle the error appropriately
-                        //System.err.println(
-                        //        "Exception in processing phones: " + fusionWorker.personId() + " - " + e.getMessage());
-                    } finally {
-                    }
-
-                    // Getting names
-                    try {
-                        String respBody = restClient.get()
-                                .uri(fusionWorker.namesLink())
-                                .accept(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Basic " + encodedAuth)
-                                .retrieve()
-                                .body(String.class);
-                        JsonNode jnode = objectMapper.readTree(respBody);
-                        namesTransform(fusionWorker.personId(), jnode, jdbcClient);
-                    } catch (JsonProcessingException e) {
-                        // TODO: Add logging service here to track DB calls
-                        throw new RuntimeException(e);
-                    } catch (Exception e) {
-                        // Log and handle the error appropriately
-                        //System.err.println(
-                        //        "Exception in processing names: " + fusionWorker.personId() + " - " + e.getMessage());
-                    } finally {
-                    }
-
-                    // Getting Work-relationships
-                    try {
-                        String respBody = restClient.get()
-                                .uri(fusionWorker.workrelationshipsLink())
-                                .accept(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Basic " + encodedAuth)
-                                .retrieve()
-                                .body(String.class);
-                        JsonNode jnode = objectMapper.readTree(respBody);
-                        namesTransform(fusionWorker.personId(), jnode, jdbcClient);
-                    } catch (JsonProcessingException e) {
-                        // TODO: Add logging service here to track DB calls
-                        throw new RuntimeException(e);
-                    } catch (Exception e) {
-                        // Log and handle the error appropriately
-                        //System.err.println(
-                        //        "Exception in processing names: " + fusionWorker.personId() + " - " + e.getMessage());
-                    } finally {
-                    }
-
-                }, exeService);
-
-                futures.add(future);
-
-            }
-
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-        } catch (Exception exception) {
-
-        } finally {
-            exeService.shutdown();
-        }
+//        try {
+//            // Use CompletableFuture for parallel execution
+//            List<CompletableFuture<Void>> futures = new ArrayList<>();
+//            int workerCounts = 1;
+//
+//            for (FusionWorker fusionWorker : workerList) {
+//
+//                workerCounts = workerCounts + 1;
+//
+//                CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+//
+//                    // Getting citizenships
+//                    try {
+//                        System.out.println("workerTransform");
+//                        String respBody = restClient.get()
+//                                .uri(fusionWorker.citizenshipsLink())
+//                                .accept(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Basic " + encodedAuth)
+//                                .retrieve()
+//                                .body(String.class);
+//                        JsonNode emailsNode = objectMapper.readTree(respBody);
+//
+//                        citizenshipTransform(fusionWorker.personId(), emailsNode, jdbcClient);
+//                    } catch (JsonProcessingException e) {
+//                        // TODO: Add logging service here to track DB calls
+//                        throw new RuntimeException(e);
+//                    } catch (Exception e) {
+//                        System.out.println("workerTransform  Error:" + e.getMessage());
+//                        // Log and handle the error appropriately
+//                        errorLogs.add(new errorLogs(batchId, "citizenships", fusionWorker.citizenshipsLink(),
+//                                e.getMessage()));
+//                        //System.err.println("Exception in processing citizenships: " + fusionWorker.personId() + " - "
+//                        //        + e.getMessage());
+//                    } finally {
+//                    }
+//
+//                    // Getting emails
+//                    try {
+//                        System.out.println("email");
+//                        String emailsBody = restClient.get()
+//                                .uri(fusionWorker.emailsLink())
+//                                .accept(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Basic " + encodedAuth)
+//                                .retrieve()
+//                                .body(String.class);
+//                        JsonNode emailsNode = objectMapper.readTree(emailsBody);
+//                        emailsTransform(fusionWorker.personId(), emailsNode, jdbcClient);
+//                    } catch (JsonProcessingException e) {
+//                        System.out.println("email error:" + e.getMessage());
+//                        // TODO: Add logging service here to track DB calls
+//                        throw new RuntimeException(e);
+//                    } catch (Exception e) {
+//                        // Log and handle the error appropriately
+//                        errorLogs.add(new errorLogs(batchId, "citizenships", fusionWorker.citizenshipsLink(),
+//                                e.getMessage()));
+//                        //System.err.println(
+//                        //        "Exception in processing emails: " + fusionWorker.personId() + " - " + e.getMessage());
+//                    } finally {
+//                    }
+//
+//                    // Getting phones
+//                    try {
+//                        System.out.println("phones");
+//                        String respBody = restClient.get()
+//                                .uri(fusionWorker.phonesLinks())
+//                                .accept(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Basic " + encodedAuth)
+//                                .retrieve()
+//                                .body(String.class);
+//                        JsonNode emailsNode = objectMapper.readTree(respBody);
+//                        phonesTransform(fusionWorker.personId(), emailsNode, jdbcClient);
+//                    } catch (JsonProcessingException e) {
+//                        System.out.println("phones error:" + e.getMessage());
+//                        // TODO: Add logging service here to track DB calls
+//                        throw new RuntimeException(e);
+//                    } catch (Exception e) {
+//                        // Log and handle the error appropriately
+//                        //System.err.println(
+//                        //        "Exception in processing phones: " + fusionWorker.personId() + " - " + e.getMessage());
+//                    } finally {
+//                    }
+//
+//                    // Getting names
+//                    try {
+//                        System.out.println("names");
+//                        String respBody = restClient.get()
+//                                .uri(fusionWorker.namesLink())
+//                                .accept(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Basic " + encodedAuth)
+//                                .retrieve()
+//                                .body(String.class);
+//                        JsonNode jnode = objectMapper.readTree(respBody);
+//                        namesTransform(fusionWorker.personId(), jnode, jdbcClient);
+//                    } catch (JsonProcessingException e) {
+//                        System.out.println("names error:" + e.getMessage());
+//                        // TODO: Add logging service here to track DB calls
+//                        throw new RuntimeException(e);
+//                    } catch (Exception e) {
+//                        // Log and handle the error appropriately
+//                        //System.err.println(
+//                        //        "Exception in processing names: " + fusionWorker.personId() + " - " + e.getMessage());
+//                    } finally {
+//                    }
+//
+//                    // Getting Work-relationships
+//                    try {
+//                        System.out.println("work relationships");
+//                        String respBody = restClient.get()
+//                                .uri(fusionWorker.workrelationshipsLink())
+//                                .accept(MediaType.APPLICATION_JSON)
+//                                .header("Authorization", "Basic " + encodedAuth)
+//                                .retrieve()
+//                                .body(String.class);
+//                        JsonNode jnode = objectMapper.readTree(respBody);
+//                        workRelationshipTransform(fusionWorker.personId(), jnode, jdbcClient);
+//                    } catch (JsonProcessingException e) {
+//                        System.out.println("work relationships error:" + e.getMessage());
+//                        // TODO: Add logging service here to track DB calls
+//                        throw new RuntimeException(e);
+//                    } catch (Exception e) {
+//                        // Log and handle the error appropriately
+//                        //System.err.println(
+//                        //        "Exception in processing names: " + fusionWorker.personId() + " - " + e.getMessage());
+//                    } finally {
+//                    }
+//
+//                }, exeService);
+//
+//                futures.add(future);
+//
+//            }
+//
+//            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+//
+//        } catch (Exception exception) {
+//
+//        } finally {
+//            exeService.shutdown();
+//        }
 
     }
 
@@ -772,6 +832,7 @@ public class ObjectTransformation {
                             .params(citizenships.lastUpdateDate())
                             .update();
                 } catch (Exception e) {
+                    logger.error("citizenshipTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                     // TODO: Add logging service here to track DB calls
                     //System.out.println(
                     //        "error inserting FusionWorkerCitizenships:" + citizenships + ", error:" + e.getMessage());
@@ -780,6 +841,7 @@ public class ObjectTransformation {
             }
 
         } catch (JsonProcessingException e) {
+            logger.error("citizenshipTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
             // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
             // ", error:" + e.getMessage());
             //System.out.println("error parsing FusionWorkerCitizenships error:" + e.getMessage());
@@ -820,6 +882,7 @@ public class ObjectTransformation {
                             .params(workerEmails.lastUpdateDate())
                             .update();
                 } catch (Exception e) {
+                    logger.error("emailsTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                     // TODO: Add logging service here to track DB calls
                     //System.out.println(
                     //        "error inserting FusionWorkerEmails:" + workerEmails + ", error:" + e.getMessage());
@@ -828,6 +891,7 @@ public class ObjectTransformation {
             }
 
         } catch (JsonProcessingException e) {
+            logger.error("emailsTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
             // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
             // ", error:" + e.getMessage());
             //System.out.println("error parsing FusionWorkerEmails error:" + e.getMessage());
@@ -844,7 +908,7 @@ public class ObjectTransformation {
     public void namesTransform(long personId, JsonNode rootNode, JdbcClient jdbcClient) {
         ObjectMapper mapper = new ObjectMapper();
         List<FusionWorkerNames> fusionWorkerNamesList = new ArrayList<>();
-        // System.out.println("emailsTransform rootNode:" + rootNode);
+        System.out.println("namesTransform rootNode:" + rootNode);
 
         try {
             mapper.registerModule(new JavaTimeModule());
@@ -856,6 +920,8 @@ public class ObjectTransformation {
             }
 
             for (FusionWorkerNames workerNames : fusionWorkerNamesList) {
+
+                System.out.println("namesTransform workerNames:" + workerNames);
 
                 try {
                     jdbcClient.sql(SchedulerSql.insertWorkerNamesSql)
@@ -964,13 +1030,15 @@ public class ObjectTransformation {
                             .params(workerNames.localLastUpdateDate())
                             .update();
                 } catch (Exception e) {
+                    logger.error("namesTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                     // TODO: Add logging service here to track DB calls
-                    //System.out.println("error inserting workerNames:" + workerNames + ", error:" + e.getMessage());
+                    System.out.println("error inserting workerNames:" + workerNames + ", error:" + e.getMessage());
                 }
 
             }
 
         } catch (JsonProcessingException e) {
+            logger.error("namesTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
             // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
             // ", error:" + e.getMessage());
             //System.out.println("error parsing workerNames error:" + e.getMessage());
@@ -1016,6 +1084,7 @@ public class ObjectTransformation {
                             .params(workerPhones.primaryFlag())
                             .update();
                 } catch (Exception e) {
+                    logger.error("phonesTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
                     // TODO: Add logging service here to track DB calls
                     //System.out.println("error inserting workerPhones:" + workerPhones + ", error:" + e.getMessage());
                 }
@@ -1023,6 +1092,7 @@ public class ObjectTransformation {
             }
 
         } catch (JsonProcessingException e) {
+            logger.error("phonesTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
             // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
             // ", error:" + e.getMessage());
             //System.out.println("error parsing FusionWorkerCitizenships error:" + e.getMessage());
@@ -1031,6 +1101,325 @@ public class ObjectTransformation {
 
         // System.out.println("departmentTransform
         // fusionFusionDepartmentList:"+fusionFusionDepartmentList);
+
+    }
+
+    public void workRelationshipTransform(long personId, JsonNode rootNode, JdbcClient jdbcClient, RestClient restClient, String encodedAuth) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<FusionWorkRelationships> workRelationshipsList = new ArrayList<>();
+
+        System.out.println("workRelationshipTransform :" + rootNode.toString());
+
+        try {
+            mapper.registerModule(new JavaTimeModule());
+            mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+            FusionWorkRelationshipsResponse response = mapper.readValue(rootNode.toString(),
+                    FusionWorkRelationshipsResponse.class);
+            System.out.println("workRelationshipTransform response:" + response);
+            //extracting assignment link
+            String assignmentLink = "";
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            JsonNode Linkroot = objectMapper.readTree(response.links());
+//
+//            System.out.println("workRelationshipTransform Linkroot:" + Linkroot);
+//
+//            JsonNode links = Linkroot.path("links");
+//            System.out.println("workRelationshipTransform links:" + links);
+//
+//            for (JsonNode link : links) {
+//                if ("assignments".equals(link.path("name").asText())) {
+//                    assignmentLink = link.path("href").asText();
+//                }
+//            }
+//            System.out.println("workRelationshipTransform assignmentLink:" + assignmentLink);
+
+
+            if (response != null) {
+                workRelationshipsList.addAll(response.items());
+            }
+
+            for (FusionWorkRelationships workRelationships : workRelationshipsList) {
+                System.out.println("workRelationshipTransform workRelationships:" + workRelationships);
+                try {
+
+                    System.out.println("workRelationshipTransform workRelationships.links():" + workRelationships.links());
+
+                    for (LinksObject link : workRelationships.links()) {
+                        if (link.name().equals("assignments")) {
+                            assignmentLink = link.href();
+                        }
+                    }
+
+                    jdbcClient.sql(SchedulerSql.insertWorkRelationship)
+                            .params(personId)
+                            .params(workRelationships.PeriodOfServiceId())
+                            .params(workRelationships.LegislationCode())
+                            .params(workRelationships.LegalEntityId())
+                            .params(workRelationships.LegalEmployerName())
+                            .params(workRelationships.WorkerType())
+                            .params(workRelationships.PrimaryFlag())
+                            .params(workRelationships.StartDate())
+                            .params(workRelationships.LegalEmployerSeniorityDate())
+                            .params(workRelationships.EnterpriseSeniorityDate())
+                            .params(workRelationships.OnMilitaryServiceFlag())
+                            .params(workRelationships.WorkerNumber())
+                            .params(workRelationships.ReadyToConvertFlag())
+                            .params(workRelationships.TerminationDate())
+                            .params(workRelationships.NotificationDate())
+                            .params(workRelationships.LastWorkingDate())
+                            .params(workRelationships.RevokeUserAccess())
+                            .params(workRelationships.RecommendedForRehire())
+                            .params(workRelationships.RecommendationReason())
+                            .params(workRelationships.RecommendationAuthorizedByPersonId())
+                            .params(workRelationships.CreationDate())
+                            .params(workRelationships.LastUpdateDate())
+                            .params(workRelationships.ProjectedTerminationDate())
+                            .params(assignmentLink)
+                            .update();
+
+                    try {
+                        // System.out.println("phones start:");
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        String restsBody = restClient.get()
+                                .uri(assignmentLink)
+                                .accept(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Basic " + encodedAuth)
+                                .retrieve()
+                                .body(String.class);
+                        JsonNode restsNode = objectMapper.readTree(restsBody);
+                        assignmentTransform(personId, restsNode, jdbcClient, restClient, encodedAuth);
+                    } catch (JsonProcessingException e) {
+                        logger.error("workerTransform / workRelationshipTransform /assignmentTransform  - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                        // TODO: Add logging service here to track DB calls
+                        throw new RuntimeException(e);
+                    } finally {
+                        // System.out.println("phones end:");
+                    }
+
+                } catch (Exception e) {
+                    // TODO: Add logging service here to track DB calls
+                    logger.error("workRelationshipTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                }
+
+            }
+
+        } catch (JsonProcessingException e) {
+            logger.error("workRelationshipTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+            // ", error:" + e.getMessage());
+            //System.out.println("error parsing FusionWorkerCitizenships error:" + e.getMessage());
+            // TODO: Add logging service here for response parsing error
+        }
+
+        // System.out.println("departmentTransform
+        // fusionFusionDepartmentList:"+fusionFusionDepartmentList);
+
+    }
+
+    public void assignmentTransform(long personId, JsonNode rootNode, JdbcClient jdbcClient, RestClient restClient, String encodedAuth) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<FusionAssignments> fusionAssignmentList = new ArrayList<>();
+
+
+        try {
+            mapper.registerModule(new JavaTimeModule());
+            mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+            logger.info("assignmentTransform - rootNode: {} - Time: {}", rootNode, LocalDateTime.now());
+            logger.info("assignmentTransform - mapper.readValue: {} - Time: {}", mapper.readValue(rootNode.toString(),
+                    FusionAssignmentsResponse.class), LocalDateTime.now());
+
+            FusionAssignmentsResponse response = mapper.readValue(rootNode.toString(),
+                    FusionAssignmentsResponse.class);
+            logger.info("assignmentTransform - response: {} - Time: {}", response, LocalDateTime.now());
+
+            if (response != null) {
+                fusionAssignmentList.addAll(response.items());
+            }
+
+            logger.info("assignmentTransform - fusionAssignmentList.size(): {} - Time: {}", fusionAssignmentList.size(), LocalDateTime.now());
+
+
+            for (FusionAssignments fusionAssignment : fusionAssignmentList) {
+
+                logger.info("assignmentTransform - fusionAssignment: {} - Time: {}", fusionAssignment, LocalDateTime.now());
+
+
+                try {
+                    jdbcClient.sql(SchedulerSql.insertAssignments)
+                            .params(personId)
+                            .params(fusionAssignment.assignmentId())
+                            .params(fusionAssignment.assignmentNumber())
+                            .params(fusionAssignment.assignmentName())
+                            .params(fusionAssignment.actionCode())
+                            .params(fusionAssignment.reasonCode())
+                            .params(fusionAssignment.effectiveStartDate())
+                            .params(fusionAssignment.effectiveEndDate())
+                            .params(fusionAssignment.effectiveSequence())
+                            .params(fusionAssignment.effectiveLatestChange())
+                            .params(fusionAssignment.businessUnitId())
+                            .params(fusionAssignment.businessUnitName())
+                            .params(fusionAssignment.assignmentType())
+                            .params(fusionAssignment.assignmentStatusTypeId())
+                            .params(fusionAssignment.assignmentStatusTypeCode())
+                            .params(fusionAssignment.assignmentStatusType())
+                            .params(fusionAssignment.systemPersonType())
+                            .params(fusionAssignment.userPersonTypeId())
+                            .params(fusionAssignment.userPersonType())
+                            .params(fusionAssignment.proposedUserPersonTypeId())
+                            .params(fusionAssignment.proposedUserPersonType())
+                            .params(fusionAssignment.projectedStartDate())
+                            .params(fusionAssignment.projectedEndDate())
+                            .params(fusionAssignment.primaryFlag())
+                            .params(fusionAssignment.primaryAssignmentFlag())
+                            .params(fusionAssignment.positionId())
+                            .params(fusionAssignment.positionCode())
+                            .params(fusionAssignment.synchronizeFromPositionFlag())
+                            .params(fusionAssignment.jobId())
+                            .params(fusionAssignment.jobCode())
+                            .params(fusionAssignment.gradeId())
+                            .params(fusionAssignment.gradeCode())
+                            .params(fusionAssignment.gradeLadderId())
+                            .params(fusionAssignment.gradeLadderName())
+                            .params(fusionAssignment.gradeStepEligibilityFlag())
+                            .params(fusionAssignment.gradeCeilingStepId())
+                            .params(fusionAssignment.gradeCeilingStep())
+                            .params(fusionAssignment.departmentId())
+                            .params(fusionAssignment.departmentName())
+                            .params(fusionAssignment.reportingEstablishmentId())
+                            .params(fusionAssignment.reportingEstablishmentName())
+                            .params(fusionAssignment.locationId())
+                            .params(fusionAssignment.locationCode())
+                            .params(fusionAssignment.workAtHomeFlag())
+                            .params(fusionAssignment.assignmentCategory())
+                            .params(fusionAssignment.workerCategory())
+                            .params(fusionAssignment.permanentTemporary())
+                            .params(fusionAssignment.fullParttime())
+                            .params(fusionAssignment.managerFlag())
+                            .params(fusionAssignment.hourlySalariedCode())
+                            .params(fusionAssignment.normalHours())
+                            .params(fusionAssignment.frequency())
+                            .params(fusionAssignment.startTime())
+                            .params(fusionAssignment.endTime())
+                            .params(fusionAssignment.seniorityBasis())
+                            .params(fusionAssignment.probationPeriod())
+                            .params(fusionAssignment.probationPeriodUnit())
+                            .params(fusionAssignment.probationEndDate())
+                            .params(fusionAssignment.noticePeriod())
+                            .params(fusionAssignment.noticePeriodUom())
+                            .params(fusionAssignment.workTaxAddressId())
+                            .params(fusionAssignment.expenseCheckSendToAddress())
+                            .params(fusionAssignment.retirementAge())
+                            .params(fusionAssignment.retirementDate())
+                            .params(fusionAssignment.labourUnionMemberFlag())
+                            .params(fusionAssignment.unionId())
+                            .params(fusionAssignment.unionName())
+                            .params(fusionAssignment.bargainingUnitCode())
+                            .params(fusionAssignment.collectiveAgreementId())
+                            .params(fusionAssignment.collectiveAgreementName())
+                            .params(fusionAssignment.contractId())
+                            .params(fusionAssignment.contractNumber())
+                            .params(fusionAssignment.internalBuilding())
+                            .params(fusionAssignment.internalFloor())
+                            .params(fusionAssignment.internalOfficeNumber())
+                            .params(fusionAssignment.internalMailstop())
+                            .params(fusionAssignment.defaultExpenseAccount())
+                            .params(fusionAssignment.peopleGroup())
+                            .params(fusionAssignment.standardWorkingHours())
+                            .params(fusionAssignment.standardFrequency())
+                            .params(fusionAssignment.createdBy())
+                            .params(fusionAssignment.creationDate())
+                            .params(fusionAssignment.lastUpdatedBy())
+                            .params(fusionAssignment.lastUpdateDate())
+                            .update();
+
+                    for (LinksObject link : fusionAssignment.links()) {
+                        if (link.name().equals("assignmentsDFF")) {
+                            String assignmentDFFLink = link.href();
+
+                            logger.info("assignmentTransform assignmentsDFF : {} - Time: {}", assignmentDFFLink, LocalDateTime.now());
+
+                            try {
+                                // System.out.println("phones start:");
+                                ObjectMapper objectMapper = new ObjectMapper();
+                                String restsBody = restClient.get()
+                                        .uri(assignmentDFFLink)
+                                        .accept(MediaType.APPLICATION_JSON)
+                                        .header("Authorization", "Basic " + encodedAuth)
+                                        .retrieve()
+                                        .body(String.class);
+                                JsonNode restsNode = objectMapper.readTree(restsBody);
+                                assignmentDFFTransform(personId, restsNode, jdbcClient);
+                            } catch (JsonProcessingException e) {
+                                logger.error("workerTransform / workRelationshipTransform /assignmentTransform  - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                                // TODO: Add logging service here to track DB calls
+                                throw new RuntimeException(e);
+                            } finally {
+                                // System.out.println("phones end:");
+                            }
+
+                        }
+                    }
+
+                } catch (Exception e) {
+                    logger.error("assignmentTransform insert- Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                    // TODO: Add logging service here to track DB calls
+                    //System.out.println("error inserting workerPhones:" + workerPhones + ", error:" + e.getMessage());
+                }
+
+            }
+
+        } catch (JsonProcessingException e) {
+            logger.error("assignmentTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+            // System.out.println("error parsing fusionDepartment, rootNode:" + rootNode +
+            // ", error:" + e.getMessage());
+            //System.out.println("error parsing FusionWorkerCitizenships error:" + e.getMessage());
+            // TODO: Add logging service here for response parsing error
+        }
+
+
+    }
+
+    public void assignmentDFFTransform(long personId, JsonNode rootNode, JdbcClient jdbcClient) {
+        ObjectMapper mapper = new ObjectMapper();
+        List<FusionAssignmentDff> fusionAssignmentDffs = new ArrayList<>();
+
+        try {
+            mapper.registerModule(new JavaTimeModule());
+            mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
+            FusionAssignmentDffResponse response = mapper.readValue(rootNode.toString(),
+                    FusionAssignmentDffResponse.class);
+            if (response != null) {
+                fusionAssignmentDffs.addAll(response.items());
+            }
+
+            for (FusionAssignmentDff assignmentDff : fusionAssignmentDffs) {
+
+                try {
+                    jdbcClient.sql(SchedulerSql.insertAssignmentDff)
+                            .params(assignmentDff.assignmentId())
+                            .params(assignmentDff.effectiveStartDate())
+                            .params(assignmentDff.effectiveEndDate())
+                            .params(assignmentDff.effectiveSequence())
+                            .params(assignmentDff.flexContext())
+                            .params(assignmentDff.otlGroup())
+                            .params(assignmentDff.otlGroupDisplay())
+                            .update();
+                } catch (Exception e) {
+                    logger.error("assignmentDFFTransform insert - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+                    // TODO: Add logging service here to track DB calls
+                    //System.out.println("error inserting workerPhones:" + workerPhones + ", error:" + e.getMessage());
+                }
+
+            }
+
+        } catch (JsonProcessingException e) {
+            logger.error("assignmentDFFTransform - Error: {} - Time: {}", e.getMessage(), LocalDateTime.now());
+
+            // TODO: Add logging service here for response parsing error
+        }
+
 
     }
 

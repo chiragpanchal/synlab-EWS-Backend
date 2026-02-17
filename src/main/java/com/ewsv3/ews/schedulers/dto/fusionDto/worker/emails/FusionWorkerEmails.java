@@ -28,7 +28,7 @@ public record FusionWorkerEmails(
 
                 @JsonProperty("CreationDate") OffsetDateTime creationDate,
 
-                @JsonIgnore() @JsonProperty("LastUpdatedBy") String lastUpdatedBy,
+                @JsonProperty("LastUpdatedBy") String lastUpdatedBy,
 
                 @JsonProperty("LastUpdateDate") OffsetDateTime lastUpdateDate,
 

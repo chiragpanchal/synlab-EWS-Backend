@@ -1,4 +1,4 @@
-package com.ewsv3.ews.schedulers.dto.fusionDto.worker;
+package com.ewsv3.ews.schedulers.dto.fusionDto.worker.workRelationShips;
 
 import com.ewsv3.ews.schedulers.dto.fusionDto.commons.LinksObject;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -49,12 +49,14 @@ public record FusionWorkRelationships(
                 @JsonProperty("RecommendationReason") String RecommendationReason,
 
                 @JsonProperty("RecommendationAuthorizedByPersonId") Long RecommendationAuthorizedByPersonId,
-
+                @JsonProperty("CreatedBy") String createdBy,
                 @JsonProperty("CreationDate") OffsetDateTime CreationDate,
-
+                @JsonProperty("LastUpdatedBy") String lastUpdatedBy,
                 @JsonProperty("LastUpdateDate") OffsetDateTime LastUpdateDate,
 
                 @JsonProperty("ProjectedTerminationDate") LocalDate ProjectedTerminationDate,
 
-                @JsonIgnore List<LinksObject> links) {
+                @JsonProperty List<LinksObject> links
+//                @JsonIgnore List<LinksObject> links
+) {
 }

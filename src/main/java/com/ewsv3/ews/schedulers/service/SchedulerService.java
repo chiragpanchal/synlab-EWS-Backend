@@ -121,7 +121,8 @@ public class SchedulerService {
                     String endpoint = inboundIntegrationList.get(taskId).endPoint();
                     String endpointName = inboundIntegrationList.get(taskId).name();
 
-                    // System.out.println("endpoint:" + endpoint);
+                     System.out.println("callApisAndStoreResponses endpoint:" + endpoint);
+                     System.out.println("callApisAndStoreResponses endpointName:" + endpointName);
 
                     try {
                         String body = restClient.get()

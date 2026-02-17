@@ -109,11 +109,11 @@ public record FusionWorkerNames(
 
                 @JsonProperty("NameInformation30") String nameInformation30,
 
-                @JsonIgnore() @JsonProperty("CreatedBy") String createdBy,
+                @JsonProperty("CreatedBy") String createdBy,
 
                 @JsonProperty("CreationDate") OffsetDateTime creationDate,
 
-                @JsonIgnore() @JsonProperty("LastUpdatedBy") String lastUpdatedBy,
+                @JsonProperty("LastUpdatedBy") String lastUpdatedBy,
 
                 @JsonProperty("LastUpdateDate") OffsetDateTime lastUpdateDate,
 
@@ -215,11 +215,11 @@ public record FusionWorkerNames(
 
                 @JsonProperty("LocalNameInformation30") String localNameInformation30,
 
-                @JsonIgnore() @JsonProperty("LocalCreatedBy") String localCreatedBy,
+                @JsonProperty("LocalCreatedBy") String localCreatedBy,
 
                 @JsonProperty("LocalCreationDate") OffsetDateTime localCreationDate,
 
-                @JsonIgnore() @JsonProperty("LocalLastUpdatedBy") String localLastUpdatedBy,
+                @JsonProperty("LocalLastUpdatedBy") String localLastUpdatedBy,
 
                 @JsonProperty("LocalLastUpdateDate") OffsetDateTime localLastUpdateDate,
 
