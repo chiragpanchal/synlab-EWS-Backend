@@ -22,7 +22,7 @@ public record WorkDuration(
         String sat,
         String sun,
         String colorCode,
-        Long duration,
+        Double duration,
         Long workDurationCategoryId,
         String exceptionEvents,
         Long minWorkHrs,

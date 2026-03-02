@@ -17,7 +17,13 @@
       "Bash(go vet:*)",
       "Bash(go env:*)",
       "Bash(where:*)",
-      "Bash(copy:*)"
+      "Bash(copy:*)",
+      "Bash(winget search:*)",
+      "Bash(choco list:*)",
+      "Bash(powershell.exe:*)",
+      "Bash(export PATH=\"$PATH:/c/mingw64/x86_64-15.2.0-release-posix-seh-ucrt-rt_v13-rev1/mingw64/bin\")",
+      "Bash(export PATH:*)",
+      "Bash(gcc:*)"
     ],
     "deny": [],
     "ask": []

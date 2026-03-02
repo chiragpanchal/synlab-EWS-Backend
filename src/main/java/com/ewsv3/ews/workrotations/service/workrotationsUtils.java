@@ -192,8 +192,8 @@ public class workrotationsUtils {
                 :created_by,
                 :created_on,
                 :last_updated_by,
-                :last_update_date.
-                :time_hour
+                :last_update_date,
+                :timeHour
             )
             """;
 
