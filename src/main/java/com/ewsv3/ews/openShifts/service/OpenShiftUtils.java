@@ -349,7 +349,7 @@ public class OpenShiftUtils {
                       )             applied_count,
                       (
                           SELECT
-                              COUNT(DISTINCT open_shift_detail_id)
+                              COUNT(DISTINCT PERSON_OPEN_SHIFT_DETAIL_ID)
                             FROM
                               sc_person_open_shift_details posd
                            WHERE

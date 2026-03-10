@@ -134,115 +134,94 @@ public class TimesheetFormUtils {
                 tts.time_start""";
 
     public static String sqlTsTimecardData = """
-            select
+            SELECT
                 person_id,
                 effective_date,
-                listagg(distinct decode(
-                    work_duration_code,
-                    'OFF',
-                    work_duration_code,
-                    schedule_line
-                ),
-                                 ', ') within group(
-                order by
+                LISTAGG(DISTINCT decode(work_duration_code, 'OFF', work_duration_code, schedule_line),
+                                 ', ') WITHIN GROUP(
+                ORDER BY
                     sch_time_start
                 ) schedule_line,
-                listagg(distinct punch_line,
-                                 ', ') within group(
-                order by
+                LISTAGG(DISTINCT punch_line, ', ') WITHIN GROUP(
+                ORDER BY
                     in_time
                 ) punch_line,
-                listagg(distinct leave_line,
-                                 ', ') within group(
-                order by
+                LISTAGG(DISTINCT leave_line, ', ') WITHIN GROUP(
+                ORDER BY
                     leave_line
                 ) leave_line,
-                listagg(distinct holiday_line,
-                                 ', ') within group(
-                order by
+                LISTAGG(DISTINCT holiday_line, ', ') WITHIN GROUP(
+                ORDER BY
                     holiday_line
                 ) holiday_line,
-                listagg(distinct violation_line,
-                                 ', ') within group(
-                order by
+                LISTAGG(DISTINCT violation_line, ', ') WITHIN GROUP(
+                ORDER BY
                     violation_line
                 ) violation_line
-            from
+            FROM
                 (
-                    select distinct
+                    SELECT DISTINCT
                         st.person_id,
                         st.effective_date,
                         st.sch_time_start,
                         st.in_time,
                         decode(
-                            nvl(
-                                st.sch_hrs,
-                                0
-                            ),
+                            nvl(st.sch_hrs, 0),
                             0,
-                            null,
-                            (sc_getshort_time_f(
-                                st.sch_time_start
-                            )
+                            NULL,
+                            (sc_getshort_time_f(st.sch_time_start)
                              || '-'
-                             || sc_getshort_time_f(
-                                st.sch_time_end
-                            )
+                             || sc_getshort_time_f(st.sch_time_end)
                              || '#'
-                             || round(
-                                st.sch_hrs,
-                                2
-                            ))
+                             || round(st.sch_hrs, 2)
+                             || '~'
+                             || vl_oc.value_meaning
+                             || '$'
+                             || vl_eg.value_meaning)
                         )                 schedule_line,
                         decode(
-                            nvl(
-                                st.act_hrs,
-                                0
-                            ),
+                            nvl(st.act_hrs, 0),
                             0,
-                            null,
-                            (sc_getshort_time_f(
-                                st.in_time
-                            )
+                            NULL,
+                            (sc_getshort_time_f(st.in_time)
                              || '-'
-                             || sc_getshort_time_f(
-                                st.out_time
-                            )
+                             || sc_getshort_time_f(st.out_time)
                              || '#'
-                             || round(
-                                st.act_hrs,
-                                2
-                            ))
+                             || round(st.act_hrs, 2))
                         )                 punch_line,
                         decode(
-                            nvl(
-                                st.absence_attendances_id,
-                                0
-                            ),
+                            nvl(st.absence_attendances_id, 0),
                             0,
-                            null,
+                            NULL,
                             st.time_type
                         )                 leave_line,
                         decode(
-                            nvl(
-                                st.holiday_id,
-                                0
-                            ),
+                            nvl(st.holiday_id, 0),
                             0,
-                            null,
+                            NULL,
                             st.time_type
                         )                 holiday_line,
                         st.violation_code violation_line,
                         st.work_duration_code
-                    from
-                        sc_timecards st
-                    where
-                            st.person_id = :personId
-                        and st.effective_date between :startDate and :endDate
-                    order by
+                    FROM
+                        sc_timecards        st,
+                        sc_value_sets       vs_oc,
+                        sc_value_set_values vl_oc,
+                        sc_value_sets       vs_eg,
+                        sc_value_set_values vl_eg
+                    WHERE
+                            vs_oc.value_set_name (+) = 'On Call Type'
+                        AND vl_oc.value_set_id (+) = vs_oc.value_set_id
+                        AND vl_oc.value_set_value_id (+) = st.on_call
+                        AND vs_eg.value_set_name (+) = 'Emergency Type'
+                        AND vl_eg.value_set_id (+) = vs_eg.value_set_id
+                        AND vl_eg.value_set_value_id (+) = st.emergency
+                        AND st.person_id = :personId
+                        AND st.effective_date BETWEEN :startDate AND :endDate
+                    ORDER BY
                         st.effective_date
                 )
-            group by
+            GROUP BY
                 person_id,
                 effective_date""";
 

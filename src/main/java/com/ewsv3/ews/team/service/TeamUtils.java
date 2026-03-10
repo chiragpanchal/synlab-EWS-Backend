@@ -42,7 +42,7 @@ public class TeamUtils {
     static String TeamSimpleChildSql = """
             SELECT
                 effective_date,
-                work_duration_code,
+                decode(work_duration_code,'OFF',work_duration_code,'') work_duration_code,
                 SUM(sch_hrs)                  sch_hrs,
                 SUM(act_hrs)                  act_hrs,
                 COUNT(absence_attendances_id) leave_count,
@@ -78,7 +78,7 @@ public class TeamUtils {
                 )
              GROUP BY
                 effective_date,
-                work_duration_code
+                decode(work_duration_code,'OFF',work_duration_code,'')
              ORDER BY
                 effective_date""";
 

@@ -70,8 +70,10 @@ public class ReportController {
                                                                             @RequestBody TimesheetReportReqDto reqDto) {
         logger.info("GET_TIMESHEET_REPORT - Entry - Time: {}, Page: {}, Size: {}, Request: {}", LocalDateTime.now(), page, size, reqDto);
         try {
+            UserProfileResponse userFromUserId = this.commonService
+                    .getUserFromUserId(new UserIdReqDto(getCurrentUserId()), jdbcClient);
             //System.out.println("timesheet-report reqDto:" + reqDto);
-            List<TimesheetReportRespDto> timesheetReport = this.timesheetReportService.getTimesheetReport(getCurrentUserId(), page, size, reqDto, this.jdbcClient);
+            List<TimesheetReportRespDto> timesheetReport = this.timesheetReportService.getTimesheetReport(getCurrentUserId(),userFromUserId.personId(), page, size, reqDto, this.jdbcClient);
             logger.info("GET_TIMESHEET_REPORT - Exit - Time: {}, Page: {}, Size: {}, Response Count: {}", LocalDateTime.now(), page, size, timesheetReport.size());
             return new ResponseEntity<>(timesheetReport, HttpStatus.OK);
         } catch (Error error) {

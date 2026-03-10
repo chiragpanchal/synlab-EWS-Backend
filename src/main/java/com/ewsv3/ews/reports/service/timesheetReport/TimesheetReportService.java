@@ -20,7 +20,7 @@ public class TimesheetReportService {
 
     private static final Logger logger = LoggerFactory.getLogger(ReportController.class);
 
-    public List<TimesheetReportRespDto> getTimesheetReport(Long userId, int page,
+    public List<TimesheetReportRespDto> getTimesheetReport(Long userId,Long loginPersonId, int page,
                                                            int size, TimesheetReportReqDto reqDto, JdbcClient jdbcClient) {
 
         //System.out.println("timesheet-report getTimesheetReport userId:" + userId);
@@ -59,6 +59,7 @@ public class TimesheetReportService {
                     .param("endDate", reqDto.endDate())
                     .param("departmentId",reqDto.departmentId())
                     .param("jobTitleId",reqDto.jobTitleId())
+                    .param("personId",loginPersonId)
                     .query(ReportPersonDto.class)
                     .list();
         } else {

@@ -13,53 +13,67 @@ public class TimecardUtils {
                 sd.department_name,
                 st.work_location_id,
                 sl.location_name,
-                st.on_call,
-                st.emergency,
-                null project,
-                null task,
+                vl_oc.value_meaning      on_call,
+                vl_eg.value_meaning      emergency,
+                NULL                     project,
+                NULL                     task,
                 st.sch_time_start,
                 st.sch_time_end,
                 st.sch_hrs,
                 st.in_time,
                 st.out_time,
                 st.act_hrs,
-                (lv.absence_name ||'-'|| ph.holiday_name) time_type,
-                nvl(st.primary_row,'N') primary_row,
+                ( lv.absence_name
+                  || '-'
+                  || ph.holiday_name )     time_type,
+                nvl(st.primary_row, 'N') primary_row,
                 st.violation_code,
                 st.occurences,
                 sw.work_duration_code,
                 (
-                        select
-                            count(*)
-                        from
-                            sc_person_requests_appr req
-                        where
-                                req.person_id = st.person_id
-                            and req.date_start = st.effective_date
-                            and req.rejected is null
-                    )    request_counts
+                    SELECT
+                        COUNT(*)
+                    FROM
+                        sc_person_requests_appr req
+                    WHERE
+                            req.person_id = st.person_id
+                        AND req.date_start = st.effective_date
+                        AND req.rejected IS NULL
+                )                        request_counts
             FROM
-                sc_timecards      st,
-                sc_departments    sd,
-                sc_jobs           sj,
-                sc_work_locations sl,
-                sc_work_duration  sw,
+                sc_timecards         st,
+                sc_departments       sd,
+                sc_jobs              sj,
+                sc_work_locations    sl,
+                sc_work_duration     sw,
                 sc_person_absences_t lv,
-                sc_person_holidays ph
+                sc_person_holidays   ph,
+                sc_value_sets        vs_oc,
+                sc_value_set_values  vl_oc,
+                sc_value_sets        vs_eg,
+                sc_value_set_values  vl_eg
             WHERE
                     st.person_id = :person_id
                 AND effective_date BETWEEN :start_date AND :end_date
-                AND sd.department_id (+) = st.COST_CENTER_ID
+                AND sd.department_id (+) = st.cost_center_id
                 AND sj.job_title_id (+) = st.job_title_id
                 AND sl.work_location_id (+) = st.work_location_id
-                AND nvl(st.primary_row,'N') = 'Y'
+                AND nvl(st.primary_row, 'N') = 'Y'
                 AND sw.work_duration_id (+) = st.work_duration_id
-                AND lv.person_id(+) = st.person_Id
-                AND lv.leave_date(+) = st.effective_date
-                AND ph.person_id(+) = st.person_Id
-                AND ph.holiday_date(+) = st.effective_date
+                AND lv.person_id (+) = st.person_id
+                AND lv.leave_date (+) = st.effective_date
+                AND ph.person_id (+) = st.person_id
+                AND ph.holiday_date (+) = st.effective_date
+                AND vs_oc.value_set_name (+) = 'On Call Type'
+                AND vl_oc.value_set_id (+) = vs_oc.value_set_id
+                AND vl_oc.value_set_value_id (+) = st.on_call
+                AND vs_eg.value_set_name (+) = 'Emergency Type'
+                AND vl_eg.value_set_id (+) = vs_eg.value_set_id
+                AND vl_eg.value_set_value_id (+) = st.emergency
             ORDER BY
-                st.effective_date, st.sch_time_start, st.in_time""";
+                st.effective_date,
+                st.sch_time_start,
+                st.in_time""";
 
     static String TimecardActualsSql = """
                 SELECT
