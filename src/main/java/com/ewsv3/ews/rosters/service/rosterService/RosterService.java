@@ -1246,4 +1246,36 @@ public class RosterService {
 
         return personDtoList;
     }
+
+    public RosterDMLResponseDto createDefaultSchedules(Long userId, Long profileId, Date startDate, Date endDate) {
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_DEFAULT_ROSTERS_P");
+
+        Map<String, Object> inParamMap = new HashMap<>();
+        inParamMap.put("p_user_id", userId);
+        inParamMap.put("p_profile_id", profileId);
+        inParamMap.put("p_start_date", startDate);
+        inParamMap.put("p_end_date", endDate);
+
+        SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+        Map<String, Object> result = simpleJdbcCall.execute(inSource);
+
+        AtomicReference<Object> pOut = new AtomicReference<>();
+        result.forEach((k, v) -> {
+            if (k.equals("P_OUT")) {
+                pOut.set(v);
+            }
+        });
+
+        String pOutStr = pOut.get().toString();
+        int separatorIdx = pOutStr.indexOf("#");
+        String statusFlag = pOutStr.substring(0, separatorIdx);
+        String message = pOutStr.substring(separatorIdx + 1);
+
+        responseDto.setStatusMessage(statusFlag);
+        responseDto.setDetailMessage(message);
+
+        return responseDto;
+    }
 }

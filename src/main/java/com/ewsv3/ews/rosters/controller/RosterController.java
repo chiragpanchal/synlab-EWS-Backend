@@ -505,6 +505,27 @@ public class RosterController {
 
     }
 
+    @PostMapping("/create-default-schedules")
+    @CrossOrigin
+    public ResponseEntity<RosterDMLResponseDto> createDefaultSchedules(@RequestHeader Map<String, String> header,
+            @RequestBody RosterMasterRequestBody requestBody) {
+        logger.info("CREATE_DEFAULT_SCHEDULES - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+        try {
+            RosterDMLResponseDto responseDto = this.rosterService.createDefaultSchedules(
+                    getCurrentUserId(),
+                    requestBody.profileId(),
+                    requestBody.startDate(),
+                    requestBody.endDate());
+            logger.info("CREATE_DEFAULT_SCHEDULES - Exit - Time: {}, StatusMessage: {}, DetailMessage: {}",
+                    LocalDateTime.now(), responseDto.getStatusMessage(), responseDto.getDetailMessage());
+            return new ResponseEntity<>(responseDto, HttpStatus.OK);
+        } catch (Exception exception) {
+            logger.error("CREATE_DEFAULT_SCHEDULES - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), requestBody, exception.getMessage(), exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("alternate-staff")
     @CrossOrigin
     public ResponseEntity<List<AlternatePersonDto>> getAlternatePersonList(

@@ -5,6 +5,7 @@ import com.ewsv3.ews.rosters.dto.rosters.RosterMasters;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import static com.ewsv3.ews.masters.service.ServiceUtils.*;
