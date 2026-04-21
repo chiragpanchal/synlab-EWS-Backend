@@ -9,6 +9,8 @@ public class RosterLines {
     private String personName;
     private String jobTitle;
     private String departmentName;
+    private Double normalHours;
+    private String frequency;
     private String errorString;
     private List<RosterLinesChildDates> children;
 
@@ -16,13 +18,15 @@ public class RosterLines {
     }
 
     public RosterLines(long personId, long assignmentId, String employeeNumber, String personName, String jobTitle,
-                       String departmentName, String errorString, List<RosterLinesChildDates> children) {
+                       String departmentName,Double normalHours,String frequency,  String errorString, List<RosterLinesChildDates> children) {
         this.personId = personId;
         this.assignmentId = assignmentId;
         this.employeeNumber = employeeNumber;
         this.personName = personName;
         this.jobTitle = jobTitle;
         this.departmentName = departmentName;
+        this.normalHours= normalHours;
+        this.frequency= frequency;
         this.errorString = errorString;
         this.children = children;
     }
@@ -65,6 +69,22 @@ public class RosterLines {
 
     public void setDepartmentName(String departmentName) {
         this.departmentName = departmentName;
+    }
+
+    public Double getNormalHrs() {
+        return normalHours;
+    }
+
+    public void setNormalHrs(Double normalHours) {
+        this.normalHours = normalHours;
+    }
+
+    public String getFrequency() {
+        return frequency;
+    }
+
+    public void setFrequency(String frequency) {
+        this.frequency = frequency;
     }
 
     public long getAssignmentId() {

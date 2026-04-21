@@ -63,6 +63,8 @@ public class RosterSql {
                             person_Name,
                             job_title,
                             department_name,
+                            normal_hours,
+                            frequency,
                             ' ' error_string
                           FROM
                             (
@@ -72,7 +74,9 @@ public class RosterSql {
                                     tkv.employee_number,
                                     tkv.person_Name,
                                     tkv.job_title,
-                                    tkv.department_name
+                                    tkv.department_name,
+                                    per.normal_hours,
+                                    per.frequency
                                   FROM
                                     sc_timekeeper_person_v tkv,
                                     sc_person_v per

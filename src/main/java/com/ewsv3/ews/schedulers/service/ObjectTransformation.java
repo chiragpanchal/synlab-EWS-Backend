@@ -424,8 +424,8 @@ public class ObjectTransformation {
         int offset = 0;
         boolean hasMore = true;
         while (hasMore) {
-//            String workerUrl = serviceUrl + "?orderBy=PersonId&limit=" + limit + "&offset=" + offset;
-            String workerUrl = serviceUrl;
+            String workerUrl = serviceUrl + "?orderBy=PersonId&limit=" + limit + "&offset=" + offset;
+//            String workerUrl = serviceUrl;
             System.out.println("workerTransform workerUrl:" + workerUrl);
             String workerBody = restClient.get()
                     .uri(workerUrl)

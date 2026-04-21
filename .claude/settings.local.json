@@ -23,7 +23,8 @@
       "Bash(powershell.exe:*)",
       "Bash(export PATH=\"$PATH:/c/mingw64/x86_64-15.2.0-release-posix-seh-ucrt-rt_v13-rev1/mingw64/bin\")",
       "Bash(export PATH:*)",
-      "Bash(gcc:*)"
+      "Bash(gcc:*)",
+      "Bash(xargs grep *)"
     ],
     "deny": [],
     "ask": []
