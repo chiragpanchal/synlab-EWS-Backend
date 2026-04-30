@@ -60,6 +60,22 @@ public class CommonController {
         }
     }
 
+    @GetMapping("all-jobs")
+    public ResponseEntity<List<JobDtoLov>> getAllJobs(@RequestHeader Map<String, String> header) {
+        logger.info("GET_ALL_JOBS - Entry - Time: {}", LocalDateTime.now());
+
+        try {
+            List<JobDtoLov> jobs = this.commonService.getJobs(this.jdbcClient);
+            logger.info("GET_ALL_JOBS - Exit - Time: {}, Response size: {}", LocalDateTime.now(), jobs.size());
+            return new ResponseEntity<>(jobs, HttpStatus.OK);
+        } catch (Exception exception) {
+            // System.out.println(exception.getMessage());
+            logger.error("GET_ALL_JOBS - Exception - Time: {}, Error: {}", LocalDateTime.now(), exception.getMessage(), exception);
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("all-person")
     public ResponseEntity<List<PersonDtoLov>> getAllPerson(@RequestHeader Map<String, String> header,
                                                            @RequestBody PersonRequestDto requestDto) {
