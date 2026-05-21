@@ -24,7 +24,8 @@
       "Bash(export PATH=\"$PATH:/c/mingw64/x86_64-15.2.0-release-posix-seh-ucrt-rt_v13-rev1/mingw64/bin\")",
       "Bash(export PATH:*)",
       "Bash(gcc:*)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(curl.exe --version)"
     ],
     "deny": [],
     "ask": []
