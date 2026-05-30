@@ -25,7 +25,10 @@
       "Bash(export PATH:*)",
       "Bash(gcc:*)",
       "Bash(xargs grep *)",
-      "Bash(curl.exe --version)"
+      "Bash(curl.exe --version)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Chirag760008\\\\IdeaProjects\\\\synlab-EWS-Backend\" -Recurse -Directory)",
+      "Bash(Select-Object -First 50)",
+      "Bash(Format-List FullName)"
     ],
     "deny": [],
     "ask": []
