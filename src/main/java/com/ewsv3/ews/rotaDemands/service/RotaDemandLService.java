@@ -36,7 +36,7 @@ public class RotaDemandLService {
 
     private static final String FIND_ALL_BY_DEMAND_PAGED_SQL = """
             SELECT
-                rota_damand_line_id,
+                rota_damand_line_id rota_demand_line_id,
                 rota_demand_id,
                 line_name,
                 work_rotation_line_id,

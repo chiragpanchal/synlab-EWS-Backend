@@ -526,6 +526,26 @@ public class RosterController {
         }
     }
 
+    @PostMapping("/generate-rota-demand-rosters")
+    @CrossOrigin
+    public ResponseEntity<List<RotaDemandSuggestionDto>> generateRotaDemandRosters(
+            @RequestHeader Map<String, String> header,
+            @RequestBody RotaDemandSuggestionsReqBody requestBody) {
+        logger.info("GENERATE_ROTA_DEMAND_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+        try {
+            List<RotaDemandSuggestionDto> suggestions = this.rosterService.generateRotaDemandRosters(
+                    getCurrentUserId(),
+                    requestBody,
+                    jdbcClient);
+            logger.info("GENERATE_ROTA_DEMAND_ROSTERS - Exit - Time: {}, Response count: {}", LocalDateTime.now(), suggestions.size());
+            return new ResponseEntity<>(suggestions, HttpStatus.OK);
+        } catch (Exception exception) {
+            logger.error("GENERATE_ROTA_DEMAND_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), requestBody, exception.getMessage(), exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("alternate-staff")
     @CrossOrigin
     public ResponseEntity<List<AlternatePersonDto>> getAlternatePersonList(

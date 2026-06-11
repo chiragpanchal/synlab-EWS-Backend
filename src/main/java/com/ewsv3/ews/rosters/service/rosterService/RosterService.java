@@ -1278,4 +1278,47 @@ public class RosterService {
 
         return responseDto;
     }
+
+    public List<RotaDemandSuggestionDto> generateRotaDemandRosters(Long userId,
+                                                                    RotaDemandSuggestionsReqBody requestBody,
+                                                                    JdbcClient jdbcClient) {
+        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate)
+                .withProcedureName("SC_ROTA_DEMAND_SUGGESTIONS_P");
+
+        Map<String, Object> inParamMap = new HashMap<>();
+        inParamMap.put("p_user_id", userId);
+        inParamMap.put("p_profile_id", requestBody.profileId());
+        inParamMap.put("p_rota_demand_id", requestBody.rotaDemandId());
+        inParamMap.put("p_start_date", requestBody.startDate());
+
+        SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+        simpleJdbcCall.execute(inSource);
+
+        String sql = """
+                SELECT
+                    per.person_id,
+                    per.employee_number,
+                    per.full_name,
+                    per.job_title,
+                    t.line_name,
+                    t.fte_req,
+                    t.start_date,
+                    t.end_date
+                FROM
+                    sc_rota_demand_suggestions_t t,
+                    sc_person_v                  per
+                WHERE
+                        per.person_id = t.person_id
+                    AND t.user_id = :userId
+                ORDER BY
+                    t.line_name,
+                    per.job_title,
+                    per.full_name
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("userId", userId)
+                .query(RotaDemandSuggestionDto.class)
+                .list();
+    }
 }
