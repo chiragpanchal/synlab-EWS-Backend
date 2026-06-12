@@ -12,6 +12,7 @@ public class RotaDemandSuggestionDto {
     private Double fteReq;
     private LocalDate startDate;
     private LocalDate endDate;
+    private Long workRotationId;
 
     public RotaDemandSuggestionDto() {
     }
@@ -78,5 +79,13 @@ public class RotaDemandSuggestionDto {
 
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
+    }
+
+    public Long getWorkRotationId() {
+        return workRotationId;
+    }
+
+    public void setWorkRotationId(Long workRotationId) {
+        this.workRotationId = workRotationId;
     }
 }

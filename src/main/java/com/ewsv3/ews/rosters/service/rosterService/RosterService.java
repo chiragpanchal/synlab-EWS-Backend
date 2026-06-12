@@ -1303,7 +1303,8 @@ public class RosterService {
                     t.line_name,
                     t.fte_req,
                     t.start_date,
-                    t.end_date
+                    t.end_date,
+                    t.work_rotation_id
                 FROM
                     sc_rota_demand_suggestions_t t,
                     sc_person_v                  per
