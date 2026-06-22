@@ -180,23 +180,12 @@ public class RosterController {
             @RequestParam(defaultValue = "100") int size,
             @RequestParam(defaultValue = "") String text,
             @RequestParam(defaultValue = "") String filterFlag,
+            @RequestParam(defaultValue = "true") boolean includeErrors,
             @RequestBody ProfileDatesRequestBody requestBody) {
         logger.info(
-                "GET_ROSTERS_SQL - Entry - Time: {}, ProfileId: {}, PersonId: {}, Page: {}, Size: {}, Text: {}, FilterFlag: {}",
-                LocalDateTime.now(), requestBody.profileId(), requestBody.personId(), page, size, text, filterFlag);
+                "GET_ROSTERS_SQL - Entry - Time: {}, ProfileId: {}, PersonId: {}, Page: {}, Size: {}, Text: {}, FilterFlag: {}, IncludeErrors: {}",
+                LocalDateTime.now(), requestBody.profileId(), requestBody.personId(), page, size, text, filterFlag, includeErrors);
         try {
-            // System.out.printf("getRostersSQL header: %s", header);
-            // UserResponseDto userInfo = getUserInfo(header);
-            // System.out.println("getRostersSQL > getCurrentUserId():" +
-            // getCurrentUserId());
-            // System.out.println("getRostersSQL > requestBody:" + requestBody);
-            // System.out.println("getRostersSQL > text:" + text);
-            // System.out.println("getRostersSQL > filterFlag:" + filterFlag);
-
-            // PersonRosterSqlResp personRosterSqlResp =
-            // this.rosterService.getPersonRosterSql(userInfo.userId(), requestBody,
-            // namedParameterJdbcTemplate, jdbcClient);
-
             PersonRosterSqlResp personRosterSqlResp = this.rosterService.getPersonRosterSql(
                     getCurrentUserId(),
                     requestBody.profileId(),
@@ -207,15 +196,14 @@ public class RosterController {
                     size,
                     text,
                     filterFlag,
+                    includeErrors,
                     jdbcClient,
                     namedParameterJdbcTemplate);
             logger.info("GET_ROSTERS_SQL - Exit - Time: {}, Response: {}", LocalDateTime.now(), personRosterSqlResp);
             return new ResponseEntity<>(personRosterSqlResp, HttpStatus.OK);
         } catch (Exception exception) {
-            // System.out.println(exception.getMessage());
             logger.error("GET_ROSTERS_SQL - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
-            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 

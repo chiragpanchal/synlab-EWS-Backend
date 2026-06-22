@@ -26,6 +26,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -41,6 +44,10 @@ public class RosterService {
     // public RosterService(JdbcClient jdbcClient) {
     // this.jdbcClient = jdbcClient;
     // }
+
+    // Dedicated pool for blocking DB calls — keeps them off the common ForkJoinPool
+    // which is designed for CPU-bound tasks and struggles under concurrent JDBC blocking.
+    private static final ExecutorService DB_TASK_EXECUTOR = Executors.newCachedThreadPool();
 
     private SimpleJdbcCall simpleJdbcCall;
     private final JdbcTemplate jdbcTemplate;
@@ -143,75 +150,99 @@ public class RosterService {
     }
 
     public PersonRosterSqlResp getPersonRosterSql(long userId, Long profileId, Long personId, LocalDate startDate,
-                                                  LocalDate endDate, int page, int size, String text, String filterFlag, JdbcClient jdbcClient,
+                                                  LocalDate endDate, int page, int size, String text, String filterFlag,
+                                                  boolean includeErrors, JdbcClient jdbcClient,
                                                   NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
 
-        // System.out.println("getPersonRosterSql userId:" + userId);
-        Map<String, Object> objectMap = null;
         String searchText = Objects.equals(text, "") ? "%" : "%" + text.trim() + "%";
-        try {
-            objectMap = Map.of(
-                    "userId", userId,
-                    "profileId", profileId,
-                    "personId", personId == null ? 0L : personId,
-                    "startDate", startDate,
-                    "endDate", endDate,
-                    "offset", page,
-                    "pageSize", size,
-                    "text", searchText,
-                    "pFilterFlag", filterFlag == null ? "Y" : filterFlag);
-        } catch (Exception e) {
-            // System.out.println("Exception in creating objectMap:" + e);
-            throw new RuntimeException(e);
-        }
+        // Treat null, empty, 'Y', and 'ALL' as the default no-filter case.
+        // The controller defaults filterFlag to "" (empty string), not null.
+        String effectiveFilterFlag = (filterFlag == null || filterFlag.isEmpty()) ? "Y" : filterFlag;
+        boolean isDefaultFilter = "Y".equals(effectiveFilterFlag) || "ALL".equals(effectiveFilterFlag);
 
-        // System.out.println("getPersonRosterSql objectMap:" + objectMap);
+        logger.info("PERF getPersonRosterSql - profileId:{} startDate:{} endDate:{} page:{} size:{} filterFlag:{} isDefaultFilter:{}",
+                profileId, startDate, endDate, page, size, effectiveFilterFlag, isDefaultFilter);
 
-        // Step 1: Get the roster team members (with pagination)
-        List<RosterLines> rosterLines = jdbcClient.sql(RosterTeamSql).params(objectMap).query(RosterLines.class).list();
-        System.out.printf("\ngetPersonRosterSql rosterLines:%s\n", rosterLines);
-
-        if (rosterLines.isEmpty()) {
-            // If no roster lines found, return empty response
-            String kpiString = getKpiString(userId, profileId, startDate, endDate, searchText,
-                    namedParameterJdbcTemplate);
-            return new PersonRosterSqlResp(rosterLines, kpiString);
-        }
-
-        // step 1.5: Get Roster Error String for schedule rule
-        List<RosterErrorString> rosterErrorStrings = jdbcClient.sql(errorStringSQL)
-                .param("userId", userId)
-                .param("profileId", profileId)
-                .param("startDate", startDate)
-                .param("endDate", endDate)
-                .param("offset", page)
-                .param("pageSize", size)
-                .param("text", searchText)
-                .param("pFilterFlag", filterFlag == null ? "Y" : filterFlag)
-                .query(RosterErrorString.class)
-                .list();
-
-        // Step 2: Get all roster children in one batch query (PERFORMANCE OPTIMIZATION)
-        // System.out.println("Fetching all roster children in batch - Performance
-        // Optimization");
-        long batchQueryStart = System.currentTimeMillis();
-
-        Map<String, Object> batchQueryMap = Map.of(
+        Map<String, Object> objectMap = Map.of(
                 "userId", userId,
                 "profileId", profileId,
+                "personId", personId == null ? 0L : personId,
                 "startDate", startDate,
                 "endDate", endDate,
+                "offset", page,
+                "pageSize", size,
                 "text", searchText,
-                "pFilterFlag", filterFlag == null ? "Y" : filterFlag);
+                "pFilterFlag", effectiveFilterFlag);
 
-        List<RosterLinesChild> allChildren = jdbcClient.sql(RosterMemberChildBatchSql)
-                .params(batchQueryMap)
-                .query(RosterLinesChild.class)
-                .list();
+        // Step 1: Get the roster team members (with pagination).
+        // Skip sc_person_rosters_filter_f entirely for the default case — avoids hundreds of PL/SQL context switches.
+        long t0 = System.currentTimeMillis();
+        String teamSql = isDefaultFilter ? RosterTeamSqlNoFilter : RosterTeamSql;
+        List<RosterLines> rosterLines = jdbcClient.sql(teamSql).params(objectMap).query(RosterLines.class).list();
+        logger.info("PERF step1 RosterTeamSql: {}ms, rows:{}", System.currentTimeMillis() - t0, rosterLines.size());
 
-        long batchQueryEnd = System.currentTimeMillis();
-        System.out.printf("Batch query completed in %d ms, fetched %d roster children records\n",
-                (batchQueryEnd - batchQueryStart), allChildren.size());
+        if (rosterLines.isEmpty()) {
+            return new PersonRosterSqlResp(rosterLines, "D:0#PA:0#UP:0#P:0#C:0#ON:0#EN:0#LV:0");
+        }
+
+        List<Long> personIds = rosterLines.stream().map(RosterLines::getPersonId).toList();
+
+        // Steps 1.5 (errors), 2 (children), and 5 (KPI) are independent — run in parallel.
+
+        CompletableFuture<List<RosterErrorString>> errorsFuture = includeErrors
+                ? CompletableFuture.supplyAsync(() -> {
+                    long t = System.currentTimeMillis();
+                    List<RosterErrorString> r = jdbcClient.sql(errorStringSQL)
+                            .param("userId", userId).param("profileId", profileId)
+                            .param("startDate", startDate).param("endDate", endDate)
+                            .param("text", searchText).query(RosterErrorString.class).list();
+                    logger.info("PERF step1.5 errorStringSQL: {}ms, rows:{}", System.currentTimeMillis() - t, r.size());
+                    return r;
+                }, DB_TASK_EXECUTOR)
+                : CompletableFuture.completedFuture(List.of());
+
+        // For the default filter, scope the children query directly to the page's person IDs —
+        // avoids joining through sc_timekeeper_person_v entirely.
+        // For non-default filters, fall back to the view-based batch query with filter function.
+        CompletableFuture<List<RosterLinesChild>> childrenFuture;
+        if (isDefaultFilter) {
+            childrenFuture = CompletableFuture.supplyAsync(() -> {
+                long t = System.currentTimeMillis();
+                List<RosterLinesChild> r = jdbcClient.sql(RosterMemberChildByPersonIdsSql)
+                        .param("personIds", personIds)
+                        .param("startDate", startDate)
+                        .param("endDate", endDate)
+                        .query(RosterLinesChild.class).list();
+                logger.info("PERF step2 RosterMemberChildByPersonIdsSql: {}ms, rows:{}", System.currentTimeMillis() - t, r.size());
+                return r;
+            }, DB_TASK_EXECUTOR);
+        } else {
+            Map<String, Object> batchQueryMap = Map.of(
+                    "userId", userId, "profileId", profileId,
+                    "startDate", startDate, "endDate", endDate,
+                    "text", searchText, "pFilterFlag", effectiveFilterFlag);
+            childrenFuture = CompletableFuture.supplyAsync(() -> {
+                long t = System.currentTimeMillis();
+                List<RosterLinesChild> r = jdbcClient.sql(RosterMemberChildBatchSql).params(batchQueryMap).query(RosterLinesChild.class).list();
+                logger.info("PERF step2 RosterMemberChildBatchSql (filter={}): {}ms, rows:{}", effectiveFilterFlag, System.currentTimeMillis() - t, r.size());
+                return r;
+            }, DB_TASK_EXECUTOR);
+        }
+
+        // Single-pass KPI count scoped to the current page's persons — replaces 7 sequential
+        // COUNT queries in the stored procedure that each scanned sc_person_rosters separately.
+        CompletableFuture<String> kpiFuture = CompletableFuture.supplyAsync(() -> {
+            long t = System.currentTimeMillis();
+            String kpi = getKpiString(personIds, startDate, endDate, jdbcClient);
+            logger.info("PERF step5 KPI sql: {}ms", System.currentTimeMillis() - t);
+            return kpi;
+        }, DB_TASK_EXECUTOR);
+
+        CompletableFuture.allOf(errorsFuture, childrenFuture, kpiFuture).join();
+
+        List<RosterErrorString> rosterErrorStrings = errorsFuture.join();
+        List<RosterLinesChild> allChildren = childrenFuture.join();
+        String kpiString = kpiFuture.join();
 
         // Step 3: Group children by person_id for efficient lookup
         Map<Long, List<RosterLinesChild>> childrenByPersonId = allChildren.stream()
@@ -219,14 +250,8 @@ public class RosterService {
 
         // Step 4: Process each roster line and assign its children
         for (RosterLines rosterLine : rosterLines) {
-            // System.out.println("Processing rosterLine.getPersonId(): " +
-            // rosterLine.getPersonId());
+            List<RosterLinesChild> children = childrenByPersonId.getOrDefault(rosterLine.getPersonId(), new ArrayList<>());
 
-            // Get children for this person from the batch result
-            List<RosterLinesChild> children = childrenByPersonId.getOrDefault(rosterLine.getPersonId(),
-                    new ArrayList<>());
-
-            // Ensure at least one record per date between startDate and endDate
             Set<LocalDate> existingDates = children.stream()
                     .map(RosterLinesChild::effectiveDate)
                     .collect(Collectors.toSet());
@@ -234,14 +259,12 @@ public class RosterService {
             List<RosterLinesChild> filledChildren = new ArrayList<>(children);
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                 if (!existingDates.contains(date)) {
-                    RosterLinesChild emptyChild = getLinesChild(rosterLine, date);
-                    filledChildren.add(emptyChild);
+                    filledChildren.add(getLinesChild(rosterLine, date));
                 }
             }
 
             filledChildren.sort(Comparator.comparing(RosterLinesChild::effectiveDate));
 
-            // Group filledChildren by effectiveDate and create RosterLinesChildDates
             Map<LocalDate, List<RosterLinesChild>> groupedByDate = filledChildren.stream()
                     .collect(Collectors.groupingBy(RosterLinesChild::effectiveDate));
             List<RosterLinesChildDates> childDatesList = groupedByDate.entrySet().stream()
@@ -250,67 +273,43 @@ public class RosterService {
                     .sorted(Comparator.comparing(RosterLinesChildDates::effectiveDate))
                     .collect(Collectors.toList());
 
-            // for (RosterLinesChildDates dates : childDatesList) {
-            // System.out.println("childDatesList: " + dates.effectiveDate() + ":" +
-            // dates.children().length);
-            // }
             rosterLine.setChildren(childDatesList);
 
-            RosterErrorString errorString = rosterErrorStrings.stream().filter(str -> str.personId() == rosterLine.getPersonId()).findFirst().orElse(null);
-
-//            assert errorString != null;
-            if (errorString != null) {
-                rosterLine.setErrorString(errorString.errorString());
-            } else {
-                rosterLine.setErrorString(null);
-            }
+            RosterErrorString errorString = rosterErrorStrings.stream()
+                    .filter(str -> str.personId() == rosterLine.getPersonId())
+                    .findFirst().orElse(null);
+            rosterLine.setErrorString(errorString != null ? errorString.errorString() : null);
         }
 
-        // for (RosterLines line : rosterLines) {
-        // line.getChildren().forEach(rosterLinesChildDates -> {
-        // System.out
-        // .println("rosterLines:" + line.getPersonName() + ":" +
-        // rosterLinesChildDates.children().length);
-        // });
-        // }
-
-        // Step 5: Get KPI String
-        String kpiString = getKpiString(userId, profileId, startDate, endDate, searchText, namedParameterJdbcTemplate);
-
-        // Step 6: Prepare final response
-        PersonRosterSqlResp rosterSqlResp = new PersonRosterSqlResp(rosterLines, kpiString);
-        System.out.printf("\ngetPersonRosterSql: END%s========================> \n", LocalTime.now());
-
-        return rosterSqlResp;
+        return new PersonRosterSqlResp(rosterLines, kpiString);
     }
 
-    /**
-     * Helper method to get KPI string - extracted for reusability and cleaner code
-     */
-    private String getKpiString(long userId, Long profileId, LocalDate startDate, LocalDate endDate,
-                                String searchText, NamedParameterJdbcTemplate namedParameterJdbcTemplate) {
-        System.out.printf("\n\t\tgetPersonRosterSql: KPI Procedure call BEGIN%s========================> \n",
-                LocalTime.now());
+    private String getKpiString(List<Long> personIds, LocalDate startDate, LocalDate endDate, JdbcClient jdbcClient) {
+        long[] counts = jdbcClient.sql(kpiCountSql)
+                .param("personIds", personIds)
+                .param("startDate", startDate)
+                .param("endDate", endDate)
+                .query((rs, rowNum) -> new long[]{
+                        rs.getLong("draft_count"),
+                        rs.getLong("submit_count"),
+                        rs.getLong("unpub_count"),
+                        rs.getLong("pub_count"),
+                        rs.getLong("correct_count"),
+                        rs.getLong("on_call_count"),
+                        rs.getLong("emergency_count")
+                })
+                .single();
 
-        Map<String, Object> procParamMap = new HashMap<>();
-        procParamMap.put("p_user_id", userId);
-        procParamMap.put("p_start_date", startDate);
-        procParamMap.put("p_end_date", endDate);
-        procParamMap.put("p_profile_id", profileId);
-        procParamMap.put("p_text", searchText);
+        long leaveCount = jdbcClient.sql(kpiLeaveCountSql)
+                .param("personIds", personIds)
+                .param("startDate", startDate)
+                .param("endDate", endDate)
+                .query((rs, rowNum) -> rs.getLong("leave_count"))
+                .single();
 
-        JdbcTemplate template = namedParameterJdbcTemplate.getJdbcTemplate();
-        SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(template).withProcedureName("SC_GET_ROSTER_SQL_KPI");
-        SqlParameterSource sqlParameterSource = new MapSqlParameterSource(procParamMap);
-        Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(sqlParameterSource);
-
-        System.out.printf("\n\t\tgetPersonRosterSql: KPI Procedure call END%s========================> \n",
-                LocalTime.now());
-
-        String kpiString = (String) simpleJdbcCallResult.get("P_KPI_STRING");
-        System.out.printf("kpiString: %s\n", kpiString);
-
-        return kpiString;
+        return "D:" + counts[0] + "#PA:" + counts[1] + "#UP:" + counts[2]
+                + "#P:" + counts[3] + "#C:" + counts[4]
+                + "#ON:" + counts[5] + "#EN:" + counts[6] + "#LV:" + leaveCount;
     }
 
     private static RosterLinesChild getLinesChild(RosterLines rosterLine, LocalDate date) {
@@ -1304,13 +1303,35 @@ public class RosterService {
                     t.fte_req,
                     t.start_date,
                     t.end_date,
-                    t.work_rotation_id
+                    t.work_rotation_id,
+                    LISTAGG(ss.skill, ', ') WITHIN GROUP(
+                    ORDER BY
+                        skill
+                    ) competencies
                 FROM
                     sc_rota_demand_suggestions_t t,
-                    sc_person_v                  per
+                    sc_person_v                  per,
+                    sc_person_preferred_jobs     pj,
+                    sc_person_preferred_skills   ps,
+                    sc_skills                    ss
                 WHERE
                         per.person_id = t.person_id
+                    AND pj.person_id (+) = per.person_id
+                    AND pj.job_title_id (+) = per.job_title_id
+                    AND ps.person_id (+) = per.person_id
+                    AND ps.person_preferred_job_id (+) = pj.person_preferred_job_id
+                    AND ss.skill_id (+) = ps.skill_id
                     AND t.user_id = :userId
+                GROUP BY
+                    per.person_id,
+                    per.employee_number,
+                    per.full_name,
+                    per.job_title,
+                    t.line_name,
+                    t.fte_req,
+                    t.start_date,
+                    t.end_date,
+                    t.work_rotation_id
                 ORDER BY
                     t.line_name,
                     per.job_title,

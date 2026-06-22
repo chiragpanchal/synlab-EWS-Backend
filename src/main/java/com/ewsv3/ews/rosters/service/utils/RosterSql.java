@@ -102,6 +102,162 @@ public class RosterSql {
                         OFFSET nvl(:offset ,1) * :pageSize ROWS
                          FETCH NEXT :pageSize ROWS ONLY""";
 
+    // No-filter variant: omits sc_person_rosters_filter_f which always returns 'Y'
+    // when p_filter_flag is 'Y' or 'ALL', avoiding hundreds of PL/SQL context switches.
+    public static String RosterTeamSqlNoFilter = """
+            SELECT
+                            person_id,
+                            assignment_id,
+                            employee_number,
+                            person_Name,
+                            job_title,
+                            department_name,
+                            normal_hours,
+                            frequency,
+                            ' ' error_string
+                          FROM
+                            (
+                                SELECT
+                                    tkv.person_id,
+                                    per.assignment_id,
+                                    tkv.employee_number,
+                                    tkv.person_Name,
+                                    tkv.job_title,
+                                    tkv.department_name,
+                                    per.normal_hours,
+                                    per.frequency
+                                  FROM
+                                    sc_timekeeper_person_v tkv,
+                                    sc_person_v per
+                                 WHERE
+                                        tkv.timekeeper_user_id = :userId
+                                       AND tkv.profile_id=:profileId
+                                       AND (lower(tkv.employee_number) LIKE lower(:text)
+                                       OR lower(tkv.person_name) LIKE lower(:text))
+                                       AND per.person_id=tkv.person_id
+                                       AND (:personId = 0 OR per.person_id = :personId)
+                                       AND nvl(
+                                        tkv.hire_date,
+                                        :startDate
+                                    ) <= :startDate
+                                       AND nvl(
+                                        tkv.termination_date,
+                                        :endDate
+                                    ) >= :endDate
+                                 ORDER BY
+                                    person_Name
+                            )
+                        OFFSET nvl(:offset ,1) * :pageSize ROWS
+                         FETCH NEXT :pageSize ROWS ONLY""";
+
+    // Fastest variant: scope by exact person_id list from step-1, no view join needed.
+    // Oracle supports IN clause expansion for named parameters with List values.
+    public static String RosterMemberChildByPersonIdsSql = """
+            SELECT
+                per.person_id,
+                per.assignment_id,
+                spr.person_roster_id,
+                spr.effective_date,
+                spr.time_start,
+                spr.time_end,
+                round(( spr.time_end - spr.time_start ) * 24,2) sch_hrs,
+                spr.department_id                      sch_department_id,
+                spr.job_title_id                       sch_job_title_id,
+                spr.work_location_id                   sch_work_location_id,
+                sd.department_name                     sch_department,
+                sj.job_title                           sch_job_title,
+                loc.location_name                      sch_location,
+                spr.on_call,
+                spr.emergency,
+                spr.published,
+                swd.work_duration_id,
+                swd.work_duration_code,
+                swd.work_duration_name,
+                swd.time_hour,
+                ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
+                fc.currency_code
+              FROM
+                sc_person_rosters        spr,
+                sc_person_v              per,
+                sc_work_duration         swd,
+                sc_departments           sd,
+                sc_jobs                  sj,
+                sc_work_locations        loc,
+                sc_person_preferred_jobs pj,
+                sc_currencies            fc
+             WHERE
+                spr.person_id IN (:personIds)
+                AND per.person_id = spr.person_id
+                AND swd.work_duration_id (+) = spr.work_duration_id
+                AND spr.effective_date BETWEEN :startDate AND :endDate
+                AND spr.department_id        = sd.department_id (+)
+                AND spr.job_title_id         = sj.job_title_id (+)
+                AND spr.work_location_id     = loc.work_location_id (+)
+                AND pj.person_id (+)         = spr.person_id
+                AND pj.job_title_id (+)      = spr.job_title_id
+                AND fc.currency_id (+)       = pj.currency_id
+             ORDER BY
+                spr.person_id,
+                spr.effective_date,
+                spr.time_start""";
+
+    // No-filter variant: omits sc_person_rosters_filter_f per roster row.
+    public static String RosterMemberChildBatchSqlNoFilter = """
+            SELECT
+                per.person_id,
+                per.assignment_id,
+                spr.person_roster_id,
+                spr.effective_date,
+                spr.time_start,
+                spr.time_end,
+                round(( spr.time_end - spr.time_start ) * 24,2) sch_hrs,
+                spr.department_id                      sch_department_id,
+                spr.job_title_id                       sch_job_title_id,
+                spr.work_location_id                   sch_work_location_id,
+                sd.department_name                     sch_department,
+                sj.job_title                           sch_job_title,
+                loc.location_name                      sch_location,
+                spr.on_call,
+                spr.emergency,
+                spr.published,
+                swd.work_duration_id,
+                swd.work_duration_code,
+                swd.work_duration_name,
+                swd.time_hour,
+                ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
+                fc.currency_code
+              FROM
+                sc_person_rosters spr,
+                sc_person_v       per,
+                sc_work_duration  swd,
+                sc_departments    sd,
+                sc_jobs           sj,
+                sc_work_locations loc,
+                sc_person_preferred_jobs pj,
+                sc_currencies            fc,
+                sc_timekeeper_person_v tkv
+             WHERE
+                    per.person_id = spr.person_id
+                   AND tkv.person_id = spr.person_id
+                   AND tkv.timekeeper_user_id = :userId
+                   AND tkv.profile_id = :profileId
+                   AND swd.work_duration_id (+) = spr.work_duration_id
+                   AND spr.effective_date BETWEEN :startDate AND :endDate
+                   AND spr.department_id        = sd.department_id (+)
+                   AND spr.job_title_id         = sj.job_title_id (+)
+                   AND spr.work_location_id     = loc.work_location_id (+)
+                   and pj.person_id (+)         = spr.person_id
+                   and pj.job_title_id (+)      = spr.job_title_id
+                   and fc.currency_id (+)       = pj.currency_id
+                   AND (lower(tkv.employee_number) LIKE lower(:text)
+                       OR lower(tkv.person_name) LIKE lower(:text))
+                   AND nvl(tkv.hire_date, :startDate) <= :startDate
+                   AND nvl(tkv.termination_date, :endDate) >= :endDate
+             ORDER BY
+                spr.person_id,
+                spr.effective_date,
+                spr.time_start""";
+
     public static String RosterMemberChildSql = """
             SELECT
                 per.person_id,
@@ -378,6 +534,52 @@ public class RosterSql {
                 spr.person_id,
                 spr.effective_date,
                 spr.time_start""";
+
+    // Replaces the 7-query SC_GET_ROSTER_SQL_KPI procedure with a single scan.
+    // Scoped to the current page's person IDs so it stays fast under concurrency.
+    public static String kpiCountSql = """
+            SELECT
+                SUM(CASE WHEN spr.appr_status = 'DRAFT'
+                              AND NVL(spr.published,'N') = 'N'
+                              AND NOT EXISTS (SELECT 'Y' FROM sc_roster_swap rs
+                                              WHERE rs.s_person_id = spr.person_id
+                                                AND rs.s_roster_person_id = spr.person_roster_id)
+                         THEN 1 ELSE 0 END) draft_count,
+                SUM(CASE WHEN spr.appr_status = 'SUBMIT'
+                              AND NVL(spr.published,'N') = 'N'
+                              AND NOT EXISTS (SELECT 'Y' FROM sc_roster_swap rs
+                                              WHERE rs.s_person_id = spr.person_id
+                                                AND rs.s_roster_person_id = spr.person_roster_id)
+                         THEN 1 ELSE 0 END) submit_count,
+                SUM(CASE WHEN spr.appr_status = 'APPROVED'
+                              AND NVL(spr.published,'N') = 'N'
+                              AND NOT EXISTS (SELECT 'Y' FROM sc_roster_swap rs
+                                              WHERE rs.s_person_id = spr.person_id
+                                                AND rs.s_roster_person_id = spr.person_roster_id)
+                         THEN 1 ELSE 0 END) unpub_count,
+                SUM(CASE WHEN spr.appr_status = 'APPROVED'
+                              AND NVL(spr.published,'N') = 'Y'
+                              AND NOT EXISTS (SELECT 'Y' FROM sc_roster_swap rs
+                                              WHERE rs.s_person_id = spr.person_id
+                                                AND rs.s_roster_person_id = spr.person_roster_id)
+                         THEN 1 ELSE 0 END) pub_count,
+                SUM(CASE WHEN spr.appr_status = 'RMI'
+                              AND NVL(spr.published,'N') = 'N'
+                              AND NOT EXISTS (SELECT 'Y' FROM sc_roster_swap rs
+                                              WHERE rs.s_person_id = spr.person_id
+                                                AND rs.s_roster_person_id = spr.person_roster_id)
+                         THEN 1 ELSE 0 END) correct_count,
+                SUM(CASE WHEN spr.on_call IS NOT NULL THEN 1 ELSE 0 END) on_call_count,
+                SUM(CASE WHEN spr.emergency IS NOT NULL THEN 1 ELSE 0 END) emergency_count
+              FROM sc_person_rosters spr
+             WHERE spr.person_id IN (:personIds)
+               AND TRUNC(spr.effective_date) BETWEEN TRUNC(:startDate) AND TRUNC(:endDate)""";
+
+    public static String kpiLeaveCountSql = """
+            SELECT COUNT(pa.absence_attendances_id) leave_count
+              FROM sc_person_absences_t pa
+             WHERE pa.person_id IN (:personIds)
+               AND TRUNC(pa.leave_date) BETWEEN TRUNC(:startDate) AND TRUNC(:endDate)""";
 
     public static String InsertPersonRorationAssoc = """
             insert into sc_person_rotation_assoc (

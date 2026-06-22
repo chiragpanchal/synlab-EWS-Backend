@@ -13,6 +13,7 @@ public class RotaDemandSuggestionDto {
     private LocalDate startDate;
     private LocalDate endDate;
     private Long workRotationId;
+    private String competencies;
 
     public RotaDemandSuggestionDto() {
     }
@@ -87,5 +88,13 @@ public class RotaDemandSuggestionDto {
 
     public void setWorkRotationId(Long workRotationId) {
         this.workRotationId = workRotationId;
+    }
+
+    public String getCompetencies() {
+        return competencies;
+    }
+
+    public void setCompetencies(String competencies) {
+        this.competencies = competencies;
     }
 }
