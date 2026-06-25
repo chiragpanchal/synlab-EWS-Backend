@@ -310,17 +310,17 @@ public class RequestUtils {
                             spr2.person_id = spr.person_id
                         and spr2.person_roster_id = :personRosterId
                 )
-                and not exists (
-                    select
-                        'Y'
-                    from
-                        sc_person_rosters spr2
-                    where
-                           1=1-- spr2.person_id = spr.person_id
-                        and spr2.effective_date   = spr.effective_date
-                        -- and spr2.person_roster_id = :personRosterId
-                        and spr2.person_id in (select spr0.person_id from sc_person_rosters spr0 where spr0.person_roster_id=:personRosterId)
-                )
+--                and not exists (
+--                    select
+--                        'Y'
+--                    from
+--                        sc_person_rosters spr2
+--                    where
+--                           1=1-- spr2.person_id = spr.person_id
+--                        and spr2.effective_date   = spr.effective_date
+--                        -- and spr2.person_roster_id = :personRosterId
+--                        and spr2.person_id in (select spr0.person_id from sc_person_rosters spr0 where spr0.person_roster_id=:personRosterId)
+--                )
             order by
                 per.full_name,
                 spr.time_start""";
