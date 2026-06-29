@@ -8,6 +8,13 @@ public record AccessProfiles(
         String profileName,
         LocalDate startDate,
         LocalDate endDate,
+        String readOnly,
+        String allowOverlapShifts,
+        String allowOvertimeShifts,
+        String allowOncallShifts,
+        Long weekStartsOn,
+        String allowOpenShifts,
+        Long rosterUpdateNotAllow,
         Long createdBy,
         LocalDateTime createdOn,
         Long lastUpdatedBy,
@@ -15,6 +22,6 @@ public record AccessProfiles(
         String skipApproval
 ) {
     public AccessProfiles() {
-        this(null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

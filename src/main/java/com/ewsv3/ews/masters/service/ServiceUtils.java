@@ -245,6 +245,13 @@ public class ServiceUtils {
                     )
                 ) profile_name,
                 supa.user_type,
+                sap.read_only,
+                sap.allow_overlap_shifts,
+                sap.allow_overtime_shifts,
+                sap.allow_oncall_shifts,
+                sap.week_starts_on,
+                sap.allow_open_shifts,
+                sap.roster_update_not_allow,
                 (
                     SELECT
                         LISTAGG(appr.full_name

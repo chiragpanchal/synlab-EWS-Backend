@@ -7,6 +7,7 @@ import com.ewsv3.ews.accessprofiles.dto.UserProfileAssoc;
 import com.ewsv3.ews.accessprofiles.dto.req.AccessProfileReq;
 import com.ewsv3.ews.accessprofiles.dto.req.AssessProfileId;
 import com.ewsv3.ews.accessprofiles.dto.resp.AccessProfileResp;
+import com.ewsv3.ews.accessprofiles.dto.resp.RosterCutoffValuesDto;
 import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import jakarta.annotation.PostConstruct;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -131,6 +132,13 @@ public class AccessProfileService {
                         .param("profileName", profile.profileName())
                         .param("endDate", profile.endDate())
                         .param("startDate", profile.startDate())
+                        .param("readOnly",profile.readOnly())
+                        .param("allowOverlapShifts",profile.allowOverlapShifts())
+                        .param("allowOvertimeShifts",profile.allowOvertimeShifts())
+                        .param("allowOncallShifts",profile.allowOncallShifts())
+                        .param("weekStartsOn",profile.weekStartsOn())
+                        .param("allowOpenShifts",profile.allowOpenShifts())
+                        .param("rosterUpdateNotAllow",profile.rosterUpdateNotAllow())
                         .update();
 
                 // System.out.println("saveProfile existingProfile inserted:" + inserted);
@@ -138,9 +146,9 @@ public class AccessProfileService {
             } else {
                 generatedAccessProfileId = profile.profileId();
 
-                if (!Objects.equals(existingProfile.getAccessProfiles().profileName(), profile.profileName())
-                        || !Objects.equals(existingProfile.getAccessProfiles().startDate(), profile.startDate())
-                        || !Objects.equals(existingProfile.getAccessProfiles().endDate(), profile.endDate())) {
+//                if (!Objects.equals(existingProfile.getAccessProfiles().profileName(), profile.profileName())
+//                        || !Objects.equals(existingProfile.getAccessProfiles().startDate(), profile.startDate())
+//                        || !Objects.equals(existingProfile.getAccessProfiles().endDate(), profile.endDate())) {
 
 
                     // System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().profileName():" + existingProfile.getAccessProfiles().profileName());
@@ -152,6 +160,11 @@ public class AccessProfileService {
                     // System.out.println("saveProfile existingProfile existingProfile.getAccessProfiles().endDate():" + existingProfile.getAccessProfiles().endDate());
                     // System.out.println("saveProfile existingProfile profile.endDate():" + profile.endDate());
 
+                System.out.println("saveProfile existingProfile profile.readOnly():" + profile.readOnly());
+                System.out.println("saveProfile existingProfile profile.allowOverlapShifts():" + profile.allowOverlapShifts());
+                System.out.println("saveProfile existingProfile profile.weekStartsOn():" + profile.weekStartsOn());
+
+
                     int updated = jdbcClient.sql(sqlUpdateAccessProfile)
                             .param("profileId", generatedAccessProfileId)
                             .param("lastUpdatedBy", userId)
@@ -159,10 +172,17 @@ public class AccessProfileService {
                             .param("profileName", profile.profileName())
                             .param("endDate", profile.endDate())
                             .param("startDate", profile.startDate())
+                            .param("readOnly",profile.readOnly())
+                            .param("allowOverlapShifts",profile.allowOverlapShifts())
+                            .param("allowOvertimeShifts",profile.allowOvertimeShifts())
+                            .param("allowOncallShifts",profile.allowOncallShifts())
+                            .param("weekStartsOn",profile.weekStartsOn())
+                            .param("allowOpenShifts",profile.allowOpenShifts())
+                            .param("rosterUpdateNotAllow",profile.rosterUpdateNotAllow())
                             .update();
 
                     // System.out.println("saveProfile existingProfile updated:" + updated);
-                }
+//                }
             }
         } catch (Exception exception) {
             throw new RuntimeException("error in saving profile:" + exception.getMessage() + ", profileName:" + profileResponse.getAccessProfiles().profileName());
@@ -382,5 +402,13 @@ public class AccessProfileService {
                 .update();
 
         return new DMLResponseDto("S", deleted + " Profile deleted!");
+    }
+
+    public List<RosterCutoffValuesDto> getRosterCutoffOptions(JdbcClient jdbcClient){
+        List<RosterCutoffValuesDto> rosterCutoffValuesDtos = jdbcClient.sql(sqlRosterCutoffValues)
+                .query(RosterCutoffValuesDto.class)
+                .list();
+
+        return rosterCutoffValuesDtos;
     }
 }

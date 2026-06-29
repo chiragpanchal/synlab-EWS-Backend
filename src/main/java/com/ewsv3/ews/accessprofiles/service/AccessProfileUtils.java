@@ -35,6 +35,13 @@ public class AccessProfileUtils {
                 profile_name,
                 start_date,
                 end_date,
+                read_only,
+                allow_overlap_shifts,
+                allow_overtime_shifts,
+                allow_oncall_shifts,
+                week_starts_on,
+                allow_open_shifts,
+                roster_update_not_allow,
                 created_by,
                 created_on,
                 last_updated_by,
@@ -103,6 +110,13 @@ public class AccessProfileUtils {
                 profile_name,
                 end_date,
                 start_date,
+                read_only,
+                allow_overlap_shifts,
+                allow_overtime_shifts,
+                allow_oncall_shifts,
+                week_starts_on,
+                allow_open_shifts,
+                roster_update_not_allow,
                 enterprise_id
             ) values (
                 :profileId,
@@ -112,6 +126,13 @@ public class AccessProfileUtils {
                 :profileName,
                 :endDate,
                 :startDate,
+                :readOnly,
+                :allowOverlapShifts,
+                :allowOvertimeShifts,
+                :allowOncallShifts,
+                :weekStartsOn,
+                :allowOpenShifts,
+                :rosterUpdateNotAllow,
                 1
             )""";
 
@@ -122,7 +143,14 @@ public class AccessProfileUtils {
                 skip_approval = :skipApproval,
                 profile_name = :profileName,
                 end_date = :endDate,
-                start_date = :startDate
+                start_date = :startDate,
+                read_only =:readOnly,
+                allow_overlap_shifts =:allowOverlapShifts,
+                allow_overtime_shifts =:allowOvertimeShifts,
+                allow_oncall_shifts =:allowOncallShifts,
+                week_starts_on =:weekStartsOn,
+                allow_open_shifts =:allowOpenShifts,
+                roster_update_not_allow =:rosterUpdateNotAllow
             where
                 profile_id = :profileId""";
 
@@ -235,4 +263,19 @@ public class AccessProfileUtils {
             delete sc_user_profile_assoc
             where
                   user_profile_assoc_id = :userProfileAssocId""";
+
+    public static String sqlRosterCutoffValues= """
+            SELECT
+                vl.value_set_value_id,
+                vl.value_meaning,
+                vl.enabled
+            FROM
+                sc_value_set_values vl,
+                sc_value_sets       vs
+            WHERE
+                    vl.value_set_id = vs.value_set_id
+                AND vl.enabled = 'Y'
+                AND vs.value_set_name = 'Roster Cutoff'
+            ORDER BY
+                value_set_value_id""";
 }

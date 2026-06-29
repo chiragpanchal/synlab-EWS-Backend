@@ -7,6 +7,7 @@ import com.ewsv3.ews.accessprofiles.dto.UserProfileAssoc;
 import com.ewsv3.ews.accessprofiles.dto.req.AccessProfileReq;
 import com.ewsv3.ews.accessprofiles.dto.req.AssessProfileId;
 import com.ewsv3.ews.accessprofiles.dto.resp.AccessProfileResp;
+import com.ewsv3.ews.accessprofiles.dto.resp.RosterCutoffValuesDto;
 import com.ewsv3.ews.accessprofiles.service.AccessProfileService;
 import com.ewsv3.ews.auth.dto.UserPrincipal;
 import com.ewsv3.ews.commons.dto.DMLResponseDto;
@@ -147,5 +148,24 @@ public class AccessProfileController {
             logger.error("DELETE_PROFILE - Exception - Time: {}, Request: {}, Error: {}", LocalDateTime.now(), req, exception.getMessage(), exception);
             return new ResponseEntity<>(new DMLResponseDto("E", exception.getMessage()), HttpStatus.BAD_REQUEST);
         }
+    }
+
+
+    @GetMapping("roster-cutoff-values")
+    public ResponseEntity<List<RosterCutoffValuesDto>> getRosterCutoffValues(@RequestHeader Map<String, String> headers){
+        logger.info("roster-cutoff-values - Entry - Time: {}", LocalDateTime.now());
+
+        try {
+
+            List<RosterCutoffValuesDto> rosterCutoffOptions = this.accessProfileService.getRosterCutoffOptions(this.jdbcClient);
+            logger.info("roster-cutoff-values - response counts: {} , Time: {}", rosterCutoffOptions.size(), LocalDateTime.now());
+            return new ResponseEntity<>(rosterCutoffOptions,HttpStatus.OK);
+
+        }catch (Exception exception){
+            logger.error("roster-cutoff-values - Exception - Time: {}, Error: {}", LocalDateTime.now(), exception.getMessage(), exception);
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+
     }
 }

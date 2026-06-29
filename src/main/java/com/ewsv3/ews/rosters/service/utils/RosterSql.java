@@ -581,6 +581,150 @@ public class RosterSql {
              WHERE pa.person_id IN (:personIds)
                AND TRUNC(pa.leave_date) BETWEEN TRUNC(:startDate) AND TRUNC(:endDate)""";
 
+    public static String kpiCountSqlTk = """
+            SELECT
+                SUM(
+                    CASE
+                        WHEN spr.appr_status = 'DRAFT'
+                             AND nvl(spr.published, 'N') = 'N'
+                             AND NOT EXISTS(
+                            SELECT
+                                'Y'
+                            FROM
+                                sc_roster_swap rs
+                            WHERE
+                                    rs.s_person_id = spr.person_id
+                                AND rs.s_roster_person_id = spr.person_roster_id
+                        ) THEN
+                            1
+                        ELSE
+                            0
+                    END
+                ) draft_count,
+                SUM(
+                    CASE
+                        WHEN spr.appr_status = 'SUBMIT'
+                             AND nvl(spr.published, 'N') = 'N'
+                             AND NOT EXISTS(
+                            SELECT
+                                'Y'
+                            FROM
+                                sc_roster_swap rs
+                            WHERE
+                                    rs.s_person_id = spr.person_id
+                                AND rs.s_roster_person_id = spr.person_roster_id
+                        ) THEN
+                            1
+                        ELSE
+                            0
+                    END
+                ) submit_count,
+                SUM(
+                    CASE
+                        WHEN spr.appr_status = 'APPROVED'
+                             AND nvl(spr.published, 'N') = 'N'
+                             AND NOT EXISTS(
+                            SELECT
+                                'Y'
+                            FROM
+                                sc_roster_swap rs
+                            WHERE
+                                    rs.s_person_id = spr.person_id
+                                AND rs.s_roster_person_id = spr.person_roster_id
+                        ) THEN
+                            1
+                        ELSE
+                            0
+                    END
+                ) unpub_count,
+                SUM(
+                    CASE
+                        WHEN spr.appr_status = 'APPROVED'
+                             AND nvl(spr.published, 'N') = 'Y'
+                             AND NOT EXISTS(
+                            SELECT
+                                'Y'
+                            FROM
+                                sc_roster_swap rs
+                            WHERE
+                                    rs.s_person_id = spr.person_id
+                                AND rs.s_roster_person_id = spr.person_roster_id
+                        ) THEN
+                            1
+                        ELSE
+                            0
+                    END
+                ) pub_count,
+                SUM(
+                    CASE
+                        WHEN spr.appr_status = 'RMI'
+                             AND nvl(spr.published, 'N') = 'N'
+                             AND NOT EXISTS(
+                            SELECT
+                                'Y'
+                            FROM
+                                sc_roster_swap rs
+                            WHERE
+                                    rs.s_person_id = spr.person_id
+                                AND rs.s_roster_person_id = spr.person_roster_id
+                        ) THEN
+                            1
+                        ELSE
+                            0
+                    END
+                ) correct_count,
+                SUM(
+                    CASE
+                        WHEN spr.on_call IS NOT NULL THEN
+                            1
+                        ELSE
+                            0
+                    END
+                ) on_call_count,
+                SUM(
+                    CASE
+                        WHEN spr.emergency IS NOT NULL THEN
+                            1
+                        ELSE
+                            0
+                    END
+                ) emergency_count
+            FROM
+                sc_person_rosters spr
+            WHERE
+                spr.person_id IN (
+                    SELECT
+                        tkv.person_id
+                    FROM
+                        sc_timekeeper_person_v tkv
+                    WHERE
+                            tkv.timekeeper_user_id = :userId
+                        AND tkv.profile_id = :profileId
+                        AND nvl(tkv.hire_date,
+                                trunc(:endDate)) <= trunc(:endDate)
+                        AND nvl(tkv.termination_date,
+                                trunc(:startDate)) >= trunc(:startDate)
+                )
+                AND trunc(spr.effective_date) BETWEEN trunc( :startDate ) AND trunc( :endDate )""";
+
+    public static String kpiLeaveCountSqlTk = """
+            SELECT COUNT(pa.absence_attendances_id) leave_count
+              FROM sc_person_absences_t pa
+             WHERE pa.person_id IN (
+             SELECT
+                        tkv.person_id
+                    FROM
+                        sc_timekeeper_person_v tkv
+                    WHERE
+                            tkv.timekeeper_user_id = :userId
+                        AND tkv.profile_id = :profileId
+                        AND nvl(tkv.hire_date,
+                                trunc(:endDate)) <= trunc(:endDate)
+                        AND nvl(tkv.termination_date,
+                                trunc(:startDate)) >= trunc(:startDate)
+                )
+            AND TRUNC(pa.leave_date) BETWEEN TRUNC(:startDate) AND TRUNC(:endDate)""";
+
     public static String InsertPersonRorationAssoc = """
             insert into sc_person_rotation_assoc (
                 person_id,

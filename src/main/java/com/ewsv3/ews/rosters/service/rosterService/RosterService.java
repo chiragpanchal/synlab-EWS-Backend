@@ -231,9 +231,16 @@ public class RosterService {
 
         // Single-pass KPI count scoped to the current page's persons — replaces 7 sequential
         // COUNT queries in the stored procedure that each scanned sc_person_rosters separately.
+//        CompletableFuture<String> kpiFuture = CompletableFuture.supplyAsync(() -> {
+//            long t = System.currentTimeMillis();
+//            String kpi = getKpiString(personIds, startDate, endDate, jdbcClient);
+//            logger.info("PERF step5 KPI sql: {}ms", System.currentTimeMillis() - t);
+//            return kpi;
+//        }, DB_TASK_EXECUTOR);
+
         CompletableFuture<String> kpiFuture = CompletableFuture.supplyAsync(() -> {
             long t = System.currentTimeMillis();
-            String kpi = getKpiString(personIds, startDate, endDate, jdbcClient);
+            String kpi = getKpiStringTk(userId ,profileId, startDate, endDate, jdbcClient);
             logger.info("PERF step5 KPI sql: {}ms", System.currentTimeMillis() - t);
             return kpi;
         }, DB_TASK_EXECUTOR);
@@ -302,6 +309,36 @@ public class RosterService {
 
         long leaveCount = jdbcClient.sql(kpiLeaveCountSql)
                 .param("personIds", personIds)
+                .param("startDate", startDate)
+                .param("endDate", endDate)
+                .query((rs, rowNum) -> rs.getLong("leave_count"))
+                .single();
+
+        return "D:" + counts[0] + "#PA:" + counts[1] + "#UP:" + counts[2]
+                + "#P:" + counts[3] + "#C:" + counts[4]
+                + "#ON:" + counts[5] + "#EN:" + counts[6] + "#LV:" + leaveCount;
+    }
+
+    private String getKpiStringTk(Long userId, Long profileId,  LocalDate startDate, LocalDate endDate, JdbcClient jdbcClient) {
+        long[] counts = jdbcClient.sql(kpiCountSqlTk)
+                .param("userId", userId)
+                .param("profileId", profileId)
+                .param("startDate", startDate)
+                .param("endDate", endDate)
+                .query((rs, rowNum) -> new long[]{
+                        rs.getLong("draft_count"),
+                        rs.getLong("submit_count"),
+                        rs.getLong("unpub_count"),
+                        rs.getLong("pub_count"),
+                        rs.getLong("correct_count"),
+                        rs.getLong("on_call_count"),
+                        rs.getLong("emergency_count")
+                })
+                .single();
+
+        long leaveCount = jdbcClient.sql(kpiLeaveCountSqlTk)
+                .param("userId", userId)
+                .param("profileId", profileId)
                 .param("startDate", startDate)
                 .param("endDate", endDate)
                 .query((rs, rowNum) -> rs.getLong("leave_count"))
