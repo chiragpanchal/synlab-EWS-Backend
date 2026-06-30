@@ -30,6 +30,7 @@ public class AppointRuleService {
         rule.setProfileId(request.getProfileId());
         rule.setReqFte(request.getReqFte());
         rule.setJobTitleId(request.getJobTitleId());
+        rule.setWorkDurationId(request.getWorkDurationId());
         rule.setNosAppointments(request.getNosAppointments());
         AppointRule saved = appointRuleRepository.save(rule);
         return mapToDto(saved);
@@ -70,6 +71,7 @@ public class AppointRuleService {
             rule.setProfileId(request.getProfileId());
             rule.setReqFte(request.getReqFte());
             rule.setJobTitleId(request.getJobTitleId());
+            rule.setWorkDurationId(request.getWorkDurationId());
             rule.setNosAppointments(request.getNosAppointments());
             AppointRule updated = appointRuleRepository.save(rule);
             return mapToDto(updated);
@@ -95,6 +97,7 @@ public class AppointRuleService {
                 rule.getProfileId(),
                 rule.getReqFte(),
                 rule.getJobTitleId(),
+                rule.getWorkDurationId(),
                 rule.getNosAppointments()
         );
     }

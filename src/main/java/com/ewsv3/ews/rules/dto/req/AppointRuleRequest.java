@@ -6,6 +6,7 @@ public class AppointRuleRequest {
     private Long profileId;
     private BigDecimal reqFte;
     private Long jobTitleId;
+    private Long workDurationId;
     private BigDecimal nosAppointments;
 
     public AppointRuleRequest() {}
@@ -32,6 +33,14 @@ public class AppointRuleRequest {
 
     public void setJobTitleId(Long jobTitleId) {
         this.jobTitleId = jobTitleId;
+    }
+
+    public Long getWorkDurationId() {
+        return workDurationId;
+    }
+
+    public void setWorkDurationId(Long workDurationId) {
+        this.workDurationId = workDurationId;
     }
 
     public BigDecimal getNosAppointments() {

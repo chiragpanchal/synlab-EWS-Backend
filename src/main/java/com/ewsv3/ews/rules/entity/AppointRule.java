@@ -21,16 +21,20 @@ public class AppointRule {
     @Column(name = "JOB_TITLE_ID")
     private Long jobTitleId;
 
+    @Column(name = "WORK_DURATION_ID")
+    private Long workDurationId;
+
     @Column(name = "NOS_APPOINTMENTS")
     private BigDecimal nosAppointments;
 
     public AppointRule() {}
 
-    public AppointRule(Long appointRuleId, Long profileId, BigDecimal reqFte, Long jobTitleId, BigDecimal nosAppointments) {
+    public AppointRule(Long appointRuleId, Long profileId, BigDecimal reqFte, Long jobTitleId, Long workDurationId, BigDecimal nosAppointments) {
         this.appointRuleId = appointRuleId;
         this.profileId = profileId;
         this.reqFte = reqFte;
         this.jobTitleId = jobTitleId;
+        this.workDurationId = workDurationId;
         this.nosAppointments = nosAppointments;
     }
 
@@ -64,6 +68,14 @@ public class AppointRule {
 
     public void setJobTitleId(Long jobTitleId) {
         this.jobTitleId = jobTitleId;
+    }
+
+    public Long getWorkDurationId() {
+        return workDurationId;
+    }
+
+    public void setWorkDurationId(Long workDurationId) {
+        this.workDurationId = workDurationId;
     }
 
     public BigDecimal getNosAppointments() {

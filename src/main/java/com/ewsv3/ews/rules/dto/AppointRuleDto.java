@@ -7,15 +7,17 @@ public class AppointRuleDto {
     private Long profileId;
     private BigDecimal reqFte;
     private Long jobTitleId;
+    private Long workDurationId;
     private BigDecimal nosAppointments;
 
     public AppointRuleDto() {}
 
-    public AppointRuleDto(Long appointRuleId, Long profileId, BigDecimal reqFte, Long jobTitleId, BigDecimal nosAppointments) {
+    public AppointRuleDto(Long appointRuleId, Long profileId, BigDecimal reqFte, Long jobTitleId, Long workDurationId, BigDecimal nosAppointments) {
         this.appointRuleId = appointRuleId;
         this.profileId = profileId;
         this.reqFte = reqFte;
         this.jobTitleId = jobTitleId;
+        this.workDurationId = workDurationId;
         this.nosAppointments = nosAppointments;
     }
 
@@ -49,6 +51,14 @@ public class AppointRuleDto {
 
     public void setJobTitleId(Long jobTitleId) {
         this.jobTitleId = jobTitleId;
+    }
+
+    public Long getWorkDurationId() {
+        return workDurationId;
+    }
+
+    public void setWorkDurationId(Long workDurationId) {
+        this.workDurationId = workDurationId;
     }
 
     public BigDecimal getNosAppointments() {
