@@ -66,6 +66,7 @@ public class ProductivityUtils {
                         st.effective_date between :startDate and :endDate
                         and per.person_id          = st.person_id
                         and st.primary_row         = 'Y'
+                        and st.SCH_HRS>0
                         and exists (
                             select
                                 'Y'
