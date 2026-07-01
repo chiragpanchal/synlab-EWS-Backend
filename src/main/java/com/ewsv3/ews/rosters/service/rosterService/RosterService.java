@@ -615,8 +615,8 @@ public class RosterService {
         AtomicReference<String> errorMessage = new AtomicReference<>("");
         AtomicInteger deleteCounts = new AtomicInteger();
 
-        // System.out.println("deletePersonRoster: reqBody:" + reqBody);
-
+//         System.out.println("deletePersonRoster: reqBody:" + reqBody);
+//
         simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
