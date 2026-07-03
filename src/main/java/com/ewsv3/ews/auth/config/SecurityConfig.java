@@ -48,6 +48,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/test-menus").permitAll()
                 .requestMatchers("/api/auth/refreshtoken").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/payroll-audit/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated()
             )
