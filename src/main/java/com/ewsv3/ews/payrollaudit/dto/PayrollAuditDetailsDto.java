@@ -18,6 +18,7 @@ public record PayrollAuditDetailsDto(
         LocalDate effectiveDate,
         Long payrollAuditLineId,
         Long ttsTimesheetId,
+        String status,
         String payCodeName,
         Long payCodeId,
         BigDecimal hours,

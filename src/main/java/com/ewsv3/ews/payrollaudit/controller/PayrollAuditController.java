@@ -1,6 +1,7 @@
 package com.ewsv3.ews.payrollaudit.controller;
 
 import com.ewsv3.ews.auth.dto.UserPrincipal;
+import com.ewsv3.ews.commons.dto.DMLResponseDto;
 import com.ewsv3.ews.payrollaudit.dto.*;
 import com.ewsv3.ews.payrollaudit.service.PayrollAuditService;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public class PayrollAuditController {
             @RequestParam(required = false) Long locationId,
             @RequestParam(required = false) Long gradeId,
             @RequestParam(required = false) String assignmentNumber,
-            @RequestParam String status) {
+            @RequestParam(required = false) String status) {
 
         logger.info("getPayrollAuditSummary - Entry - Time: {}, payPeriodId: {}, status: {}",
                    LocalDateTime.now(), payPeriodId, status);
@@ -66,7 +67,8 @@ public class PayrollAuditController {
                     locationId,
                     gradeId,
                     assignmentNumber,
-                    status);
+                    status,
+                    jdbcClient);
 
             logger.info("getPayrollAuditSummary - Exit - Time: {}, recordCount: {}",
                        LocalDateTime.now(), summaryList.size());
@@ -153,6 +155,101 @@ public class PayrollAuditController {
             logger.error("getPayrollAuditMasters - Error: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error fetching payroll audit masters: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/populate")
+    public ResponseEntity<?> populatePayrollAuditData(@RequestBody PopulatePayrollAuditReqDto reqDto) {
+
+        logger.info("populatePayrollAuditData - Entry - Time: {}, payPeriodId: {}",
+                   LocalDateTime.now(), reqDto.payPeriodId());
+
+        try {
+            Long userId = getCurrentUserId();
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not authenticated");
+            }
+
+            String result = payrollAuditService.populatePayrollAuditData(userId, reqDto.payPeriodId());
+
+            logger.info("populatePayrollAuditData - Exit - Time: {}, result: {}",
+                       LocalDateTime.now(), result);
+            return ResponseEntity.ok(new DMLResponseDto("S", result));
+        } catch (Exception e) {
+            logger.error("populatePayrollAuditData - Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new DMLResponseDto("E", "Error populating payroll audit data: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/line/update")
+    public ResponseEntity<?> updatePayrollAuditLine(@RequestBody UpdatePayrollAuditLineReqDto reqDto) {
+
+        logger.info("updatePayrollAuditLine - Entry - Time: {}, payrollAuditLineId: {}, nPayCodeId: {}, nHours: {}",
+                   LocalDateTime.now(), reqDto.payrollAuditLineId(), reqDto.nPayCodeId(), reqDto.nHours());
+
+        try {
+            int rowsAffected = payrollAuditService.updatePayrollAuditLine(reqDto, jdbcClient);
+
+            if (rowsAffected > 0) {
+                logger.info("updatePayrollAuditLine - Exit - Time: {}, rowsAffected: {}",
+                           LocalDateTime.now(), rowsAffected);
+                return ResponseEntity.ok(new DMLResponseDto("S", "Payroll audit line updated successfully"));
+            } else {
+                logger.warn("updatePayrollAuditLine - No records updated for payrollAuditLineId: {}",
+                           reqDto.payrollAuditLineId());
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new DMLResponseDto("E", "Payroll audit line not found"));
+            }
+        } catch (Exception e) {
+            logger.error("updatePayrollAuditLine - Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new DMLResponseDto("E", "Error updating payroll audit line: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/action")
+    public ResponseEntity<?> performPayrollAuditAction(@RequestBody PayrollAuditActionReqDto reqDto) {
+
+        logger.info("performPayrollAuditAction - Entry - Time: {}, payPeriodId: {}, status: {}, action: {}",
+                   LocalDateTime.now(), reqDto.payPeriodId(), reqDto.status(), reqDto.action());
+
+        try {
+            Long userId = getCurrentUserId();
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not authenticated");
+            }
+
+            String result = payrollAuditService.performPayrollAuditAction(userId, reqDto);
+
+            logger.info("performPayrollAuditAction - Exit - Time: {}, result: {}",
+                       LocalDateTime.now(), result);
+            return ResponseEntity.ok(new DMLResponseDto("S", result));
+        } catch (Exception e) {
+            logger.error("performPayrollAuditAction - Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new DMLResponseDto("E", "Error performing payroll audit action: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/logs/{payrollAuditId}")
+    public ResponseEntity<?> getPayrollAuditLogs(@PathVariable Long payrollAuditId) {
+
+        logger.info("getPayrollAuditLogs - Entry - Time: {}, payrollAuditId: {}",
+                   LocalDateTime.now(), payrollAuditId);
+
+        try {
+            List<PayrollAuditLogDto> logsList = payrollAuditService.getPayrollAuditLogs(payrollAuditId, jdbcClient);
+
+            logger.info("getPayrollAuditLogs - Exit - Time: {}, recordCount: {}",
+                       LocalDateTime.now(), logsList.size());
+            return ResponseEntity.ok(logsList);
+        } catch (Exception e) {
+            logger.error("getPayrollAuditLogs - Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error fetching payroll audit logs: " + e.getMessage());
         }
     }
 }

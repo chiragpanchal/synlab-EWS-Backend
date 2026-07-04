@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public record PayrollAuditSummaryDto(
         Long personId,
+        Long payrollAuditId,
         String employeeNumber,
         String assignmentNumber,
         String fullName,
@@ -15,6 +16,7 @@ public record PayrollAuditSummaryDto(
         String employeeTypes,
         String locationName,
         String payCodeName,
+        String status,
         BigDecimal hours
 ) {
 }
