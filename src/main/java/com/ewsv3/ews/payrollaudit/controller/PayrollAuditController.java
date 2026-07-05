@@ -252,4 +252,28 @@ public class PayrollAuditController {
                     .body("Error fetching payroll audit logs: " + e.getMessage());
         }
     }
+
+    @GetMapping("/is-approver")
+    public ResponseEntity<?> isUserPayrollAuditApprover() {
+
+        logger.info("isUserPayrollAuditApprover - Entry - Time: {}", LocalDateTime.now());
+
+        try {
+            Long userId = getCurrentUserId();
+            if (userId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body("User not authenticated");
+            }
+
+            Boolean isApprover = payrollAuditService.isUserPayrollAuditApprover(userId, jdbcClient);
+
+            logger.info("isUserPayrollAuditApprover - Exit - Time: {}, userId: {}, isApprover: {}",
+                       LocalDateTime.now(), userId, isApprover);
+            return ResponseEntity.ok(new IsUserPayrollApproverRespDto(isApprover));
+        } catch (Exception e) {
+            logger.error("isUserPayrollAuditApprover - Error: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error checking user payroll audit approver status: " + e.getMessage());
+        }
+    }
 }

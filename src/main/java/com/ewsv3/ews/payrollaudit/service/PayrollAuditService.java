@@ -465,6 +465,23 @@ public class PayrollAuditService {
         );
     }
 
+    public Boolean isUserPayrollAuditApprover(Long userId, JdbcClient jdbcClient) {
+        String sql = "SELECT sc_manage_payroll_audit_pkg.is_user_payroll_approver_f(?) as flag FROM dual";
+
+        try {
+            Boolean result = jdbcClient.sql(sql)
+                    .param(userId)
+                    .query(Boolean.class)
+                    .single();
+
+            logger.info("Checked if user is payroll audit approver - userId: {}, result: {}", userId, result);
+            return result;
+        } catch (Exception e) {
+            logger.error("Error checking if user is payroll audit approver - userId: {}", userId, e);
+            return false;
+        }
+    }
+
     private PayrollAuditDetailsDto mapToDetailsDto(ResultSet rs) throws SQLException {
         return new PayrollAuditDetailsDto(
                 rs.getLong("person_id"),
