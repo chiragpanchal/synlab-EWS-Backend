@@ -28,7 +28,9 @@
       "Bash(curl.exe --version)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Chirag760008\\\\IdeaProjects\\\\synlab-EWS-Backend\" -Recurse -Directory)",
       "Bash(Select-Object -First 50)",
-      "Bash(Format-List FullName)"
+      "Bash(Format-List FullName)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Chirag760008\\\\IdeaProjects\\\\synlab-EWS-Backend\" -Recurse -Directory -Depth 3 | Where-Object {$_.Name -match \"com|src\"} | Select-Object -First 30 FullName)",
+      "Bash(mvn clean *)"
     ],
     "deny": [],
     "ask": []
