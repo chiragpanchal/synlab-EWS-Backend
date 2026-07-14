@@ -372,6 +372,8 @@ public class RosterService {
                 null, // workDurationName
                 null, // timeHour
                 null,
+                null,
+                null,
                 null);
         emptyChild.setEffectiveDate(date);
         return emptyChild;

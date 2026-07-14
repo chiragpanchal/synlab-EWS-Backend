@@ -175,7 +175,9 @@ public class RosterSql {
                 swd.work_duration_name,
                 swd.time_hour,
                 ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
-                fc.currency_code
+                fc.currency_code,
+                spr.work_rotation_id,
+                wh.work_rotation_name
               FROM
                 sc_person_rosters        spr,
                 sc_person_v              per,
@@ -184,7 +186,8 @@ public class RosterSql {
                 sc_jobs                  sj,
                 sc_work_locations        loc,
                 sc_person_preferred_jobs pj,
-                sc_currencies            fc
+                sc_currencies            fc,
+                sc_work_rotations_h wh
              WHERE
                 spr.person_id IN (:personIds)
                 AND per.person_id = spr.person_id
@@ -196,6 +199,7 @@ public class RosterSql {
                 AND pj.person_id (+)         = spr.person_id
                 AND pj.job_title_id (+)      = spr.job_title_id
                 AND fc.currency_id (+)       = pj.currency_id
+                AND wh.work_rotation_id (+) = spr.work_rotation_id
              ORDER BY
                 spr.person_id,
                 spr.effective_date,
@@ -332,7 +336,9 @@ public class RosterSql {
                 swd.work_duration_name,
                 swd.time_hour,
                 ( ( spr.time_end - spr.time_start ) * 24 * pj.per_hr_sal ) sch_cost,
-                fc.currency_code
+                fc.currency_code,
+                spr.work_rotation_id,
+                wh.work_rotation_name
               FROM
                 sc_person_rosters spr,
                 sc_person_v       per,
@@ -342,7 +348,8 @@ public class RosterSql {
                 sc_work_locations loc,
                 sc_person_preferred_jobs pj,
                 sc_currencies            fc,
-                sc_timekeeper_person_v tkv
+                sc_timekeeper_person_v tkv,
+                sc_work_rotations_h wh
              WHERE
                     per.person_id = spr.person_id
                    AND tkv.person_id = spr.person_id
@@ -357,6 +364,7 @@ public class RosterSql {
                    and pj.person_id (+)         = spr.person_id
                    and pj.job_title_id (+)      = spr.job_title_id
                    and fc.currency_id (+)       = pj.currency_id
+                   and wh.work_rotation_id (+) = spr.work_rotation_id
                    AND (lower(tkv.employee_number) LIKE lower(:text)
                        OR lower(tkv.person_name) LIKE lower(:text))
                    AND nvl(tkv.hire_date, :startDate) <= :startDate
