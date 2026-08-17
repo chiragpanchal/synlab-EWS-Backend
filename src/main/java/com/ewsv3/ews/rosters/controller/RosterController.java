@@ -514,6 +514,27 @@ public class RosterController {
         }
     }
 
+    @PostMapping("/create-optimized-rosters")
+    @CrossOrigin
+    public ResponseEntity<RosterDMLResponseDto> createOptimizedRosters(@RequestHeader Map<String, String> header,
+            @RequestBody List<OptimizedRosterReqBody> requestBody) {
+        logger.info("CREATE_OPTIMIZED_ROSTERS - Entry - Time: {}, Request count: {}, Request: {}",
+                LocalDateTime.now(), requestBody.size(), requestBody);
+        try {
+            RosterDMLResponseDto responseDto = this.rosterService.createOptimizedRosters(
+                    getCurrentUserId(),
+                    requestBody);
+            logger.info("CREATE_OPTIMIZED_ROSTERS - Exit - Time: {}, StatusMessage: {}, DetailMessage: {}",
+                    LocalDateTime.now(), responseDto.getStatusMessage(), responseDto.getDetailMessage());
+            return new ResponseEntity<>(responseDto, HttpStatus.OK);
+        } catch (Exception exception) {
+            logger.error("CREATE_OPTIMIZED_ROSTERS - Exception - Time: {}, Request count: {}, Error: {}",
+                    LocalDateTime.now(), requestBody == null ? 0 : requestBody.size(), exception.getMessage(),
+                    exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/generate-rota-demand-rosters")
     @CrossOrigin
     public ResponseEntity<List<RotaDemandSuggestionDto>> generateRotaDemandRosters(
@@ -555,6 +576,35 @@ public class RosterController {
         } catch (Exception exception) {
             // System.out.println(exception.getMessage());
             logger.error("alternate-staff - Exception - Time: {}, Request: {}, Error: {}",
+                    LocalDateTime.now(), requestBody, exception.getMessage(), exception);
+            // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+
+    @GetMapping("demand-suggest-staff")
+    @CrossOrigin
+    public ResponseEntity<List<DemandRosterPersonRespBody>> getDemandRosterPersonList(
+            @RequestHeader Map<String, String> header,
+            @RequestBody DemandRosterPersonReqBody requestBody
+    ){
+
+        logger.info("demand-suggest-staff - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+        try {
+            // System.out.println("quick-copy > getCurrentUserId():" + getCurrentUserId());
+            // System.out.println("quick-copy > requestBody:" + requestBody);
+
+            List<DemandRosterPersonRespBody> demandRosterPersonList = this.rosterService.getDemandRosterPersonList(
+                    getCurrentUserId(),
+                    requestBody,
+                    jdbcClient);
+            logger.info("demand-suggest-staff - Exit - Time: {}, demandRosterPersonList Counts: {}", LocalDateTime.now(), demandRosterPersonList.size());
+            return new ResponseEntity<>(demandRosterPersonList, HttpStatus.OK);
+        } catch (Exception exception) {
+            // System.out.println(exception.getMessage());
+            logger.error("demand-suggest-staff - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

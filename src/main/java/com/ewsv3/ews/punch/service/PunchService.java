@@ -25,11 +25,15 @@ public class PunchService {
 
         // punchParamMap.put("userId", userId);
 
+
+        LocalDateTime sysdate = jdbcClient.sql("select sysdate from dual").query(LocalDateTime.class).single();
+
         int insertedCounts = jdbcClient.sql(PunchUtils.insertPunch)
                 .param("personId", personId)
                 .param("departmentId", punch.departmentId())
                 .param("jobTitleId", punch.jobTitleId())
-                .param("punchTime", LocalDateTime.now())
+//                .param("punchTime", LocalDateTime.now())
+                .param("punchTime", sysdate)
                 .param("punchType", punch.punchType())
                 .param("createdBy", userId)
                 .param("lastUpdatedBy", userId)

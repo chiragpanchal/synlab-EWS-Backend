@@ -1115,4 +1115,63 @@ public class RosterSql {
                 ),
                 person_name ASC""";
 
+
+    public static String getDemandSuggestionEmployees= """
+            SELECT
+                person_id,
+                person_name,
+                employee_number,
+                grade_name,
+                rate,
+                effective_date,
+                work_duration_code,
+                time_start,
+                time_end
+            FROM
+                (
+                    SELECT
+                        tkv.person_id,
+                        tkv.person_name,
+                        tkv.employee_number,
+                        tkv.grade_name,
+                        spr.effective_date,
+                        swd.work_duration_code,
+                        spr.time_start,
+                        spr.time_end,
+                        pj.per_hr_sal rate
+                    FROM
+                        sc_timekeeper_person_v   tkv,
+                        sc_person_preferred_jobs pj,
+                        sc_demand_template_h     h,
+                        sc_demand_template_l     l,
+                        sc_person_rosters        spr,
+                        sc_work_duration         swd
+                    WHERE
+                            tkv.timekeeper_user_id = :userId
+                        AND tkv.profile_id = :profileId
+                        AND pj.person_id = tkv.person_id
+                        AND h.profile_id = tkv.profile_id
+                        AND l.demand_template_id = h.demand_template_id
+                        AND l.demand_template_line_id = :demandTemplateLineId
+                        AND l.job_title_id = tkv.job_title_id
+                        AND l.department_id = tkv.department_id
+                        AND spr.person_id (+) = tkv.person_id
+                        AND spr.effective_date (+) BETWEEN :startDate AND :endDate
+                        AND swd.work_duration_id (+) = spr.work_duration_id
+                        AND tkv.person_id NOT IN (
+                                        SELECT
+                                            TO_NUMBER(regexp_substr(:personIds, '[^,]+', 1, level)) AS value
+                                        FROM
+                                            dual
+                                        CONNECT BY
+                                            regexp_substr(:personIds, '[^,]+', 1, level) IS NOT NULL
+                                    )
+                        AND nvl(tkv.hire_date, :startDate) <= :startDate
+                        AND nvl(tkv.termination_date, :endDate) >= :endDate
+                )
+            ORDER BY
+                nvl(rate, 0),
+                person_name ASC,
+                effective_date""";
+
 }

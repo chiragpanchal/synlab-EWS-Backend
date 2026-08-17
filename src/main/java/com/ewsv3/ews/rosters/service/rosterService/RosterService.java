@@ -1317,6 +1317,67 @@ public class RosterService {
         return responseDto;
     }
 
+    public RosterDMLResponseDto createOptimizedRosters(Long userId, List<OptimizedRosterReqBody> reqBodyList) {
+        RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
+
+        if (reqBodyList == null || reqBodyList.isEmpty()) {
+            responseDto.setStatusMessage("E");
+            responseDto.setDetailMessage("No records to process!");
+            return responseDto;
+        }
+
+        Map<String, Object> inParamMap = new HashMap<>();
+        int recCounts = 0;
+
+        for (OptimizedRosterReqBody reqBody : reqBodyList) {
+            try {
+                simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_OPTIMIZED_ROSTERS_P");
+
+                inParamMap.put("p_user_id", userId);
+                inParamMap.put("p_person_id", reqBody.personId());
+                inParamMap.put("p_start_date", reqBody.startDate());
+                inParamMap.put("p_end_date", reqBody.endDate());
+                inParamMap.put("p_days", reqBody.days());
+                inParamMap.put("p_work_duration_id", reqBody.workDurationId());
+
+                SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
+                Map<String, Object> result = simpleJdbcCall.execute(inSource);
+
+                AtomicReference<Object> pOut = new AtomicReference<>();
+                result.forEach((k, v) -> {
+                    if (k.equalsIgnoreCase("P_OUT")) {
+                        pOut.set(v);
+                    }
+                });
+
+                String pOutStr = pOut.get() == null ? "" : pOut.get().toString();
+                int separatorIdx = pOutStr.indexOf("#");
+                String statusFlag = separatorIdx < 0 ? "S" : pOutStr.substring(0, separatorIdx);
+                String message = separatorIdx < 0 ? pOutStr : pOutStr.substring(separatorIdx + 1);
+
+                if (statusFlag.startsWith("E")) {
+                    responseDto.setStatusMessage("E");
+                    responseDto.setDetailMessage(message);
+                    return responseDto;
+                }
+
+                recCounts = recCounts + 1;
+
+            } catch (Exception e) {
+                responseDto.setStatusMessage("E");
+                responseDto.setDetailMessage(e.getMessage());
+                return responseDto;
+            } finally {
+                inParamMap.clear();
+            }
+        }
+
+        responseDto.setStatusMessage("S");
+        responseDto.setDetailMessage("Optimized schedules created successfully for " + recCounts + " staff!");
+
+        return responseDto;
+    }
+
     public List<RotaDemandSuggestionDto> generateRotaDemandRosters(Long userId,
                                                                     RotaDemandSuggestionsReqBody requestBody,
                                                                     JdbcClient jdbcClient) {
@@ -1381,5 +1442,21 @@ public class RosterService {
                 .param("userId", userId)
                 .query(RotaDemandSuggestionDto.class)
                 .list();
+    }
+
+    public List<DemandRosterPersonRespBody> getDemandRosterPersonList(Long userId, DemandRosterPersonReqBody requestBody , JdbcClient jdbcClient ) {
+
+        List<DemandRosterPersonRespBody> respBodies = jdbcClient.sql(getDemandSuggestionEmployees)
+                .param("userId", userId)
+                .param("profileId", requestBody.profileId())
+                .param("demandTemplateLineId",requestBody.demandTemplateLineId())
+                .param("startDate", requestBody.startDate())
+                .param("endDate", requestBody.endDate())
+                .param("personIds", requestBody.personIds())
+                .query(DemandRosterPersonRespBody.class)
+                .list();
+
+        return respBodies;
+
     }
 }
