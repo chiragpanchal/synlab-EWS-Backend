@@ -65,7 +65,10 @@ public class RequestUtils {
                 and sn.ACTION_TYPE = 'Approval'
                 and (mgr.user_id=sn.to_user_id
                 or mgr.user_id= sn.more_info_user_id)) pending_with,
-                spra.comments
+                spra.comments,
+                sc_get_roster_name_f (
+                             p_person_roster_id => spra.d_person_roster_id
+                        )swap_details
             FROM
                 sc_person_requests_appr spra,
                 sc_requests_master      srm,

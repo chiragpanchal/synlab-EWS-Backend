@@ -16,6 +16,7 @@ public record RequestResp(
         LocalDateTime createdOn,
         String status,
         String comments,
-        String  pendingWith
+        String  pendingWith,
+        String swapDetails
 ) {
 }
