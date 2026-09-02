@@ -65,7 +65,7 @@ public class RequestUtils {
                 and sn.ACTION_TYPE = 'Approval'
                 and (mgr.user_id=sn.to_user_id
                 or mgr.user_id= sn.more_info_user_id)) pending_with,
-                spra.comments 
+                spra.comments
             FROM
                 sc_person_requests_appr spra,
                 sc_requests_master      srm,
@@ -82,7 +82,6 @@ public class RequestUtils {
                 AND srr.request_reason_id(+)= spra.request_reason_id
             ORDER BY
                 spra.created_on DESC""";
-
 
     static String RequestsApprovalSqlxcxx = """
             select
@@ -274,7 +273,73 @@ public class RequestUtils {
             order by
                 wc.notif_comment_id""";
 
-    static String DestinationRostersSql = """
+    public static String DestinationRostersSql = """
+                        SELECT DISTINCT
+                per.person_id,
+                per.employee_number,
+                per.full_name,
+                spr.time_start,
+                spr.time_end,
+                spr.person_roster_id,
+                swd.work_duration_name,
+                swd.time_hour,
+                swd.duration,
+                sc_get_swapable_flag(
+                    p_person_roster_id => :personRosterId,
+                    p_dest_person_id   => per.person_id,
+                    p_swap_date        => trunc(spr.time_start)
+                ) swappable_flag
+            FROM
+                sc_person_rosters      spr,
+                sc_person_v            per,
+                sc_timekeeper_person_v tkv,
+                sc_work_duration       swd
+            WHERE
+                    spr.published = 'Y'
+                AND spr.on_call IS NULL
+                AND spr.emergency IS NULL
+                AND per.person_id = spr.person_id
+                AND swd.work_duration_id = spr.work_duration_id
+                AND tkv.person_id = per.person_id
+                AND tkv.hire_date <= spr.effective_date
+                AND nvl(tkv.termination_date, spr.effective_date) <= spr.effective_date
+                AND EXISTS (
+                    SELECT
+                        'Y'
+                    FROM
+                        sc_person_rosters spr2
+                    WHERE
+                            spr2.person_roster_id = :personRosterId
+                        AND spr2.department_id = spr.department_id
+                        AND spr2.job_title_id = spr.job_title_id
+                        AND spr2.work_location_id = spr.work_location_id
+                        AND spr.effective_date BETWEEN spr2.effective_date - 2 AND spr2.effective_date + 2
+                )
+                AND EXISTS (
+                    SELECT
+                        'Y'
+                    FROM
+                        sc_timekeeper_person_v self_tkv,
+                        sc_person_rosters      self_spr
+                    WHERE
+                            self_spr.person_id = self_tkv.person_id
+                        AND self_tkv.profile_id = tkv.profile_id
+                        AND self_spr.person_roster_id = :personRosterId
+                )
+                AND NOT EXISTS (
+                    SELECT
+                        'Y'
+                    FROM
+                        sc_person_rosters spr2
+                    WHERE
+                            spr2.person_id = spr.person_id
+                        AND spr2.person_roster_id = :personRosterId
+                )
+            ORDER BY
+                per.full_name,
+                spr.time_start""";
+
+    static String oldDestinationRostersSql = """
             select
                 per.person_id,
                 per.employee_number,
@@ -310,17 +375,6 @@ public class RequestUtils {
                             spr2.person_id = spr.person_id
                         and spr2.person_roster_id = :personRosterId
                 )
---                and not exists (
---                    select
---                        'Y'
---                    from
---                        sc_person_rosters spr2
---                    where
---                           1=1-- spr2.person_id = spr.person_id
---                        and spr2.effective_date   = spr.effective_date
---                        -- and spr2.person_roster_id = :personRosterId
---                        and spr2.person_id in (select spr0.person_id from sc_person_rosters spr0 where spr0.person_roster_id=:personRosterId)
---                )
             order by
                 per.full_name,
                 spr.time_start""";

@@ -31,7 +31,10 @@
       "Bash(Format-List FullName)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Chirag760008\\\\IdeaProjects\\\\synlab-EWS-Backend\" -Recurse -Directory -Depth 3 | Where-Object {$_.Name -match \"com|src\"} | Select-Object -First 30 FullName)",
       "Bash(mvn clean *)",
-      "PowerShell(.\\\\mvnw.cmd -q -o compile -DskipTests)"
+      "PowerShell(.\\\\mvnw.cmd -q -o compile -DskipTests)",
+      "Bash(rm -rf \"C:/Users/Chirag760008/IdeaParojects\")",
+      "Read(//c/Users/Chirag760008/**)",
+      "PowerShell($r = Test-NetConnection -ComputerName localhost -Port 1521 -WarningAction SilentlyContinue; \"localhost:1521 reachable = $\\($r.TcpTestSucceeded\\)\")"
     ],
     "deny": [],
     "ask": []
