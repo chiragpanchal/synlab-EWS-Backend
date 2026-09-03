@@ -5,6 +5,7 @@ public record TimecardSummary(
         Double totActHrs,
         Double totViolationCount,
         Double totAbsenceHrs,
-        Double totHolidayHrs
+        Double totHolidayHrs,
+        Long totRequestCount
 ) {
 }

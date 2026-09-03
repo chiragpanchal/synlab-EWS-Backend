@@ -110,7 +110,8 @@ public class TimecardUtils {
                 SUM(act_hrs)         tot_act_hrs,
                 SUM(violation_count) tot_violation_count,
                 SUM(absence_hrs)     tot_absence_hrs,
-                SUM(holiday_hrs)     tot_holiday_hrs
+                SUM(holiday_hrs)     tot_holiday_hrs,
+                SUM(request_count)   tot_request_count
             FROM
                 (
                     SELECT
@@ -140,7 +141,18 @@ public class TimecardUtils {
                                 AND st2.effective_date = st.effective_date
                                 AND sh.person_id = st.person_id
                                 AND sh.holiday_date = st.effective_date
-                        )                        holiday_hrs
+                        )                        holiday_hrs,
+                        (
+                            SELECT
+                                COUNT(spra.person_request_id)
+                            FROM
+                                sc_person_requests_appr spra
+                            WHERE
+                                    spra.person_id = st.person_id
+                                AND spra.date_start = st.effective_date
+                                AND spra.rejected IS NULL
+                                AND spra.status IN ( 'APPROVED', 'SUBMIT' )
+                        )               request_count
                     FROM
                         sc_timecards st,
                         sc_work_duration sw
