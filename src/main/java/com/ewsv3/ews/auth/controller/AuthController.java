@@ -1,6 +1,7 @@
 package com.ewsv3.ews.auth.controller;
 
 import com.ewsv3.ews.auth.dto.*;
+import com.ewsv3.ews.auth.service.FusionUserDetailsService;
 import com.ewsv3.ews.auth.service.JwtService;
 import com.ewsv3.ews.auth.service.RefreshTokenService;
 import com.ewsv3.ews.auth.service.TokenBlacklistService;
@@ -39,6 +40,9 @@ public class AuthController {
 
     @Autowired
     com.ewsv3.ews.auth.repository.UserRepository userRepository;
+
+    @Autowired
+    FusionUserDetailsService fusionUserDetailsService;
 
     @GetMapping("/test")
     public ResponseEntity<?> testAuthEndpoint() {
@@ -94,6 +98,73 @@ public class AuthController {
         logger.info("AUTHENTICATE_USER - Exit - Time: {}, Username: {}, UserId: {}", LocalDateTime.now(), loginRequest.getUsername(), userDetails.getUserId());
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Oracle Fusion SSO login.
+     * <p>
+     * Fusion launches this application as
+     * https://&lt;host&gt;/login?jwt=&lt;token&gt;; the UI posts that token (without the
+     * "jwt=" prefix) here. The token is exchanged for the Fusion UserId via
+     * UserDetailsServiceV2.findSelfUserDetails, the matching SC_USERS row is
+     * looked up by USER_ID, and its credentials are handed to the regular
+     * {@link #authenticateUser(LoginRequest)} flow so the same JWT / refresh
+     * token pair is issued as for a normal login.
+     */
+    @PostMapping("/login-jwt")
+    public ResponseEntity<?> authenticateUserWithJwt(@RequestBody JwtLoginRequest jwtLoginRequest) {
+        logger.info("AUTHENTICATE_USER_JWT - Entry - Time: {}", LocalDateTime.now());
+
+        String fusionJwt = jwtLoginRequest != null ? jwtLoginRequest.getJwt() : null;
+        if (fusionJwt == null || fusionJwt.trim().isEmpty()) {
+            logger.error("AUTHENTICATE_USER_JWT - Exception - Time: {}, Error: jwt is missing in request body", LocalDateTime.now());
+            return ResponseEntity.badRequest().body(new MessageResponse("jwt is required"));
+        }
+        fusionJwt = fusionJwt.trim();
+
+        // Tolerate a token that still carries the "jwt=" query-parameter prefix
+        if (fusionJwt.startsWith("jwt=")) {
+            fusionJwt = fusionJwt.substring(4);
+        }
+
+        String subject = fusionUserDetailsService.extractSubject(fusionJwt);
+        logger.info("AUTHENTICATE_USER_JWT - Token subject: {}", subject);
+
+        String fusionUserId;
+        try {
+            fusionUserId = fusionUserDetailsService.findSelfUserId(fusionJwt);
+        } catch (Exception e) {
+            logger.error("AUTHENTICATE_USER_JWT - Exception - Time: {}, Error: {}", LocalDateTime.now(), e.getMessage(), e);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Unable to validate the Oracle Fusion token"));
+        }
+
+        if (fusionUserId == null || fusionUserId.trim().isEmpty()) {
+            logger.error("AUTHENTICATE_USER_JWT - Exception - Time: {}, Error: UserId not returned by Oracle Fusion for subject {}", LocalDateTime.now(), subject);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Oracle Fusion did not return a UserId for this token"));
+        }
+        logger.info("AUTHENTICATE_USER_JWT - Fusion UserId: {}", fusionUserId);
+
+        Long userId;
+        try {
+            userId = Long.valueOf(fusionUserId.trim());
+        } catch (NumberFormatException e) {
+            logger.error("AUTHENTICATE_USER_JWT - Exception - Time: {}, Error: Non numeric UserId {}", LocalDateTime.now(), fusionUserId);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Unexpected UserId returned by Oracle Fusion: " + fusionUserId));
+        }
+
+        User user = userRepository.findByUserId(userId).orElse(null);
+        if (user == null) {
+            logger.error("AUTHENTICATE_USER_JWT - Exception - Time: {}, Error: No user found for UserId {}", LocalDateTime.now(), userId);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("No application user found for Oracle Fusion UserId " + userId));
+        }
+
+        logger.info("AUTHENTICATE_USER_JWT - Resolved user - UserId: {}, Username: {}", user.getUserId(), user.getUserName());
+
+        return authenticateUser(new LoginRequest(user.getUserName(), user.getPassword()));
     }
 
     @PostMapping("/refreshtoken")
