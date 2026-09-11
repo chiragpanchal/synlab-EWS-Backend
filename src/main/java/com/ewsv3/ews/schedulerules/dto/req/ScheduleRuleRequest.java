@@ -4,6 +4,7 @@ import java.time.LocalDate;
 
 public record ScheduleRuleRequest(
         Long profileId,
+        Long parentScheduleRuleId,
         LocalDate validFrom,
         LocalDate validTo,
         Double maxHrsPerDay,
@@ -17,6 +18,6 @@ public record ScheduleRuleRequest(
         Integer maxContRestDays
 ) {
     public ScheduleRuleRequest() {
-        this(null, null, null, null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

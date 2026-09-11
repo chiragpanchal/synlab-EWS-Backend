@@ -74,14 +74,33 @@ public class ScheduleRuleService {
                 .toList();
     }
 
+    public List<ScheduleRuleDto> getScheduleRulesByParentScheduleRuleId(Long parentScheduleRuleId) {
+        List<ScheduleRule> scheduleRules = scheduleRuleRepository
+                .findByParentScheduleRuleIdOrderByValidFromDesc(parentScheduleRuleId);
+        return scheduleRules.stream()
+                .map(this::convertToDto)
+                .toList();
+    }
+
     public List<ScheduleRuleDto> searchScheduleRules(ScheduleRuleSearchRequest request) {
         List<ScheduleRule> scheduleRules;
 
-        if (request.profileId() != null && request.validDate() != null) {
+        if (request.profileId() != null && request.parentScheduleRuleId() != null && request.validDate() != null) {
+            scheduleRules = scheduleRuleRepository.findByProfileIdAndParentScheduleRuleIdAndValidDate(request.profileId(),
+                    request.parentScheduleRuleId(), request.validDate());
+        } else if (request.profileId() != null && request.parentScheduleRuleId() != null) {
+            scheduleRules = scheduleRuleRepository.findByProfileIdAndParentScheduleRuleId(request.profileId(),
+                    request.parentScheduleRuleId());
+        } else if (request.profileId() != null && request.validDate() != null) {
             scheduleRules = scheduleRuleRepository.findByProfileIdAndValidDate(request.profileId(),
+                    request.validDate());
+        } else if (request.parentScheduleRuleId() != null && request.validDate() != null) {
+            scheduleRules = scheduleRuleRepository.findByParentScheduleRuleIdAndValidDate(request.parentScheduleRuleId(),
                     request.validDate());
         } else if (request.profileId() != null) {
             scheduleRules = scheduleRuleRepository.findByProfileId(request.profileId());
+        } else if (request.parentScheduleRuleId() != null) {
+            scheduleRules = scheduleRuleRepository.findByParentScheduleRuleId(request.parentScheduleRuleId());
         } else if (request.validDate() != null) {
             scheduleRules = scheduleRuleRepository.findActiveScheduleRules(request.validDate());
         } else {
@@ -108,6 +127,7 @@ public class ScheduleRuleService {
 
             // Set business fields
             scheduleRule.setProfileId(request.profileId());
+            scheduleRule.setParentScheduleRuleId(request.parentScheduleRuleId());
             scheduleRule.setValidFrom(request.validFrom());
             scheduleRule.setValidTo(request.validTo());
             scheduleRule.setMaxHrsPerDay(request.maxHrsPerDay());
@@ -158,19 +178,23 @@ public class ScheduleRuleService {
                 return new DMLResponseDto("E", "Schedule rule not found with ID: " + id);
             }
 
+            ScheduleRule scheduleRule = existingRule.get();
+
             // Validate date overlap for existing schedule rule (exclude current rule from
-            // check)
-            DMLResponseDto validationResult = validateDateOverlap(request.profileId(), request.validFrom(),
+            // check) - against the rule's own profile, since PROFILE_ID cannot be updated
+            DMLResponseDto validationResult = validateDateOverlap(scheduleRule.getProfileId(), request.validFrom(),
                     request.validTo(), id);
             if ("E".equals(validationResult.getStatusMessage())) {
                 return validationResult;
             }
 
-            ScheduleRule scheduleRule = existingRule.get();
             mapRequestToEntity(request, scheduleRule, userId);
             // lastUpdatedBy is already set in mapRequestToEntity for update operations
 
             ScheduleRule updatedRule = scheduleRuleRepository.save(scheduleRule);
+
+            // Push the new values onto every rule that inherits from this one
+            syncChildScheduleRules(updatedRule.getScheduleRuleId());
 
             // System.out.println("updateScheduleRule updated schedule rule ID: " +
             // updatedRule.getScheduleRuleId());
@@ -206,8 +230,24 @@ public class ScheduleRuleService {
                 .toList();
     }
 
+    /**
+     * Copies the rule values of a just-updated rule onto every rule whose
+     * PARENT_SCHEDULE_RULE_ID points at it.
+     *
+     * @return the number of child rules updated
+     */
+    public int syncChildScheduleRules(Long scheduleRuleId) {
+        int syncedChildRules = scheduleRuleRepository.syncChildRulesWithParent(scheduleRuleId);
+
+        // System.out.println("syncChildScheduleRules synced " + syncedChildRules +
+        // " child rules of scheduleRuleId: " + scheduleRuleId);
+        return syncedChildRules;
+    }
+
     private void mapRequestToEntity(ScheduleRuleRequest request, ScheduleRule entity, Long userId) {
-        entity.setProfileId(request.profileId());
+        // PROFILE_ID is deliberately not mapped - a rule stays on the profile it was created
+        // for, so request.profileId() is ignored on update
+        entity.setParentScheduleRuleId(request.parentScheduleRuleId());
         entity.setValidFrom(request.validFrom());
         entity.setValidTo(request.validTo());
         entity.setMaxHrsPerDay(request.maxHrsPerDay());
@@ -239,6 +279,7 @@ public class ScheduleRuleService {
         return new ScheduleRuleDto(
                 entity.getScheduleRuleId(),
                 entity.getProfileId(),
+                entity.getParentScheduleRuleId(),
                 entity.getValidFrom(),
                 entity.getValidTo(),
                 entity.getMaxHrsPerDay(),

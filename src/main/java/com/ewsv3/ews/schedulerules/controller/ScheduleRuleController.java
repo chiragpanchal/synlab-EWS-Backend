@@ -94,6 +94,20 @@ public class ScheduleRuleController {
         }
     }
 
+    @GetMapping("parent-schedule-rule/{parentScheduleRuleId}")
+    public ResponseEntity<List<ScheduleRuleDto>> getScheduleRulesByParentScheduleRuleId(@RequestHeader Map<String, String> headers, @PathVariable Long parentScheduleRuleId) {
+        logger.info("GET_SCHEDULE_RULES_BY_PARENT_SCHEDULE_RULE - Entry - Time: {}, ParentScheduleRuleId: {}", LocalDateTime.now(), parentScheduleRuleId);
+        try {
+            List<ScheduleRuleDto> scheduleRules = scheduleRuleService.getScheduleRulesByParentScheduleRuleId(parentScheduleRuleId);
+            logger.info("GET_SCHEDULE_RULES_BY_PARENT_SCHEDULE_RULE - Exit - Time: {}, Response count: {}", LocalDateTime.now(), scheduleRules.size());
+            return new ResponseEntity<>(scheduleRules, HttpStatus.OK);
+        } catch (Exception exception) {
+            logger.error("GET_SCHEDULE_RULES_BY_PARENT_SCHEDULE_RULE - Exception - Time: {}, ParentScheduleRuleId: {}, Error: {}",
+                    LocalDateTime.now(), parentScheduleRuleId, exception.getMessage(), exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("search")
     public ResponseEntity<List<ScheduleRuleDto>> searchScheduleRules(@RequestHeader Map<String, String> headers, @RequestBody ScheduleRuleSearchRequest request) {
         logger.info("SEARCH_SCHEDULE_RULES - Entry - Time: {}, Request: {}", LocalDateTime.now(), request);

@@ -4,9 +4,10 @@ import java.time.LocalDate;
 
 public record ScheduleRuleSearchRequest(
         Long profileId,
+        Long parentScheduleRuleId,
         LocalDate validDate
 ) {
     public ScheduleRuleSearchRequest() {
-        this(null, null);
+        this(null, null, null);
     }
 }

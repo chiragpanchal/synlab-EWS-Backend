@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record ScheduleRuleDto(
         Long scheduleRuleId,
         Long profileId,
+        Long parentScheduleRuleId,
         LocalDate validFrom,
         LocalDate validTo,
         Double maxHrsPerDay,
@@ -23,6 +24,6 @@ public record ScheduleRuleDto(
         LocalDateTime lastUpdateDate
 ) {
     public ScheduleRuleDto() {
-        this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        this(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

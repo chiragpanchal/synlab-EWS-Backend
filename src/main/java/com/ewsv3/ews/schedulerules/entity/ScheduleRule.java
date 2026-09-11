@@ -17,6 +17,9 @@ public class ScheduleRule {
     @Column(name = "PROFILE_ID", nullable = false)
     private Long profileId;
     
+    @Column(name = "PARENT_SCHEDULE_RULE_ID")
+    private Long parentScheduleRuleId;
+    
     @Column(name = "VALID_FROM")
     private LocalDate validFrom;
     
@@ -79,11 +82,12 @@ public class ScheduleRule {
     public ScheduleRule() {
     }
 
-    public ScheduleRule(Long profileId, LocalDate validFrom, LocalDate validTo, Double maxHrsPerDay,
+    public ScheduleRule(Long profileId, Long parentScheduleRuleId, LocalDate validFrom, LocalDate validTo, Double maxHrsPerDay,
                         Double minHrsPerWeek, Double maxHrsPerWeek, Double minHrsPerMonth,
                         Double maxHrsPerMonth, Double shiftGap, Integer minRestDaysPerWeek,
                        Integer maxContShiftDays, Integer maxContRestDays, Long createdBy, Long lastUpdatedBy) {
         this.profileId = profileId;
+        this.parentScheduleRuleId = parentScheduleRuleId;
         this.validFrom = validFrom;
         this.validTo = validTo;
         this.maxHrsPerDay = maxHrsPerDay;
@@ -113,6 +117,14 @@ public class ScheduleRule {
 
     public void setProfileId(Long profileId) {
         this.profileId = profileId;
+    }
+
+    public Long getParentScheduleRuleId() {
+        return parentScheduleRuleId;
+    }
+
+    public void setParentScheduleRuleId(Long parentScheduleRuleId) {
+        this.parentScheduleRuleId = parentScheduleRuleId;
     }
 
     public LocalDate getValidFrom() {
