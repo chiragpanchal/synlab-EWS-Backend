@@ -194,8 +194,9 @@ public class RosterService {
                     long t = System.currentTimeMillis();
                     List<RosterErrorString> r = jdbcClient.sql(errorStringSQL)
                             .param("userId", userId).param("profileId", profileId)
+                            .param("personIds", personIds)
                             .param("startDate", startDate).param("endDate", endDate)
-                            .param("text", searchText).query(RosterErrorString.class).list();
+                            .query(RosterErrorString.class).list();
                     logger.info("PERF step1.5 errorStringSQL: {}ms, rows:{}", System.currentTimeMillis() - t, r.size());
                     return r;
                 }, DB_TASK_EXECUTOR)
@@ -254,6 +255,9 @@ public class RosterService {
         // Step 3: Group children by person_id for efficient lookup
         Map<Long, List<RosterLinesChild>> childrenByPersonId = allChildren.stream()
                 .collect(Collectors.groupingBy(RosterLinesChild::personId));
+        Map<Long, String> errorByPersonId = rosterErrorStrings.stream()
+                .filter(e -> e.errorString() != null)
+                .collect(Collectors.toMap(RosterErrorString::personId, RosterErrorString::errorString, (a, b) -> a));
 
         // Step 4: Process each roster line and assign its children
         for (RosterLines rosterLine : rosterLines) {
@@ -282,10 +286,7 @@ public class RosterService {
 
             rosterLine.setChildren(childDatesList);
 
-            RosterErrorString errorString = rosterErrorStrings.stream()
-                    .filter(str -> str.personId() == rosterLine.getPersonId())
-                    .findFirst().orElse(null);
-            rosterLine.setErrorString(errorString != null ? errorString.errorString() : null);
+            rosterLine.setErrorString(errorByPersonId.get(rosterLine.getPersonId()));
         }
 
         return new PersonRosterSqlResp(rosterLines, kpiString);
@@ -332,21 +333,14 @@ public class RosterService {
                         rs.getLong("pub_count"),
                         rs.getLong("correct_count"),
                         rs.getLong("on_call_count"),
-                        rs.getLong("emergency_count")
+                        rs.getLong("emergency_count"),
+                        rs.getLong("leave_count")
                 })
-                .single();
-
-        long leaveCount = jdbcClient.sql(kpiLeaveCountSqlTk)
-                .param("userId", userId)
-                .param("profileId", profileId)
-                .param("startDate", startDate)
-                .param("endDate", endDate)
-                .query((rs, rowNum) -> rs.getLong("leave_count"))
                 .single();
 
         return "D:" + counts[0] + "#PA:" + counts[1] + "#UP:" + counts[2]
                 + "#P:" + counts[3] + "#C:" + counts[4]
-                + "#ON:" + counts[5] + "#EN:" + counts[6] + "#LV:" + leaveCount;
+                + "#ON:" + counts[5] + "#EN:" + counts[6] + "#LV:" + counts[7];
     }
 
     private static RosterLinesChild getLinesChild(RosterLines rosterLine, LocalDate date) {

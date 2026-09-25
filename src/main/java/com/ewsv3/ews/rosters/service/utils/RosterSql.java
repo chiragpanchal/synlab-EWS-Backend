@@ -10,50 +10,35 @@ package com.ewsv3.ews.rosters.service.utils;
 
 public class RosterSql {
 
+    // Scoped to the page's person IDs from step 1 (which already applied the text/hire/termination filters).
+    // Persons with no rosters in the period can't violate any rule, so the function is skipped for them.
+    // NULL results are dropped in Java: an outer "WHERE error_string IS NOT NULL" makes Oracle call the function twice per row.
     public static String errorStringSQL= """
             SELECT
-                person_id,
-                error_string
+                p.person_id,
+                sc_get_schedule_rule_error_f(
+                                            p_profile_id => :profileId,
+                                            p_person_id => p.person_id,
+                                            p_start_date => :startDate,
+                                            p_end_date => :endDate
+                ) error_string
               FROM
                 (
-                    SELECT
-                        tkv.person_id,
-                        sc_get_schedule_rule_error_f(
-                                                    p_profile_id => tkv.profile_id,
-                                                    p_person_id => tkv.person_id,
-                                                    p_start_date => :startDate,
-                                                    p_end_date => :endDate
-                        ) error_string
+                    SELECT DISTINCT
+                        tkv.person_id
                       FROM
-                        sc_timekeeper_person_v tkv,
-                        sc_person_v            per
+                        sc_timekeeper_person_v tkv
                      WHERE
                             tkv.timekeeper_user_id = :userId
                            AND tkv.profile_id = :profileId
-                           AND ( lower(
-                            tkv.employee_number
-                        ) LIKE lower(
-                            :text
+                           AND tkv.person_id IN (:personIds)
+                           AND EXISTS (
+                            SELECT 1
+                              FROM sc_person_rosters spr
+                             WHERE spr.person_id = tkv.person_id
+                               AND spr.effective_date BETWEEN :startDate AND :endDate
                         )
-                            OR lower(
-                            tkv.person_name
-                        ) LIKE lower(
-                            :text
-                        ) )
-                           AND per.person_id  = tkv.person_id
-            --                                       AND (:personId = 0 OR per.person_id = :personId)
-            --                                       AND 'Y'= sc_person_rosters_filter_f(p_person_id =>tkv.person_id ,p_person_roster_id => null, p_start_date=> trunc(:startDate) , p_end_date=> trunc(:endDate) ,p_filter_flag=>:pFilterFlag)
-                           AND nvl(
-                            tkv.hire_date,
-                            :startDate
-                        ) <= :startDate
-                           AND nvl(
-                            tkv.termination_date,
-                            :endDate
-                        ) >= :endDate
-                )
-             WHERE
-                error_string IS NOT NULL""";
+                ) p""";
 
     public static String RosterTeamSql = """
             SELECT
@@ -589,149 +574,74 @@ public class RosterSql {
              WHERE pa.person_id IN (:personIds)
                AND TRUNC(pa.leave_date) BETWEEN TRUNC(:startDate) AND TRUNC(:endDate)""";
 
+    // Single round trip for all KPI counts. Date filters are written as ranges on the raw columns
+    // (not trunc(column)) so IDX7 (person_id, effective_date) can be used; the swap check runs once per row.
     public static String kpiCountSqlTk = """
+            WITH team AS (
+                SELECT
+                    tkv.person_id
+                  FROM
+                    sc_timekeeper_person_v tkv
+                 WHERE
+                        tkv.timekeeper_user_id = :userId
+                    AND tkv.profile_id = :profileId
+                    AND nvl(tkv.hire_date, trunc(:endDate)) <= trunc(:endDate)
+                    AND nvl(tkv.termination_date, trunc(:startDate)) >= trunc(:startDate)
+            ), rosters AS (
+                SELECT
+                    spr.appr_status,
+                    nvl(spr.published, 'N') published,
+                    spr.on_call,
+                    spr.emergency,
+                    CASE
+                        WHEN EXISTS (
+                            SELECT 'Y'
+                              FROM sc_roster_swap rs
+                             WHERE rs.s_person_id = spr.person_id
+                               AND rs.s_roster_person_id = spr.person_roster_id
+                        ) THEN 1
+                        ELSE 0
+                    END is_swapped
+                  FROM
+                    sc_person_rosters spr
+                 WHERE
+                        spr.person_id IN (SELECT person_id FROM team)
+                    AND spr.effective_date >= trunc(:startDate)
+                    AND spr.effective_date < trunc(:endDate) + 1
+            ), roster_counts AS (
+                SELECT
+                    nvl(SUM(CASE WHEN is_swapped = 0 AND appr_status = 'DRAFT'    AND published = 'N' THEN 1 ELSE 0 END), 0) draft_count,
+                    nvl(SUM(CASE WHEN is_swapped = 0 AND appr_status = 'SUBMIT'   AND published = 'N' THEN 1 ELSE 0 END), 0) submit_count,
+                    nvl(SUM(CASE WHEN is_swapped = 0 AND appr_status = 'APPROVED' AND published = 'N' THEN 1 ELSE 0 END), 0) unpub_count,
+                    nvl(SUM(CASE WHEN is_swapped = 0 AND appr_status = 'APPROVED' AND published = 'Y' THEN 1 ELSE 0 END), 0) pub_count,
+                    nvl(SUM(CASE WHEN is_swapped = 0 AND appr_status = 'RMI'      AND published = 'N' THEN 1 ELSE 0 END), 0) correct_count,
+                    nvl(SUM(CASE WHEN on_call IS NOT NULL THEN 1 ELSE 0 END), 0) on_call_count,
+                    nvl(SUM(CASE WHEN emergency IS NOT NULL THEN 1 ELSE 0 END), 0) emergency_count
+                  FROM
+                    rosters
+            ), leave_counts AS (
+                SELECT
+                    COUNT(pa.absence_attendances_id) leave_count
+                  FROM
+                    sc_person_absences_t pa
+                 WHERE
+                        pa.person_id IN (SELECT person_id FROM team)
+                    AND pa.leave_date >= trunc(:startDate)
+                    AND pa.leave_date < trunc(:endDate) + 1
+            )
             SELECT
-                SUM(
-                    CASE
-                        WHEN spr.appr_status = 'DRAFT'
-                             AND nvl(spr.published, 'N') = 'N'
-                             AND NOT EXISTS(
-                            SELECT
-                                'Y'
-                            FROM
-                                sc_roster_swap rs
-                            WHERE
-                                    rs.s_person_id = spr.person_id
-                                AND rs.s_roster_person_id = spr.person_roster_id
-                        ) THEN
-                            1
-                        ELSE
-                            0
-                    END
-                ) draft_count,
-                SUM(
-                    CASE
-                        WHEN spr.appr_status = 'SUBMIT'
-                             AND nvl(spr.published, 'N') = 'N'
-                             AND NOT EXISTS(
-                            SELECT
-                                'Y'
-                            FROM
-                                sc_roster_swap rs
-                            WHERE
-                                    rs.s_person_id = spr.person_id
-                                AND rs.s_roster_person_id = spr.person_roster_id
-                        ) THEN
-                            1
-                        ELSE
-                            0
-                    END
-                ) submit_count,
-                SUM(
-                    CASE
-                        WHEN spr.appr_status = 'APPROVED'
-                             AND nvl(spr.published, 'N') = 'N'
-                             AND NOT EXISTS(
-                            SELECT
-                                'Y'
-                            FROM
-                                sc_roster_swap rs
-                            WHERE
-                                    rs.s_person_id = spr.person_id
-                                AND rs.s_roster_person_id = spr.person_roster_id
-                        ) THEN
-                            1
-                        ELSE
-                            0
-                    END
-                ) unpub_count,
-                SUM(
-                    CASE
-                        WHEN spr.appr_status = 'APPROVED'
-                             AND nvl(spr.published, 'N') = 'Y'
-                             AND NOT EXISTS(
-                            SELECT
-                                'Y'
-                            FROM
-                                sc_roster_swap rs
-                            WHERE
-                                    rs.s_person_id = spr.person_id
-                                AND rs.s_roster_person_id = spr.person_roster_id
-                        ) THEN
-                            1
-                        ELSE
-                            0
-                    END
-                ) pub_count,
-                SUM(
-                    CASE
-                        WHEN spr.appr_status = 'RMI'
-                             AND nvl(spr.published, 'N') = 'N'
-                             AND NOT EXISTS(
-                            SELECT
-                                'Y'
-                            FROM
-                                sc_roster_swap rs
-                            WHERE
-                                    rs.s_person_id = spr.person_id
-                                AND rs.s_roster_person_id = spr.person_roster_id
-                        ) THEN
-                            1
-                        ELSE
-                            0
-                    END
-                ) correct_count,
-                SUM(
-                    CASE
-                        WHEN spr.on_call IS NOT NULL THEN
-                            1
-                        ELSE
-                            0
-                    END
-                ) on_call_count,
-                SUM(
-                    CASE
-                        WHEN spr.emergency IS NOT NULL THEN
-                            1
-                        ELSE
-                            0
-                    END
-                ) emergency_count
-            FROM
-                sc_person_rosters spr
-            WHERE
-                spr.person_id IN (
-                    SELECT
-                        tkv.person_id
-                    FROM
-                        sc_timekeeper_person_v tkv
-                    WHERE
-                            tkv.timekeeper_user_id = :userId
-                        AND tkv.profile_id = :profileId
-                        AND nvl(tkv.hire_date,
-                                trunc(:endDate)) <= trunc(:endDate)
-                        AND nvl(tkv.termination_date,
-                                trunc(:startDate)) >= trunc(:startDate)
-                )
-                AND trunc(spr.effective_date) BETWEEN trunc( :startDate ) AND trunc( :endDate )""";
+                rc.draft_count,
+                rc.submit_count,
+                rc.unpub_count,
+                rc.pub_count,
+                rc.correct_count,
+                rc.on_call_count,
+                rc.emergency_count,
+                lc.leave_count
+              FROM
+                roster_counts rc
+                CROSS JOIN leave_counts lc""";
 
-    public static String kpiLeaveCountSqlTk = """
-            SELECT COUNT(pa.absence_attendances_id) leave_count
-              FROM sc_person_absences_t pa
-             WHERE pa.person_id IN (
-             SELECT
-                        tkv.person_id
-                    FROM
-                        sc_timekeeper_person_v tkv
-                    WHERE
-                            tkv.timekeeper_user_id = :userId
-                        AND tkv.profile_id = :profileId
-                        AND nvl(tkv.hire_date,
-                                trunc(:endDate)) <= trunc(:endDate)
-                        AND nvl(tkv.termination_date,
-                                trunc(:startDate)) >= trunc(:startDate)
-                )
-            AND TRUNC(pa.leave_date) BETWEEN TRUNC(:startDate) AND TRUNC(:endDate)""";
 
     public static String InsertPersonRorationAssoc = """
             insert into sc_person_rotation_assoc (
