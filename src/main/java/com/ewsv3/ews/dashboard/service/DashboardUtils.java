@@ -176,6 +176,7 @@ public class DashboardUtils {
                         and si.completion_date is null
                         and login_user.user_id        = :userId
                         and srr.request_master_id (+) = spra.request_master_id
+                        AND srr.request_reason_id (+) = spra.request_reason_id
                         and st.person_id              = spra.person_id
                         and st.effective_date         = spra.date_start
                         and st.primary_row            = 'Y'
