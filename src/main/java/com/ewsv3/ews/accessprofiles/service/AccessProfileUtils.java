@@ -72,6 +72,7 @@ public class AccessProfileUtils {
                 employee_catg,
                 shift_type,
                 project_id,
+                legislation,
                 created_by,
                 created_on,
                 last_updated_by,
@@ -178,6 +179,7 @@ public class AccessProfileUtils {
                     employee_type_id,
                     gender,
                     project_id,
+                    legislation,
                     grade_id,
                     include_exclude_flag
                 ) values (
@@ -198,6 +200,7 @@ public class AccessProfileUtils {
                     :employeeTypeId,
                     :gender,
                     :projectId,
+                    :legislation,
                     :gradeId,
                     :includeExcludeFlag
                 )
@@ -220,6 +223,7 @@ public class AccessProfileUtils {
                 employee_type_id = :employeeTypeId,
                 gender = :gender,
                 project_id = :projectId,
+                legislation = :legislation,
                 grade_id = :gradeId,
                 include_exclude_flag = :includeExcludeFlag
             where

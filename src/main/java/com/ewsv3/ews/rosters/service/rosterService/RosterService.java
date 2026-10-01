@@ -4,6 +4,8 @@ import com.ewsv3.ews.masters.service.ServiceUtils;
 import com.ewsv3.ews.rosters.controller.RosterController;
 import com.ewsv3.ews.rosters.dto.rosters.*;
 import com.ewsv3.ews.rosters.dto.rosters.payload.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ewsv3.ews.rosters.dto.rosters.payload.pivot.PersonRosterSqlResp;
 import com.ewsv3.ews.rosters.dto.rosters.validate.DemandLineResponse;
 import com.ewsv3.ews.rosters.dto.rosters.validate.ScheduleLineResponse;
@@ -25,8 +27,12 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.sql.Clob;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,7 +55,11 @@ public class RosterService {
     // which is designed for CPU-bound tasks and struggles under concurrent JDBC blocking.
     private static final ExecutorService DB_TASK_EXECUTOR = Executors.newCachedThreadPool();
 
-    private SimpleJdbcCall simpleJdbcCall;
+    // Compiled stored-procedure calls, cached per procedure. Building a SimpleJdbcCall and compiling it
+    // reads the procedure's parameter metadata from Oracle, which is slow; compiling once and reusing is
+    // safe because a compiled SimpleJdbcCall is thread-safe. (Previously a single shared field was
+    // reassigned on every request, which was both slow and unsafe under concurrent requests.)
+    private final Map<String, SimpleJdbcCall> procedureCalls = new ConcurrentHashMap<>();
     private final JdbcTemplate jdbcTemplate;
 
     private static final Logger logger = LoggerFactory.getLogger(RosterController.class);
@@ -61,7 +71,24 @@ public class RosterService {
     @PostConstruct
     public void init() {
         jdbcTemplate.setResultsMapCaseInsensitive(true);
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_SPOT_ROSTER_P");
+    }
+
+    /** Returns a compiled, reusable call for the given procedure (optionally inside a package). */
+    private SimpleJdbcCall procedureCall(String catalogName, String procedureName) {
+        String key = (catalogName == null ? "" : catalogName + ".") + procedureName;
+        return procedureCalls.computeIfAbsent(key, k -> {
+            SimpleJdbcCall call = new SimpleJdbcCall(jdbcTemplate);
+            if (catalogName != null) {
+                call.withCatalogName(catalogName);
+            }
+            call.withProcedureName(procedureName);
+            call.compile();
+            return call;
+        });
+    }
+
+    private SimpleJdbcCall procedureCall(String procedureName) {
+        return procedureCall(null, procedureName);
     }
 
     public List<PersonRosters> getPersonRosters(Long userId, Long profileId, Date startDate, Date endDate,
@@ -192,11 +219,14 @@ public class RosterService {
         CompletableFuture<List<RosterErrorString>> errorsFuture = includeErrors
                 ? CompletableFuture.supplyAsync(() -> {
                     long t = System.currentTimeMillis();
-                    List<RosterErrorString> r = jdbcClient.sql(errorStringSQL)
-                            .param("userId", userId).param("profileId", profileId)
-                            .param("personIds", personIds)
-                            .param("startDate", startDate).param("endDate", endDate)
-                            .query(RosterErrorString.class).list();
+                    List<RosterErrorString> r = new ArrayList<>();
+                    for (List<Long> chunk : chunkIds(personIds)) {
+                        r.addAll(jdbcClient.sql(errorStringSQL)
+                                .param("userId", userId).param("profileId", profileId)
+                                .param("personIds", chunk)
+                                .param("startDate", startDate).param("endDate", endDate)
+                                .query(RosterErrorString.class).list());
+                    }
                     logger.info("PERF step1.5 errorStringSQL: {}ms, rows:{}", System.currentTimeMillis() - t, r.size());
                     return r;
                 }, DB_TASK_EXECUTOR)
@@ -209,11 +239,14 @@ public class RosterService {
         if (isDefaultFilter) {
             childrenFuture = CompletableFuture.supplyAsync(() -> {
                 long t = System.currentTimeMillis();
-                List<RosterLinesChild> r = jdbcClient.sql(RosterMemberChildByPersonIdsSql)
-                        .param("personIds", personIds)
-                        .param("startDate", startDate)
-                        .param("endDate", endDate)
-                        .query(RosterLinesChild.class).list();
+                List<RosterLinesChild> r = new ArrayList<>();
+                for (List<Long> chunk : chunkIds(personIds)) {
+                    r.addAll(jdbcClient.sql(RosterMemberChildByPersonIdsSql)
+                            .param("personIds", chunk)
+                            .param("startDate", startDate)
+                            .param("endDate", endDate)
+                            .query(RosterLinesChild.class).list());
+                }
                 logger.info("PERF step2 RosterMemberChildByPersonIdsSql: {}ms, rows:{}", System.currentTimeMillis() - t, r.size());
                 return r;
             }, DB_TASK_EXECUTOR);
@@ -292,7 +325,18 @@ public class RosterService {
         return new PersonRosterSqlResp(rosterLines, kpiString);
     }
 
-    private String getKpiString(List<Long> personIds, LocalDate startDate, LocalDate endDate, JdbcClient jdbcClient) {
+    // Oracle rejects IN lists with more than 1000 expressions (ORA-01795).
+    private static final int ORACLE_IN_LIMIT = 1000;
+
+    private static List<List<Long>> chunkIds(List<Long> ids) {
+        List<List<Long>> chunks = new ArrayList<>();
+        for (int i = 0; i < ids.size(); i += ORACLE_IN_LIMIT) {
+            chunks.add(ids.subList(i, Math.min(i + ORACLE_IN_LIMIT, ids.size())));
+        }
+        return chunks;
+    }
+
+    private String getKpiString(List<Long> personIds,LocalDate startDate, LocalDate endDate, JdbcClient jdbcClient) {
         long[] counts = jdbcClient.sql(kpiCountSql)
                 .param("personIds", personIds)
                 .param("startDate", startDate)
@@ -511,7 +555,7 @@ public class RosterService {
                     // System.out.println("createSpotRoster inSource" + inSource);
                     // simpleJdbcCall = new
                     // SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
-                    simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_SPOT_ROSTER_P");
+                    SimpleJdbcCall simpleJdbcCall = procedureCall("SC_CREATE_SPOT_ROSTER_P");
                     Map<String, Object> simpleJdbcCallResult = simpleJdbcCall.execute(inSource);
 
                     AtomicReference<Object> sMessage = new AtomicReference<>();
@@ -571,6 +615,67 @@ public class RosterService {
 
     }
 
+    /**
+     * Creates many spot rosters in one database call (Excel import).
+     *
+     * The entries are sent as a JSON CLOB to SC_CREATE_SPOT_ROSTER_BULK_P, which runs
+     * SC_CREATE_SPOT_ROSTER_P per entry inside the database. That replaces several database
+     * round-trips per entry with a handful per batch. The batch is committed when the call returns.
+     */
+    public SpotBulkResponseDto createSpotRosterBulk(long userId, List<SpotBulkEntry> entries) throws Exception {
+        if (entries == null || entries.isEmpty()) {
+            return new SpotBulkResponseDto(0, 0, List.of());
+        }
+
+        MapSqlParameterSource inSource = new MapSqlParameterSource()
+                .addValue("p_creator_user_id", userId)
+                .addValue("p_entries", BULK_JSON.writeValueAsString(entries), Types.CLOB);
+
+        Map<String, Object> callResult = procedureCall("SC_CREATE_SPOT_ROSTER_BULK_P").execute(inSource);
+        String resultsJson = readClob(callResult.get("P_RESULTS"));
+
+        List<Map<String, Object>> rawResults = resultsJson == null || resultsJson.isBlank()
+                ? List.of()
+                : BULK_JSON.readValue(resultsJson, new TypeReference<List<Map<String, Object>>>() {});
+
+        List<SpotBulkResult> results = new ArrayList<>(rawResults.size());
+        int successCount = 0;
+        int failedCount = 0;
+        for (Map<String, Object> raw : rawResults) {
+            Integer ref = raw.get("ref") instanceof Number n ? n.intValue() : null;
+            String out = raw.get("out") == null ? "E#No result returned" : raw.get("out").toString();
+            String detail = out.length() > 2 ? out.substring(2) : "";
+
+            if (out.startsWith("S")) {
+                int created;
+                try {
+                    created = Integer.parseInt(detail.trim());
+                } catch (NumberFormatException e) {
+                    created = 0;
+                }
+                results.add(new SpotBulkResult(ref, "S", created, null));
+                successCount++;
+            } else {
+                results.add(new SpotBulkResult(ref, "E", 0, detail));
+                failedCount++;
+            }
+        }
+
+        return new SpotBulkResponseDto(successCount, failedCount, results);
+    }
+
+    private static final ObjectMapper BULK_JSON = new ObjectMapper();
+
+    private static String readClob(Object value) throws SQLException {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Clob clob) {
+            return clob.getSubString(1, (int) clob.length());
+        }
+        return value.toString();
+    }
+
     public List<PersonRosters> getSinglePersonRosters(Long userId, Long personId, Long personRosterId, Date startDate,
                                                       Date endDate, JdbcClient jdbcClient) {
         Map<String, Object> objectMap = new HashMap<>();
@@ -613,7 +718,7 @@ public class RosterService {
 
 //         System.out.println("deletePersonRoster: reqBody:" + reqBody);
 //
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DELETE_PERSON_ROSTERS_P");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("SC_DELETE_PERSON_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
 
@@ -685,7 +790,7 @@ public class RosterService {
 
         // System.out.println("copyPersonRoster: reqBody:" + reqBody);
 
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_COPY_ROSTERS_P");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("SC_COPY_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
         inParamMap.put("p_user_id", userId);
@@ -749,7 +854,7 @@ public class RosterService {
         // System.out.println("createRota: reqBody:" + reqBody);
         AtomicInteger recCounts = new AtomicInteger(0);
 
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_GENERATE_ROTA_SHIFTS_P");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("SC_GENERATE_ROTA_SHIFTS_P");
 
         // If reqBody.persons() is a comma-separated String, split and convert to
         // List<Long>
@@ -866,7 +971,7 @@ public class RosterService {
                 inParamMap.clear();
 
                 // calling procedure to create rotation plan based schedules..
-                simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sc_process_rota_p");
+                SimpleJdbcCall simpleJdbcCall = procedureCall("sc_process_rota_p");
 
                 inProcParamMap.put("p_person_id", assocReqBody.personId());
                 inProcParamMap.put("p_work_rotation_id", assocReqBody.workRotationId());
@@ -937,8 +1042,7 @@ public class RosterService {
         try {
 
             // calling procedure to create rotation plan based schedules..
-            simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withCatalogName("SC_MANAGE_ROSTER_PKG")
-                    .withProcedureName("sc_action_rosters_p");
+            SimpleJdbcCall simpleJdbcCall = procedureCall("SC_MANAGE_ROSTER_PKG", "sc_action_rosters_p");
 
             inProcParamMap.put("p_profile_id", reqBody.profileId());
             inProcParamMap.put("p_user_id", userId);
@@ -988,7 +1092,7 @@ public class RosterService {
     public DemandAllocationRespBody getDemandAllocations(Long userId, DemandAllocationReqBody reqBody,
                                                          JdbcClient jdbcClient) {
 
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sc_generate_demand_rosters_p");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("sc_generate_demand_rosters_p");
         Map<String, Object> inProcParamMap = new HashMap<>();
 
         inProcParamMap.put("p_user_id", userId);
@@ -1036,7 +1140,7 @@ public class RosterService {
     public DemandAllocationRespBody getDemandAllocationsNew(Long userId, DemandAllocationReqBody reqBody,
                                                             JdbcClient jdbcClient) {
         logger.info("getDemandAllocationsNew - Entry - Time: {}, Request: {}", LocalDateTime.now(), reqBody);
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("sp_generate_staff_schedule");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("sp_generate_staff_schedule");
         Map<String, Object> inProcParamMap = new HashMap<>();
 
         inProcParamMap.put("p_demand_template_id", reqBody.demandTemplateId());
@@ -1132,7 +1236,7 @@ public class RosterService {
 
         // System.out.println("dragDropPersonRoster: reqBody:" + reqBody);
 
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_DRAG_DROP_ROSTERS_P");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("SC_DRAG_DROP_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
         inParamMap.put("p_user_id", userId);
@@ -1199,7 +1303,7 @@ public class RosterService {
 
         // System.out.println("quickCopyPersonRoster: reqBody:" + reqBody);
 
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_QUICK_COPY_ROSTERS_P");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("SC_QUICK_COPY_ROSTERS_P");
         Map<String, Object> inParamMap = new HashMap<>();
 
         List<QuickCopyPersonDateReqBody> collepersonDateReqBodiesct = reqBody.quickCopyPersonDateReqBodies().stream()
@@ -1282,7 +1386,7 @@ public class RosterService {
     public RosterDMLResponseDto createDefaultSchedules(Long userId, Long profileId, Date startDate, Date endDate) {
         RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
 
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_DEFAULT_ROSTERS_P");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("SC_CREATE_DEFAULT_ROSTERS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
         inParamMap.put("p_user_id", userId);
@@ -1325,7 +1429,7 @@ public class RosterService {
 
         for (OptimizedRosterReqBody reqBody : reqBodyList) {
             try {
-                simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("SC_CREATE_OPTIMIZED_ROSTERS_P");
+                SimpleJdbcCall simpleJdbcCall = procedureCall("SC_CREATE_OPTIMIZED_ROSTERS_P");
 
                 inParamMap.put("p_user_id", userId);
                 inParamMap.put("p_person_id", reqBody.personId());
@@ -1375,8 +1479,7 @@ public class RosterService {
     public List<RotaDemandSuggestionDto> generateRotaDemandRosters(Long userId,
                                                                     RotaDemandSuggestionsReqBody requestBody,
                                                                     JdbcClient jdbcClient) {
-        simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate)
-                .withProcedureName("SC_ROTA_DEMAND_SUGGESTIONS_P");
+        SimpleJdbcCall simpleJdbcCall = procedureCall("SC_ROTA_DEMAND_SUGGESTIONS_P");
 
         Map<String, Object> inParamMap = new HashMap<>();
         inParamMap.put("p_user_id", userId);

@@ -213,7 +213,8 @@ public class RosterController {
     @CrossOrigin
     public ResponseEntity<RosterDMLResponseDto> createSpotRosters(@RequestHeader Map<String, String> header,
             @RequestBody SpotRequestBody requestBody) {
-        logger.info("CREATE_SPOT_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
+        // Full request body only at DEBUG: this endpoint is called many times per Excel import
+        logger.debug("CREATE_SPOT_ROSTERS - Entry - Time: {}, Request: {}", LocalDateTime.now(), requestBody);
 
         // System.out.println("spotone requestBody:" + requestBody);
         // RosterCreateResponseDto responseDto = new RosterCreateResponseDto();
@@ -230,6 +231,34 @@ public class RosterController {
             logger.error("CREATE_SPOT_ROSTERS - Exception - Time: {}, Request: {}, Error: {}",
                     LocalDateTime.now(), requestBody, exception.getMessage(), exception);
             // return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Upper bound per request; the Excel import sends batches well below this
+    private static final int SPOT_BULK_MAX_ENTRIES = 2000;
+
+    @PostMapping("/spot-bulk")
+    @CrossOrigin
+    public ResponseEntity<SpotBulkResponseDto> createSpotRostersBulk(@RequestHeader Map<String, String> header,
+            @RequestBody SpotBulkRequestBody requestBody) {
+        int count = requestBody.entries() == null ? 0 : requestBody.entries().size();
+        logger.info("CREATE_SPOT_ROSTERS_BULK - Entry - Time: {}, Entries: {}", LocalDateTime.now(), count);
+
+        if (count > SPOT_BULK_MAX_ENTRIES) {
+            logger.warn("CREATE_SPOT_ROSTERS_BULK - Rejected - Entries: {} exceeds max {}", count, SPOT_BULK_MAX_ENTRIES);
+            return new ResponseEntity<>(HttpStatus.PAYLOAD_TOO_LARGE);
+        }
+
+        try {
+            long start = System.currentTimeMillis();
+            SpotBulkResponseDto response = this.rosterService.createSpotRosterBulk(getCurrentUserId(), requestBody.entries());
+            logger.info("CREATE_SPOT_ROSTERS_BULK - Exit - Time: {}, Success: {}, Failed: {}, DurationMs: {}",
+                    LocalDateTime.now(), response.successCount(), response.failedCount(), System.currentTimeMillis() - start);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception exception) {
+            logger.error("CREATE_SPOT_ROSTERS_BULK - Exception - Time: {}, Entries: {}, Error: {}",
+                    LocalDateTime.now(), count, exception.getMessage(), exception);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -21,6 +21,7 @@ public record AccessProfileLines(
         String employeeCatg,
         String shiftType,
         Long projectId,
+        String legislation,
         Long createdBy,
         LocalDateTime createdOn,
         Long lastUpdatedBy,

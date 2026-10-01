@@ -223,6 +223,7 @@ public class AccessProfileService {
                             .param("accessProfileLineId", generatedAccessProfileLineId)
                             .param("religion", profileLine.religion())
                             .param("personId", profileLine.personId())
+                            .param("legislation", profileLine.legislation())
                             .param("employeeTypeId", profileLine.employeeTypeId())
                             .param("gender", profileLine.gender())
                             .param("projectId", profileLine.projectId())
@@ -261,6 +262,7 @@ public class AccessProfileService {
                             || !Objects.equals(matchingLine.employeeTypeId(), profileLine.employeeTypeId())
                             || !Objects.equals(matchingLine.gender(), profileLine.gender())
                             || !Objects.equals(matchingLine.projectId(), profileLine.projectId())
+                            || !Objects.equals(matchingLine.legislation(), profileLine.legislation())
                             || !Objects.equals(matchingLine.gradeId(), profileLine.gradeId())
                             || !Objects.equals(matchingLine.includeExcludeFlag(), profileLine.includeExcludeFlag())
                     ) {
@@ -281,6 +283,7 @@ public class AccessProfileService {
                                 .param("employeeTypeId", profileLine.employeeTypeId())
                                 .param("gender", profileLine.gender())
                                 .param("projectId", profileLine.projectId())
+                                .param("legislation", profileLine.legislation())
                                 .param("gradeId", profileLine.gradeId())
                                 .param("includeExcludeFlag", profileLine.includeExcludeFlag())
                                 .param("accessProfileLineId", generatedAccessProfileLineId)
