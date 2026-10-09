@@ -33,7 +33,9 @@ public class PersonPreferredPatternService {
                 p.created_by,
                 p.created_on,
                 p.last_updated_by,
-                p.last_update_date
+                p.last_update_date,
+                p.start_date,
+                p.end_date
             FROM sc_person_preferred_patterns p
             JOIN sc_work_rotations_h w ON p.work_rotation_id = w.work_rotation_id
             WHERE p.person_id = :personId
@@ -48,7 +50,9 @@ public class PersonPreferredPatternService {
                 p.created_by,
                 p.created_on,
                 p.last_updated_by,
-                p.last_update_date
+                p.last_update_date,
+                p.start_date,
+                p.end_date
             FROM sc_person_preferred_patterns p
             JOIN sc_work_rotations_h w ON p.work_rotation_id = w.work_rotation_id
             WHERE p.person_preferred_pattern_id = :id

@@ -32,10 +32,19 @@ public class PersonPreferredPattern {
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastUpdateDate;
 
+    @Column(name = "START_DATE")
+    @Temporal(TemporalType.DATE)
+    private Date startDate;
+
+    @Column(name = "END_DATE")
+    @Temporal(TemporalType.DATE)
+    private Date endDate;
+
     public PersonPreferredPattern() {}
 
     public PersonPreferredPattern(Long personPreferredPatternId, Long personId, Long workRotationId,
-                                   Long createdBy, Date createdOn, Long lastUpdatedBy, Date lastUpdateDate) {
+                                   Long createdBy, Date createdOn, Long lastUpdatedBy, Date lastUpdateDate,
+                                   Date startDate, Date endDate) {
         this.personPreferredPatternId = personPreferredPatternId;
         this.personId = personId;
         this.workRotationId = workRotationId;
@@ -43,6 +52,8 @@ public class PersonPreferredPattern {
         this.createdOn = createdOn;
         this.lastUpdatedBy = lastUpdatedBy;
         this.lastUpdateDate = lastUpdateDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
 
     public Long getPersonPreferredPatternId() {
@@ -99,5 +110,21 @@ public class PersonPreferredPattern {
 
     public void setLastUpdateDate(Date lastUpdateDate) {
         this.lastUpdateDate = lastUpdateDate;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
     }
 }

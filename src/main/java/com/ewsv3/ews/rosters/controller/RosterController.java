@@ -11,6 +11,7 @@ import com.ewsv3.ews.rosters.service.rosterService.RosterService;
 import com.ewsv3.ews.team.dto.ProfileDatesRequestBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -532,7 +533,8 @@ public class RosterController {
                     getCurrentUserId(),
                     requestBody.profileId(),
                     requestBody.startDate(),
-                    requestBody.endDate());
+                    requestBody.endDate(),
+                    requestBody.overrideFlag());
             logger.info("CREATE_DEFAULT_SCHEDULES - Exit - Time: {}, StatusMessage: {}, DetailMessage: {}",
                     LocalDateTime.now(), responseDto.getStatusMessage(), responseDto.getDetailMessage());
             return new ResponseEntity<>(responseDto, HttpStatus.OK);
@@ -639,6 +641,32 @@ public class RosterController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    @GetMapping("/preferred-patterns-active")
+    @CrossOrigin
+    public ResponseEntity<List<PreferredPatternActiveDto>> getPreferredPatternsActive(
+            @RequestHeader Map<String, String> header,
+            @RequestParam Long profileId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        logger.info("GET_PREFERRED_PATTERNS_ACTIVE - Entry - Time: {}, ProfileId: {}, StartDate: {}, EndDate: {}",
+                LocalDateTime.now(), profileId, startDate, endDate);
+        try {
+            List<PreferredPatternActiveDto> patterns = this.rosterService.getPreferredPatternsActive(
+                    getCurrentUserId(),
+                    profileId,
+                    startDate,
+                    endDate,
+                    jdbcClient);
+            logger.info("GET_PREFERRED_PATTERNS_ACTIVE - Exit - Time: {}, Response count: {}", LocalDateTime.now(),
+                    patterns.size());
+            return new ResponseEntity<>(patterns, HttpStatus.OK);
+        } catch (Exception exception) {
+            logger.error("GET_PREFERRED_PATTERNS_ACTIVE - Exception - Time: {}, ProfileId: {}, StartDate: {}, EndDate: {}, Error: {}",
+                    LocalDateTime.now(), profileId, startDate, endDate, exception.getMessage(), exception);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

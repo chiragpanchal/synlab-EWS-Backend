@@ -1084,4 +1084,46 @@ public class RosterSql {
                 person_name ASC,
                 effective_date""";
 
+    public static String preferredPatternActiveSQL = """
+            SELECT
+                employee_number,
+                person_name,
+                work_rotation_name,
+                start_date,
+                end_date,
+                week_counts,
+                start_date + ( floor((CAST(:startDate AS DATE) - start_date) / 7) - MOD(
+                    floor((CAST(:startDate AS DATE) - start_date) / 7),
+                    week_counts
+                ) ) * 7 AS current_active_start_date
+            FROM
+                (
+                    SELECT
+                        tkv.employee_number,
+                        tkv.person_name,
+                        h.work_rotation_name,
+                        ppp.start_date,
+                        ppp.end_date,
+                        COUNT(l.work_rotation_line_id) AS week_counts
+                    FROM
+                             sc_person_preferred_patterns ppp
+                        JOIN sc_timekeeper_person_v tkv ON tkv.person_id = ppp.person_id
+                        JOIN sc_work_rotations_h    h ON h.work_rotation_id = ppp.work_rotation_id
+                        JOIN sc_work_rotation_lines l ON l.work_rotation_id = h.work_rotation_id
+                    WHERE
+                            tkv.profile_id = :profileId
+                        AND tkv.timekeeper_user_id = :userId
+                        AND ( ppp.start_date BETWEEN :startDate AND :endDate
+                              OR ppp.end_date BETWEEN :startDate AND :endDate
+                              OR :startDate BETWEEN trunc(ppp.start_date) AND trunc(ppp.end_date) )
+                    GROUP BY
+                        tkv.employee_number,
+                        tkv.person_name,
+                        h.work_rotation_name,
+                        ppp.start_date,
+                        ppp.end_date
+                )
+            ORDER BY
+                person_name""";
+
 }

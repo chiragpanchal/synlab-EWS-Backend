@@ -12,6 +12,8 @@ public class PersonPreferredPatternDto {
     private Date createdOn;
     private Long lastUpdatedBy;
     private Date lastUpdateDate;
+    private Date startDate;
+    private Date endDate;
 
     public PersonPreferredPatternDto() {}
 
@@ -77,5 +79,21 @@ public class PersonPreferredPatternDto {
 
     public void setLastUpdateDate(Date lastUpdateDate) {
         this.lastUpdateDate = lastUpdateDate;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public Date getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(Date endDate) {
+        this.endDate = endDate;
     }
 }

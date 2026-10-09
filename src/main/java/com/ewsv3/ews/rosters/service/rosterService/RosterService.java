@@ -1383,7 +1383,7 @@ public class RosterService {
         return personDtoList;
     }
 
-    public RosterDMLResponseDto createDefaultSchedules(Long userId, Long profileId, Date startDate, Date endDate) {
+    public RosterDMLResponseDto createDefaultSchedules(Long userId, Long profileId, Date startDate, Date endDate, String overrideFlag) {
         RosterDMLResponseDto responseDto = new RosterDMLResponseDto();
 
         SimpleJdbcCall simpleJdbcCall = procedureCall("SC_CREATE_DEFAULT_ROSTERS_P");
@@ -1393,6 +1393,7 @@ public class RosterService {
         inParamMap.put("p_profile_id", profileId);
         inParamMap.put("p_start_date", startDate);
         inParamMap.put("p_end_date", endDate);
+        inParamMap.put("p_override_flag", overrideFlag);
 
         SqlParameterSource inSource = new MapSqlParameterSource(inParamMap);
         Map<String, Object> result = simpleJdbcCall.execute(inSource);
@@ -1538,6 +1539,18 @@ public class RosterService {
         return jdbcClient.sql(sql)
                 .param("userId", userId)
                 .query(RotaDemandSuggestionDto.class)
+                .list();
+    }
+
+    public List<PreferredPatternActiveDto> getPreferredPatternsActive(Long userId, Long profileId,
+                                                                      LocalDate startDate, LocalDate endDate,
+                                                                      JdbcClient jdbcClient) {
+        return jdbcClient.sql(preferredPatternActiveSQL)
+                .param("userId", userId)
+                .param("profileId", profileId)
+                .param("startDate", startDate)
+                .param("endDate", endDate)
+                .query(PreferredPatternActiveDto.class)
                 .list();
     }
 
